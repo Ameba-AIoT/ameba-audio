@@ -16,7 +16,7 @@
 #include <inttypes.h>
 
 #include "os_wrapper.h"
-#include "usbh_uac1.h"
+#include "usbh_composite_uac1.h"
 #include "usbh.h"
 
 #include "audio_hw_compat.h"
@@ -257,7 +257,7 @@ static ssize_t UsbStreamOutWrite(struct AudioHwStreamOut *stream, const void *bu
     struct UsbAudioHwStreamOut *out = (struct UsbAudioHwStreamOut *)stream;
     size_t frame_size = UsbAudioHwStreamOutFrameSize((const struct AudioHwStreamOut *)stream);
 
-    ret = usbh_uac_write((uint8_t *)(buffer), bytes, timeout_ms);
+    ret = usbh_composite_uac_write((uint8_t *)(buffer), bytes, timeout_ms);
     if (ret != (int32_t)bytes) {
         HAL_AUDIO_INFO("bytes: %d, written: %ld", bytes, ret);
     }
