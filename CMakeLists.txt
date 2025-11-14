@@ -37,7 +37,7 @@ if(CONFIG_AUDIO_FWK)
 endif()
 
 if(CONFIG_AUDIO_DEVICE_USB)
-    ameba_add_subdirectory(usb_audio)
+    ameba_add_subdirectory_if_exist(usb_audio)
 endif()
 
 ameba_submodule_register(audio
