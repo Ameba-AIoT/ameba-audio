@@ -190,7 +190,7 @@ static char *UsbGetStreamOutParameters(const struct AudioHwStream *stream, const
 {
     (void) stream;
     (void) keys;
-    return (char *)strdup("");
+    return (char *)xstrdup("");
 }
 
 static uint32_t UsbGetStreamOutLatency(const struct AudioHwStreamOut *stream)

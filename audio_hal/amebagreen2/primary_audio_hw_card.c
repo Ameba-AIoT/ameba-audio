@@ -46,7 +46,7 @@ static char *PrimaryGetCardParameters(const struct AudioHwCard *card,
 {
 	(void) card;
 	(void) keys;
-	return (char *)strdup("");
+	return (char *)xstrdup("");
 }
 
 static int32_t PrimarySetCaptureVolume(const struct AudioHwCard *card, float volume)
