@@ -233,7 +233,7 @@ static char *PrimaryGetStreamOutParameters(const struct AudioHwStream *stream, c
 {
 	(void) stream;
 	(void) keys;
-	return (char *)strdup("");
+	return (char *)xstrdup("");
 }
 
 static uint32_t PrimaryGetStreamOutLatency(const struct AudioHwStreamOut *stream)

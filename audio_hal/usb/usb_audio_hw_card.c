@@ -46,7 +46,7 @@ static char *UsbGetCardParameters(const struct AudioHwCard *card,
 {
     (void) card;
     (void) keys;
-    return (char *)strdup("");
+    return (char *)xstrdup("");
 }
 
 static int32_t UsbSetCaptureVolume(const struct AudioHwCard *card, float volume)
