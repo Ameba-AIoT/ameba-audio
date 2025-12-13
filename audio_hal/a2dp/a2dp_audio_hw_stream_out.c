@@ -193,7 +193,7 @@ static char *A2dpGetStreamOutParameters(const struct AudioHwStream *stream, cons
 {
     (void) stream;
     (void) keys;
-    return (char *)strdup("");
+    return (char *)xstrdup("");
 }
 
 static uint32_t A2dpGetStreamOutLatency(const struct AudioHwStreamOut *stream)

@@ -10,5 +10,6 @@ target_include_directories(
     ${CURRENT_LIB_NAME} PRIVATE
     ${BASEDIR}/component/audio/interfaces
     ${BASEDIR}/component/audio/base/osal/osal_c/interfaces
+    ${BASEDIR}/component/audio/base/xlib/include
 )
 

@@ -78,6 +78,7 @@ ameba_list_append(private_includes
     ${c_CMPT_AUDIO_DIR}/interfaces
     ${c_CMPT_AUDIO_DIR}/audio_driver/include
     ${c_CMPT_AUDIO_DIR}/audio_hal/common
+    ${c_CMPT_AUDIO_DIR}/base/xlib/include
     ${c_CMPT_BLUETOOTH_DIR}/api/include
     ${c_CMPT_BLUETOOTH_DIR}/osif
 )
