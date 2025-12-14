@@ -38,7 +38,7 @@ char *param_strdup(const char *s)
 char *param_strndup(const char *s, int32_t count)
 {
 	const char *sin = s;
-	size_t len = strnlen(sin, (count)) + 1;
+	size_t len = xstrnlen(sin, (count)) + 1;
 	HAL_AUDIO_VERBOSE("count:%d, len:%d", count, len);
 	char *new = (char *) rtos_mem_zmalloc(len);
 	if (new == NULL) {
@@ -186,7 +186,7 @@ int32_t string_cells_get_str(struct string_cell *cell_head, const char *key, cha
 		HAL_AUDIO_VERBOSE("%s cell_iterate->key:%s,cell_iterate->value:%s, key:%s", __func__, cell_iterate->key, cell_iterate->value, key);
 		if (!strcmp(cell_iterate->key, key)) {
 			char *value = cell_iterate->value;
-			return strlcpy(val, value, len);
+			return xstrlcpy(val, value, len);
 		}
 		cell_iterate = cell_iterate->next;
 	}

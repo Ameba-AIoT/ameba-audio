@@ -19,7 +19,7 @@
 #include "ameba.h"
 #include "basic_types.h"
 #include "os_wrapper.h"
-
+#include "xlib/string_ext.h"
 
 /* Debug options */
 #define HAL_AUDIO_COMMON_DEBUG                1
