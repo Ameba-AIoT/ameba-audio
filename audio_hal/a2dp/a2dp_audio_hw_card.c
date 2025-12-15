@@ -46,7 +46,7 @@ static char *A2dpGetCardParameters(const struct AudioHwCard *card,
 {
     (void) card;
     (void) keys;
-    return (char *)strdup("");
+    return (char *)xstrdup("");
 }
 
 static int32_t A2dpSetCaptureVolume(const struct AudioHwCard *card, float volume)

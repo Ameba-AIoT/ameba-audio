@@ -27,7 +27,6 @@
 
 #include <yvals.h>
 #include <time64.h>
-size_t strlcpy(char *dst, const char *src, size_t dsize);
 typedef _Atomic(uint32_t)       atomic_uint;
 
 AUDIO_HAL_ATOMIC_INLINE

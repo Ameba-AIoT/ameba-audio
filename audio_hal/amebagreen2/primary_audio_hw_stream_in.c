@@ -254,7 +254,7 @@ static char *PrimaryGetStreamInParameters(const struct AudioHwStream *stream,
 {
 	(void) stream;
 	(void) keys;
-	return (char *)strdup("");
+	return (char *)xstrdup("");
 }
 
 static uint32_t PrimaryGetStreamInLatency(const struct AudioHwStreamIn *stream)

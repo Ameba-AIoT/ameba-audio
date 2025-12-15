@@ -11,6 +11,7 @@
 #include "audio/audio_service.h"
 #include "media/rtplayer.h"
 
+#include "xlib/string_ext.h"
 #include "example_player.h"
 
 //#define USE_CACHE
@@ -232,7 +233,7 @@ void example_player_test_args_handle(char  *argv[])
 			argv++;
 			if (*argv) {
 				memset(g_url, 0, MAX_URL_SIZE);
-				if (!strncasecmp("http://", *argv, 7) || !strncasecmp("https://", *argv, 8)) {
+				if (!xstrncasecmp("http://", *argv, 7) || !xstrncasecmp("https://", *argv, 8)) {
 					snprintf(g_url, MAX_URL_SIZE, "%s", *argv);
 				} else {
 					snprintf(g_url, MAX_URL_SIZE, "%s", *argv);
