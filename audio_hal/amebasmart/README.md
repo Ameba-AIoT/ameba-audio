@@ -147,10 +147,10 @@ If you want to use dmic, please set following configurations.
 If you want to record with I2S, please change the following codes:
 
 ```
-    //in your test code with RTAudioRecord, please set device as I2S:
-    RTAudioRecordConfig record_config;
+    //in your test code with AudioRecord, please set device as I2S:
+    AudioRecordConfig record_config;
     ......
-    record_config.device = RTDEVICE_IN_I2S;
+    record_config.device = DEVICE_IN_I2S;
 
     component/soc/**/usrcfg/include/ameba_audio_hw_usrcfg.h
     //if your external codec needs mclk from soc, and it's mclk should be mulitiplier of fs, set 1 here.

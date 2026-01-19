@@ -22,26 +22,26 @@ extern "C" {
 
 #include <stdbool.h>
 
-#include "media/rtdata_source.h"
+#include "media/stream_source.h"
 
 typedef struct MyDataSource MyDataSource;
 struct MyDataSource {
-	RTDataSource base;
+    StreamSource base;
 
-	char *data;
-	int data_length; // current total source length; for unknown_data_length source, data_length will change until last_data_gained equals 1
-	bool unknown_data_length;
-	bool last_data_gained;
+    char *data;
+    int data_length; // current total source length; for unknown_data_length source, data_length will change until last_data_gained equals 1
+    bool unknown_data_length;
+    bool last_data_gained;
 
-	bool alive;
+    bool alive;
 };
 
-RTDataSource *MyDataSource_Create(char *source, int length);
+StreamSource *MyDataSource_Create(char *source, int length);
 void MyDataSource_Destroy(MyDataSource *source);
 
-int32_t MyDataSource_CheckPrepared(const RTDataSource *source);
-ssize_t MyDataSource_ReadAt(const RTDataSource *source, off_t offset, void *data, size_t size);
-int32_t MyDataSource_GetLength(const RTDataSource *source, off_t *size);
+int32_t MyDataSource_CheckPrepared(const StreamSource *source);
+ssize_t MyDataSource_ReadAt(const StreamSource *source, off_t offset, void *data, size_t size);
+int32_t MyDataSource_GetLength(const StreamSource *source, off_t *size);
 
 #ifdef __cplusplus
 }

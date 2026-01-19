@@ -48,7 +48,7 @@ extern "C" {
 #endif
 
 
-struct RTAudioTrack;
+struct AudioTrack;
 
 /**
  * @brief Defines all the audio track configs.
@@ -64,40 +64,40 @@ typedef struct {
 	/** channel num of track, supports 1, 2 in mixer architecture, and 1, 2, 4, 6, 8 in passthrough. */
 	uint32_t channel_count;
 	/** format of track, supports
-	 * [mixer] RTAUDIO_FORMAT_PCM_32_BIT, RTAUDIO_FORMAT_PCM_16_BIT,
-	 * RTAUDIO_FORMAT_PCM_24_BIT, RTAUDIO_FORMAT_PCM_FLOAT.
-	 * [passthrough] RTAUDIO_FORMAT_PCM_32_BIT, RTAUDIO_FORMAT_PCM_16_BIT,
-	 * RTAUDIO_FORMAT_PCM_24_BIT, RTAUDIO_FORMAT_PCM_8_24_BIT.
+	 * [mixer] AUDIO_FORMAT_PCM_32_BIT, AUDIO_FORMAT_PCM_16_BIT,
+	 * AUDIO_FORMAT_PCM_24_BIT, AUDIO_FORMAT_PCM_FLOAT.
+	 * [passthrough] AUDIO_FORMAT_PCM_32_BIT, AUDIO_FORMAT_PCM_16_BIT,
+	 * AUDIO_FORMAT_PCM_24_BIT, AUDIO_FORMAT_PCM_8_24_BIT.
 	 */
 	uint32_t format;
 	/** bufsize of track */
 	uint32_t buffer_bytes;
-} RTAudioTrackConfig;
+} AudioTrackConfig;
 
 typedef struct {
 	/** speed of track, support 0.5 ~ 6.0 */
 	float speed;
 	/** pitch of track, only support 1.0 now */
 	float pitch;
-} RTAudioPlaybackRate;
+} AudioPlaybackRate;
 
 /**
- * @brief Create RTAudioTrack.
+ * @brief Create AudioTrack.
  */
-struct RTAudioTrack *RTAudioTrack_Create(void);
+struct AudioTrack *AudioTrack_Create(void);
 
 /**
- * @brief Release RTAudioTrack.
+ * @brief Release AudioTrack.
  */
-void RTAudioTrack_Destroy(struct RTAudioTrack *track);
+void AudioTrack_Destroy(struct AudioTrack *track);
 
 /**
  * @brief Init audio track.
- * See the {@link RTAudioTrackConfig} for information about the options available to configure
+ * See the {@link AudioTrackConfig} for information about the options available to configure
  * your track.
  *
- * @param track is the pointer of struct RTAudioTrack.
- * @param config a {@link RTAudioTrackConfig} instance used to configure track information.
+ * @param track is the pointer of struct AudioTrack.
+ * @param config a {@link AudioTrackConfig} instance used to configure track information.
  * @param flags is the output flags for current audio track.
  * @return Returns a value listed below: \n
  * int32_t | Description
@@ -109,33 +109,33 @@ void RTAudioTrack_Destroy(struct RTAudioTrack *track);
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioTrack_Init(struct RTAudioTrack *track, const RTAudioTrackConfig *config, uint32_t flags);
+int32_t AudioTrack_Init(struct AudioTrack *track, const AudioTrackConfig *config, uint32_t flags);
 
 /**
  * @brief Set audio track play water level.
  *
- * @param track is the pointer of struct RTAudioTrack.
+ * @param track is the pointer of struct AudioTrack.
  * @param bytes is the start playing water level bytes.
  * @return Returns the water level bytes sets to audio framework.
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioTrack_SetStartThresholdBytes(struct RTAudioTrack *track, int32_t bytes);
+int32_t AudioTrack_SetStartThresholdBytes(struct AudioTrack *track, int32_t bytes);
 
 /**
  * @brief Get audio track play water level.
  *
- * @param track is the pointer of struct RTAudioTrack.
+ * @param track is the pointer of struct AudioTrack.
  * @return Returns the playing water level bytes of current audio track.
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioTrack_GetStartThresholdBytes(struct RTAudioTrack *track);
+int32_t AudioTrack_GetStartThresholdBytes(struct AudioTrack *track);
 
 /**
  * @brief Start audio track.
  *
- * @param track is the pointer of struct RTAudioTrack.
+ * @param track is the pointer of struct AudioTrack.
  * @return Returns a value listed below: \n
  * int32_t | Description
  * ----------------------| -----------------------
@@ -145,21 +145,21 @@ int32_t RTAudioTrack_GetStartThresholdBytes(struct RTAudioTrack *track);
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioTrack_Start(struct RTAudioTrack *track);
+int32_t AudioTrack_Start(struct AudioTrack *track);
 
 /**
  * @brief Stop audio track.
  *
- * @param track is the pointer of struct RTAudioTrack.
+ * @param track is the pointer of struct AudioTrack.
  * @since 1.0
  * @version 1.0
  */
-void RTAudioTrack_Stop(struct RTAudioTrack *track);
+void AudioTrack_Stop(struct AudioTrack *track);
 
 /**
  * @brief Write audio data.
  *
- * @param track is the pointer of struct RTAudioTrack.
+ * @param track is the pointer of struct AudioTrack.
  * @param buffer is the src buffer of application.
  * @param size is the src buffer data bytes.
  * @param should_block choice whether to block when write stuck, suggest:true.
@@ -167,39 +167,39 @@ void RTAudioTrack_Stop(struct RTAudioTrack *track);
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioTrack_Write(struct RTAudioTrack *track, const void *buffer, size_t size, bool should_block);
+int32_t AudioTrack_Write(struct AudioTrack *track, const void *buffer, size_t size, bool should_block);
 
 /**
  * @brief Get minimun buffer bytes for track.
  *
- * @param track is the pointer of struct RTAudioTrack.
+ * @param track is the pointer of struct AudioTrack.
  * @param category_type can be a value listed below: \n
  * type | Description
  * ----------------------| -----------------------
- * RTAUDIO_CATEGORY_MEDIA | the data stream is music.
- * RTAUDIO_CATEGORY_COMMUNICATION | the data stream is call.
- * RTAUDIO_CATEGORY_TTS | the data stream is voice recognition.
- * RTAUDIO_CATEGORY_BEEP | the data stream is beep.
- * @param sample_rate is the samplerate of RTAudioTrack.
+ * AUDIO_CATEGORY_MEDIA | the data stream is music.
+ * AUDIO_CATEGORY_COMMUNICATION | the data stream is call.
+ * AUDIO_CATEGORY_TTS | the data stream is voice recognition.
+ * AUDIO_CATEGORY_BEEP | the data stream is beep.
+ * @param sample_rate is the samplerate of AudioTrack.
  * @param format can be a value listed below: \n
  * format | Description
  * ----------------------| -----------------------
- * RTAUDIO_FORMAT_PCM_8_BIT | 8bit data format.
- * RTAUDIO_FORMAT_PCM_16_BIT | 16bit data format.
- * RTAUDIO_FORMAT_PCM_32_BIT | 32bit data format.
- * RTAUDIO_FORMAT_PCM_FLOAT | float data format.
- * RTAUDIO_FORMAT_PCM_24_BIT | 24bit data format.
- * @param channel_count is the channel count of RTAudioTrack.
- * @return {@link RTAudioTrackConfig#buffer_bytes} size of mininum buffer bytes
+ * AUDIO_FORMAT_PCM_8_BIT | 8bit data format.
+ * AUDIO_FORMAT_PCM_16_BIT | 16bit data format.
+ * AUDIO_FORMAT_PCM_32_BIT | 32bit data format.
+ * AUDIO_FORMAT_PCM_FLOAT | float data format.
+ * AUDIO_FORMAT_PCM_24_BIT | 24bit data format.
+ * @param channel_count is the channel count of AudioTrack.
+ * @return {@link AudioTrackConfig#buffer_bytes} size of mininum buffer bytes
  * @since 1.0
  * @version 1.0
  */
-size_t RTAudioTrack_GetMinBufferBytes(struct RTAudioTrack *track, uint32_t category_type, uint32_t sample_rate, uint32_t format, uint32_t channel_count);
+size_t AudioTrack_GetMinBufferBytes(struct AudioTrack *track, uint32_t category_type, uint32_t sample_rate, uint32_t format, uint32_t channel_count);
 
 /**
  * @brief Set samplerate of track.
  *
- * @param track is the pointer of struct RTAudioTrack.
+ * @param track is the pointer of struct AudioTrack.
  * @param sample_rate the samplerate of track.
  * @return Returns a value listed below: \n
  * int32_t | Description
@@ -209,30 +209,30 @@ size_t RTAudioTrack_GetMinBufferBytes(struct RTAudioTrack *track, uint32_t categ
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioTrack_SetSampleRate(struct RTAudioTrack *track, uint32_t sample_rate);
+int32_t AudioTrack_SetSampleRate(struct AudioTrack *track, uint32_t sample_rate);
 
 /**
  * @brief Get samplerate of audio track.
  *
- * @param track is the pointer of struct RTAudioTrack.
+ * @param track is the pointer of struct AudioTrack.
  * @return samplerate
  * @since 1.0
  * @version 1.0
  */
-uint32_t RTAudioTrack_GetSampleRate(struct RTAudioTrack *track);
+uint32_t AudioTrack_GetSampleRate(struct AudioTrack *track);
 
 /**
  * @brief Set format of track.
  *
- * @param track is the pointer of struct RTAudioTrack.
+ * @param track is the pointer of struct AudioTrack.
  * @param format can be a value listed below: \n
  * format | Description
  * ----------------------| -----------------------
- * RTAUDIO_FORMAT_PCM_8_BIT | 8bit data format.
- * RTAUDIO_FORMAT_PCM_16_BIT | 16bit data format.
- * RTAUDIO_FORMAT_PCM_32_BIT | 32bit data format.
- * RTAUDIO_FORMAT_PCM_FLOAT | float data format.
- * RTAUDIO_FORMAT_PCM_24_BIT | 24bit data format.
+ * AUDIO_FORMAT_PCM_8_BIT | 8bit data format.
+ * AUDIO_FORMAT_PCM_16_BIT | 16bit data format.
+ * AUDIO_FORMAT_PCM_32_BIT | 32bit data format.
+ * AUDIO_FORMAT_PCM_FLOAT | float data format.
+ * AUDIO_FORMAT_PCM_24_BIT | 24bit data format.
  * @return Returns a value listed below: \n
  * int32_t | Description
  * ----------------------| -----------------------
@@ -241,30 +241,30 @@ uint32_t RTAudioTrack_GetSampleRate(struct RTAudioTrack *track);
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioTrack_SetFormat(struct RTAudioTrack *track, uint32_t format);
+int32_t AudioTrack_SetFormat(struct AudioTrack *track, uint32_t format);
 
 /**
  * @brief Get format of audio track.
  *
- * @param track is the pointer of struct RTAudioTrack.
+ * @param track is the pointer of struct AudioTrack.
  * @return format can be a value listed below: \n
  * format | Description
  * ----------------------| -----------------------
- * RTAUDIO_FORMAT_INVALID | invalid data format.
- * RTAUDIO_FORMAT_PCM_8_BIT | 8bit data format.
- * RTAUDIO_FORMAT_PCM_16_BIT | 16bit data format.
- * RTAUDIO_FORMAT_PCM_32_BIT | 32bit data format.
- * RTAUDIO_FORMAT_PCM_FLOAT | float data format.
- * RTAUDIO_FORMAT_PCM_24_BIT | 24bit data format.
+ * AUDIO_FORMAT_INVALID | invalid data format.
+ * AUDIO_FORMAT_PCM_8_BIT | 8bit data format.
+ * AUDIO_FORMAT_PCM_16_BIT | 16bit data format.
+ * AUDIO_FORMAT_PCM_32_BIT | 32bit data format.
+ * AUDIO_FORMAT_PCM_FLOAT | float data format.
+ * AUDIO_FORMAT_PCM_24_BIT | 24bit data format.
  * @since 1.0
  * @version 1.0
  */
-uint32_t RTAudioTrack_GetFormat(struct RTAudioTrack *track);
+uint32_t AudioTrack_GetFormat(struct AudioTrack *track);
 
 /**
  * @brief Set channel count of track.
  *
- * @param track is the pointer of struct RTAudioTrack.
+ * @param track is the pointer of struct AudioTrack.
  * @param channel the channel count of track.
  * @return Returns a value listed below: \n
  * int32_t | Description
@@ -274,40 +274,40 @@ uint32_t RTAudioTrack_GetFormat(struct RTAudioTrack *track);
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioTrack_SetChannelCount(struct RTAudioTrack *track, uint32_t channel);
+int32_t AudioTrack_SetChannelCount(struct AudioTrack *track, uint32_t channel);
 
 /**
  * @brief Get channel count of audio track.
  *
- * @param track is the pointer of struct RTAudioTrack.
+ * @param track is the pointer of struct AudioTrack.
  * @return channel count of track.
  * @since 1.0
  * @version 1.0
  */
-uint32_t RTAudioTrack_GetChannelCount(struct RTAudioTrack *track);
+uint32_t AudioTrack_GetChannelCount(struct AudioTrack *track);
 
 /**
  * @brief Pause audio track streaming.
  *
- * @param track is the pointer of struct RTAudioTrack.
+ * @param track is the pointer of struct AudioTrack.
  * @since 1.0
  * @version 1.0
  */
-void RTAudioTrack_Pause(struct RTAudioTrack *track);
+void AudioTrack_Pause(struct AudioTrack *track);
 
 /**
  * @brief Flush audio track streaming.
  *
- * @param track is the pointer of struct RTAudioTrack.
+ * @param track is the pointer of struct AudioTrack.
  * @since 1.0
  * @version 1.0
  */
-void RTAudioTrack_Flush(struct RTAudioTrack *track);
+void AudioTrack_Flush(struct AudioTrack *track);
 
 /**
  * @brief Set volume of track.
  *
- * @param track is the pointer of struct RTAudioTrack.
+ * @param track is the pointer of struct AudioTrack.
  * @param left the left channel volume of track, the value ranges from 0.0 to 1.0.
  * @param right the right channel volume of track, the value ranges from 0.0 to 1.0.
  * @return Returns a value listed below: \n
@@ -318,13 +318,13 @@ void RTAudioTrack_Flush(struct RTAudioTrack *track);
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioTrack_SetVolume(struct RTAudioTrack *track, float left, float right);
+int32_t AudioTrack_SetVolume(struct AudioTrack *track, float left, float right);
 
 /**
  * @brief Set speed of track.
  *
- * @param track is the pointer of struct RTAudioTrack.
- * @param rate See the {@link RTAudioPlaybackRate} for information.
+ * @param track is the pointer of struct AudioTrack.
+ * @param rate See the {@link AudioPlaybackRate} for information.
  * @return Returns a value listed below: \n
  * int32_t | Description
  * ----------------------| -----------------------
@@ -334,13 +334,13 @@ int32_t RTAudioTrack_SetVolume(struct RTAudioTrack *track, float left, float rig
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioTrack_SetPlaybackRate(struct RTAudioTrack *track, RTAudioPlaybackRate rate);
+int32_t AudioTrack_SetPlaybackRate(struct AudioTrack *track, AudioPlaybackRate rate);
 
 /**
  * @brief Get speed of track.
  *
- * @param track is the pointer of struct RTAudioTrack.
- * @param rate See the {@link RTAudioPlaybackRate} for information.
+ * @param track is the pointer of struct AudioTrack.
+ * @param rate See the {@link AudioPlaybackRate} for information.
  * @return Returns a value listed below: \n
  * int32_t | Description
  * ----------------------| -----------------------
@@ -349,12 +349,12 @@ int32_t RTAudioTrack_SetPlaybackRate(struct RTAudioTrack *track, RTAudioPlayback
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioTrack_GetPlaybackRate(struct RTAudioTrack *track, RTAudioPlaybackRate *rate);
+int32_t AudioTrack_GetPlaybackRate(struct AudioTrack *track, AudioPlaybackRate *rate);
 
 /**
  * @brief Get timestamp of track.
  *
- * @param track is the pointer of struct RTAudioTrack.
+ * @param track is the pointer of struct AudioTrack.
  * @param stamp the timestamp get from audio framework.
  * @return Returns a value listed below: \n
  * int32_t | Description
@@ -364,12 +364,12 @@ int32_t RTAudioTrack_GetPlaybackRate(struct RTAudioTrack *track, RTAudioPlayback
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioTrack_GetTimestamp(struct RTAudioTrack *track, RTAudioTimestamp *tstamp);
+int32_t AudioTrack_GetTimestamp(struct AudioTrack *track, AudioTimestamp *tstamp);
 
 /**
  * @brief Get present playing PTS of track.
  *
- * @param track is the pointer of struct RTAudioTrack.
+ * @param track is the pointer of struct AudioTrack.
  * @param now_ns the system time, or tsf time.
  * @param audio_ns the audio playing time.
  * @return Returns a value listed below: \n
@@ -380,12 +380,12 @@ int32_t RTAudioTrack_GetTimestamp(struct RTAudioTrack *track, RTAudioTimestamp *
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioTrack_GetPresentTime(struct RTAudioTrack *track, int64_t *now_ns, int64_t *audio_ns);
+int32_t AudioTrack_GetPresentTime(struct AudioTrack *track, int64_t *now_ns, int64_t *audio_ns);
 
 /**
  * @brief Get trigger timestamp of track.
  *
- * @param audio_track is the pointer of struct RTAudioTrack.
+ * @param audio_track is the pointer of struct AudioTrack.
  * @param trigger_ns the time render is triggered(start or stop).
  * @return Returns a value listed below: \n
  * status_t | Description
@@ -395,12 +395,12 @@ int32_t RTAudioTrack_GetPresentTime(struct RTAudioTrack *track, int64_t *now_ns,
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioTrack_GetTriggerTimestamp(struct RTAudioTrack *audio_track, int64_t *trigger_ns);
+int32_t AudioTrack_GetTriggerTimestamp(struct AudioTrack *audio_track, int64_t *trigger_ns);
 
 /**
  * @brief Set params of track.
  *
- * @param track is the pointer of struct RTAudioTrack.
+ * @param track is the pointer of struct AudioTrack.
  * @param strs can be used to set the private data of track, for example, the amplifier pin.
  * to set the amplier pin, for example _PB_7, you can get your pin value from:
  * fwlib/include/ameba_pinmux.h, it's value is "#define _PB_7 (0x27)"
@@ -414,32 +414,32 @@ int32_t RTAudioTrack_GetTriggerTimestamp(struct RTAudioTrack *audio_track, int64
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioTrack_SetParameters(struct RTAudioTrack *track, const char *strs);
+int32_t AudioTrack_SetParameters(struct AudioTrack *track, const char *strs);
 
 /**
  * @brief Get DMA buffer status of audio track.
  *
- * @param track is the pointer of struct RTAudioTrack.
+ * @param track is the pointer of struct AudioTrack.
  * @return DMA buffer available size to play.
  * @since 1.0
  * @version 1.0
  */
-uint32_t RTAudioTrack_GetBufferStatus(struct RTAudioTrack *track);
+uint32_t AudioTrack_GetBufferStatus(struct AudioTrack *track);
 
 /**
  * @brief Get buffer size of audio track.
  *
- * @param track is the pointer of struct RTAudioTrack.
+ * @param track is the pointer of struct AudioTrack.
  * @return total buffer size of track.
  * @since 1.0
  * @version 1.0
  */
-uint32_t RTAudioTrack_GetBufferSize(struct RTAudioTrack *track);
+uint32_t AudioTrack_GetBufferSize(struct AudioTrack *track);
 
 /**
  * @brief Get msec latency of audio track.
  *
- * @param track is the pointer of struct RTAudioTrack.
+ * @param track is the pointer of struct AudioTrack.
  * @param latency is the pointer of the latency user wants.
  * @return  Returns a value listed below: \n
  * int32_t | Description
@@ -449,15 +449,15 @@ uint32_t RTAudioTrack_GetBufferSize(struct RTAudioTrack *track);
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioTrack_GetLatency(struct RTAudioTrack *track, uint32_t *latency);
+int32_t AudioTrack_GetLatency(struct AudioTrack *track, uint32_t *latency);
 
 /**
  * @brief Get position of audio track.
  *
- * @param track is the pointer of struct RTAudioTrack.
+ * @param track is the pointer of struct AudioTrack.
  * @param position is the pointer of the total number of frames played since track start.
  *      This value will overflow periodically according to track's rate.
- *      This value is reset to zero by RTAudioTrack_Stop() and RTAudioTrack_Flush().
+ *      This value is reset to zero by AudioTrack_Stop() and AudioTrack_Flush().
  * @return  Returns a value listed below: \n
  * int32_t | Description
  * ----------------------| -----------------------
@@ -466,7 +466,7 @@ int32_t RTAudioTrack_GetLatency(struct RTAudioTrack *track, uint32_t *latency);
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioTrack_GetPosition(struct RTAudioTrack *track, uint64_t *position);
+int32_t AudioTrack_GetPosition(struct AudioTrack *track, uint64_t *position);
 
 #ifdef __cplusplus
 }

@@ -98,7 +98,7 @@ index a16673beb3..6971f2a7e8 100644
  			a2dp_demo_flush_bond_info(A2DP_DEMO_BOND_INFO_FLUSH_EVENT);
  		}
 +        if(a2dp_demo_role == RTK_BT_A2DP_ROLE_SRC) {
-+			RTAudioService_SetDeviceState(RTDEVICE_OUT_A2DP, RTAUDIO_DEVICE_STATE_UNAVAILABLE, "rtk_bt_a2dp", NULL);
++			AudioService_SetDeviceState(DEVICE_OUT_A2DP, AUDIO_DEVICE_STATE_UNAVAILABLE, "rtk_bt_a2dp", NULL);
 +			g_a2dp_connect = false;
 +		}
  		break;
@@ -150,7 +150,7 @@ index a16673beb3..6971f2a7e8 100644
 +
 +int bt_a2dp_get_format(void)
 +{
-+    return RTAUDIO_FORMAT_PCM_16_BIT;
++    return AUDIO_FORMAT_PCM_16_BIT;
 +}
 +
 +int bt_a2dp_get_channels(void)
@@ -165,7 +165,7 @@ index a16673beb3..6971f2a7e8 100644
  	char addr_str[30] = {0};
  	char dev_name[30] = {0};
  
-+	RTAudioService_Init();
++	AudioService_Init();
 +
  	if (1 == enable) {
  		if (a2dp_demo_init_flag) {
@@ -226,14 +226,14 @@ index 3f1f8dbc55..cfbd8c48fa 100644
  	rtk_bt_br_addr_to_str(bd_addr, addr_str, sizeof(addr_str));
  	BT_LOGA("A2DP starting to device %s ...\r\n", addr_str);
  
-+	RTAudioDeviceConfig config;
++	AudioDeviceConfig config;
 +	config.rate = bt_a2dp_get_rate();
 +	config.channels = bt_a2dp_get_channels();
 +	config.format = bt_a2dp_get_format();
 +
 +	if(a2dp_demo_role == RTK_BT_A2DP_ROLE_SRC) {
 +		BT_LOGA("A2dp set device state avail");
-+	    RTAudioService_SetDeviceState(RTDEVICE_OUT_A2DP, RTAUDIO_DEVICE_STATE_AVAILABLE, "rtk_bt_a2dp", &config);
++	    AudioService_SetDeviceState(DEVICE_OUT_A2DP, AUDIO_DEVICE_STATE_AVAILABLE, "rtk_bt_a2dp", &config);
 +	}
 +
  	return 0;

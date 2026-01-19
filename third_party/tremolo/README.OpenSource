@@ -1,0 +1,6 @@
+Name: Tremolo
+License: BSD
+License File: COPYING
+URL: http://wss.co.uk/pinknoise/tremolo/Tremolo007.zip
+Version: 0.07
+Description: Tremolo is an ARM optimised version of the Tremor lib from xiph.org. The Tremor lib is an integer only library for doing Ogg Vorbis decompression.
