@@ -1,0 +1,6 @@
+Name: opus
+License: BSD
+License File: COPYING
+URL: https://gitlab.xiph.org/xiph/opus.git
+Version: b83dd52868326a401c8578041e3dbea439d53f11
+Description: Opus is a codec for interactive speech and audio transmission over the Internet.

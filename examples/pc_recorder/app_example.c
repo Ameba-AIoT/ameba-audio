@@ -7,5 +7,5 @@
 
 void app_example(void)
 {
-	example_pc_recorder();
+    example_pc_recorder();
 }

@@ -11,12 +11,6 @@ set(public_libraries)               #public libraries(files), NOTE: linked with 
 
 # You may use if-else condition to set or update predefined variable above
 
-## Differentiated configuration based on SoC types
-ameba_list_append(public_libraries
-    ${c_SDK_LIB_APPLICATION_DIR}/lib_speexdsp.a
-)
-
-list(REMOVE_DUPLICATES public_libraries)
 # Component public part, user config end
 #----------------------------------------#
 
@@ -78,7 +72,7 @@ ameba_list_append(private_compile_options
 #WARNING: Select right API based on your component's release/not-release/standalone
 
 ###NOTE: For closed-source component, only build before release and libs are packaged into lib/application
-ameba_add_external_app_library(speexdsp
+ameba_add_internal_library(speexdsp
     p_SOURCES
         ${private_sources}
     p_INCLUDES

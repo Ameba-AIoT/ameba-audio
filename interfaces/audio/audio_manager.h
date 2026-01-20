@@ -46,20 +46,20 @@ extern "C" {
 #endif
 
 /**
- * @brief Create RTAudioManager.
+ * @brief Create AudioManager.
  */
-struct RTAudioManager *RTAudioManager_GetInstance(void);
+struct AudioManager *AudioManager_GetInstance(void);
 
 /**
- * @brief Release RTAudioManager.
+ * @brief Release AudioManager.
  */
-void RTAudioManager_Destroy(void);
+void AudioManager_Destroy(void);
 
 /**
  * @brief create audio patch between devices or ports.
  * @only support amebadplus I2S IN->I2S OUT
  *
- * @param manager is the pointer of struct RTAudioManager.
+ * @param manager is the pointer of struct AudioManager.
  * @param num_sources is total number of sources.
  * @param sources are the sources of the patch.
  * @param num_sinks is total number of sinks.
@@ -68,14 +68,14 @@ void RTAudioManager_Destroy(void);
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioManager_CreateAudioPatch(struct RTAudioManager *manager,
-                                        uint32_t num_sources, struct RTAudioPatchConfig *sources,
-                                        uint32_t num_sinks, struct RTAudioPatchConfig *sinks);
+int32_t AudioManager_CreateAudioPatch(struct AudioManager *manager,
+                                        uint32_t num_sources, struct AudioPatchConfig *sources,
+                                        uint32_t num_sinks, struct AudioPatchConfig *sinks);
 
 /**
  * @brief release audio patch between devices or ports.
  *
- * @param manager is the pointer of struct RTAudioManager.
+ * @param manager is the pointer of struct AudioManager.
  * @param patch_index is the index of patch to be released.
  * @return Returns a value listed below: \n
  * int32_t | Description
@@ -86,7 +86,7 @@ int32_t RTAudioManager_CreateAudioPatch(struct RTAudioManager *manager,
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioManager_ReleaseAudioPatch(struct RTAudioManager *manager, int32_t patch_index);
+int32_t AudioManager_ReleaseAudioPatch(struct AudioManager *manager, int32_t patch_index);
 
 #ifdef __cplusplus
 }

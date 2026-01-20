@@ -1,5 +1,4 @@
 ameba_add_subdirectory_if(CONFIG_MEDIA_CODEC_HAAC haac)
-ameba_add_subdirectory_if(CONFIG_MEDIA_CODEC_AAC fdk-aac)
 ameba_add_subdirectory_if(CONFIG_MEDIA_DEMUX_FLAC flac)
 ameba_add_subdirectory_if(CONFIG_MEDIA_CODEC_VORBIS tremolo)
 if(CONFIG_MEDIA_CODEC_OPUS OR CONFIG_OPUS_LIB)

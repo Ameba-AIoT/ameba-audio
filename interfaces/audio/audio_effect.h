@@ -43,29 +43,29 @@
 extern "C" {
 #endif
 
-struct RTAudioEffect;
-struct RTEffectAttributesBuilder;
+struct AudioEffect;
+struct EffectAttributesBuilder;
 
-int32_t RTEffectAttributesBuilder_Create(struct RTEffectAttributesBuilder **builder);
-void    RTEffectAttributesBuilder_Destroy(struct RTEffectAttributesBuilder *builder);
-int32_t RTEffectAttributesBuilder_SetInRate(struct RTEffectAttributesBuilder *builder, uint32_t rate);
-int32_t RTEffectAttributesBuilder_SetOutRate(struct RTEffectAttributesBuilder *builder, uint32_t rate);
-int32_t RTEffectAttributesBuilder_SetInFormat(struct RTEffectAttributesBuilder *builder, uint32_t format);
-int32_t RTEffectAttributesBuilder_SetOutFormat(struct RTEffectAttributesBuilder *builder, uint32_t format);
-int32_t RTEffectAttributesBuilder_SetInChannels(struct RTEffectAttributesBuilder *builder, uint32_t channels);
-int32_t RTEffectAttributesBuilder_SetOutChannels(struct RTEffectAttributesBuilder *builder, uint32_t channels);
-int32_t RTEffectAttributesBuilder_SetFrameCount(struct RTEffectAttributesBuilder *builder, uint32_t frame_count);
+int32_t EffectAttributesBuilder_Create(struct EffectAttributesBuilder **builder);
+void    EffectAttributesBuilder_Destroy(struct EffectAttributesBuilder *builder);
+int32_t EffectAttributesBuilder_SetInRate(struct EffectAttributesBuilder *builder, uint32_t rate);
+int32_t EffectAttributesBuilder_SetOutRate(struct EffectAttributesBuilder *builder, uint32_t rate);
+int32_t EffectAttributesBuilder_SetInFormat(struct EffectAttributesBuilder *builder, uint32_t format);
+int32_t EffectAttributesBuilder_SetOutFormat(struct EffectAttributesBuilder *builder, uint32_t format);
+int32_t EffectAttributesBuilder_SetInChannels(struct EffectAttributesBuilder *builder, uint32_t channels);
+int32_t EffectAttributesBuilder_SetOutChannels(struct EffectAttributesBuilder *builder, uint32_t channels);
+int32_t EffectAttributesBuilder_SetFrameCount(struct EffectAttributesBuilder *builder, uint32_t frame_count);
 
-int32_t RTAudioEffect_Create(struct RTEffectAttributesBuilder *builder, struct RTAudioEffect **stream);
-void    RTAudioEffect_Destroy(struct RTAudioEffect *stream);
-int32_t RTAudioEffect_SetConfig(struct RTAudioEffect *stream);
-int32_t RTAudioEffect_Start(struct RTAudioEffect *stream);
-int32_t RTAudioEffect_Stop(struct RTAudioEffect *stream);
-void    RTAudioEffect_SetInBuffer(struct RTAudioEffect *stream, int16_t *buf);
-void    RTAudioEffect_SetOutBuffer(struct RTAudioEffect *stream, int16_t *buf);
-void    RTAudioEffect_SetFrameCount(struct RTAudioEffect *module, int32_t frame_count);
-void    RTAudioEffect_Process(struct RTAudioEffect *stream);
-int32_t RTAudioEffect_Command(struct RTAudioEffect *stream, uint32_t cmd_code, uint32_t cmd_size, void *cmd_data, uint32_t *reply_size, void *reply_data);
+int32_t AudioEffect_Create(struct EffectAttributesBuilder *builder, struct AudioEffect **stream);
+void    AudioEffect_Destroy(struct AudioEffect *stream);
+int32_t AudioEffect_SetConfig(struct AudioEffect *stream);
+int32_t AudioEffect_Start(struct AudioEffect *stream);
+int32_t AudioEffect_Stop(struct AudioEffect *stream);
+void    AudioEffect_SetInBuffer(struct AudioEffect *stream, int16_t *buf);
+void    AudioEffect_SetOutBuffer(struct AudioEffect *stream, int16_t *buf);
+void    AudioEffect_SetFrameCount(struct AudioEffect *module, int32_t frame_count);
+void    AudioEffect_Process(struct AudioEffect *stream);
+int32_t AudioEffect_Command(struct AudioEffect *stream, uint32_t cmd_code, uint32_t cmd_size, void *cmd_data, uint32_t *reply_size, void *reply_data);
 
 #ifdef __cplusplus
 }

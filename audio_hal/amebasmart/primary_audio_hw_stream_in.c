@@ -589,8 +589,8 @@ static ssize_t PrimaryStreamInRead(struct AudioHwStreamIn *stream, void *buffer,
 	rtos_mutex_take(cap->lock, MUTEX_WAIT_TIMEOUT);
 	if (cap->standby) {
 		// in this StartAudioHwStreamIn, it needs to check stream_in mode, so this apis should be called
-		// after setparameters. Because setparameters need to be set after RTAudioRecord_start(), so this api
-		// can only be called in the first time call RTAudioRecord_read().Don't move it to other place.
+		// after setparameters. Because setparameters need to be set after AudioRecord_start(), so this api
+		// can only be called in the first time call AudioRecord_read().Don't move it to other place.
 		ret = StartAudioHwStreamIn(cap);
 		if (ret == 0) {
 			cap->standby = 0;
@@ -632,8 +632,8 @@ static ssize_t PrimaryStreamInReadTimeout(struct AudioHwStreamIn *stream, void *
 	rtos_mutex_take(cap->lock, MUTEX_WAIT_TIMEOUT);
 	if (cap->standby) {
 		// in this StartAudioHwStreamIn, it needs to check stream_in mode, so this apis should be called
-		// after setparameters. Because setparameters need to be set after RTAudioRecord_start(), so this api
-		// can only be called in the first time call RTAudioRecord_read().Don't move it to other place.
+		// after setparameters. Because setparameters need to be set after AudioRecord_start(), so this api
+		// can only be called in the first time call AudioRecord_read().Don't move it to other place.
 		ret = StartAudioHwStreamIn(cap);
 		if (ret == 0) {
 			cap->standby = 0;
@@ -731,7 +731,7 @@ void DestroyAudioHwStreamIn(struct AudioHwStreamIn *stream_in)
 	//stream_in = NULL;
 }
 
-//for passthrough, this api is called in RTAudioRecord_start(). Please pay attention to it when do logic change.
+//for passthrough, this api is called in AudioRecord_start(). Please pay attention to it when do logic change.
 struct AudioHwStreamIn *CreateAudioHwStreamIn(struct AudioHwCard *card, const struct AudioHwPathDescriptor *desc,
 		const struct AudioHwConfig *config)
 {

@@ -44,10 +44,10 @@
 extern "C" {
 #endif
 
-typedef struct RTAudioTimestamp {
+typedef struct AudioTimestamp {
 	uint64_t            position;
 	struct timespec     time;
-} RTAudioTimestamp;
+} AudioTimestamp;
 
 #ifdef __cplusplus
 }

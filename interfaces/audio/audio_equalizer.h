@@ -46,28 +46,28 @@
 extern "C" {
 #endif
 
-struct RTAudioEqualizer;
-struct RTAudioEffect;
+struct AudioEqualizer;
+struct AudioEffect;
 
 /**
- * @brief Create RTAudioEqualizer instance.
- * @return Returns the instance pointer of RTAudioEqualizer.
+ * @brief Create AudioEqualizer instance.
+ * @return Returns the instance pointer of AudioEqualizer.
  * @since 1.0
  * @version 1.0
  */
-struct RTAudioEqualizer *RTAudioEqualizer_Create(void);
+struct AudioEqualizer *AudioEqualizer_Create(void);
 
 /**
- * @brief Release RTAudioEqualizer.
- * @param equalizer is the pointer of struct RTAudioEqualizer.
+ * @brief Release AudioEqualizer.
+ * @param equalizer is the pointer of struct AudioEqualizer.
  * @since 1.0
  * @version 1.0
  */
-void RTAudioEqualizer_Destroy(struct RTAudioEqualizer *equalizer);
+void AudioEqualizer_Destroy(struct AudioEqualizer *equalizer);
 
 /**
- * @brief Set RTAudioEffect to equalizer.Only works in passthrough mode.
- * @param module is the pointer of struct RTAudioEffect.
+ * @brief Set AudioEffect to equalizer.Only works in passthrough mode.
+ * @param module is the pointer of struct AudioEffect.
  * @return Returns a value listed below: \n
  * int32_t | Description
  * ----------------------| -----------------------
@@ -77,11 +77,11 @@ void RTAudioEqualizer_Destroy(struct RTAudioEqualizer *equalizer);
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioEqualizer_SetModule(struct RTAudioEqualizer *equalizer, struct RTAudioEffect *module);
+int32_t AudioEqualizer_SetModule(struct AudioEqualizer *equalizer, struct AudioEffect *module);
 
 /**
- * @brief Init RTAudioEqualizer.
- * @param equalizer is the pointer of struct RTAudioEqualizer.
+ * @brief Init AudioEqualizer.
+ * @param equalizer is the pointer of struct AudioEqualizer.
  * @param priority designed for future use, now please set 0.
  * @param session designed for future use, now please set 0.
  * @return Returns a value listed below: \n
@@ -93,12 +93,12 @@ int32_t RTAudioEqualizer_SetModule(struct RTAudioEqualizer *equalizer, struct RT
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioEqualizer_Init(struct RTAudioEqualizer *equalizer, int32_t priority, int32_t session);
+int32_t AudioEqualizer_Init(struct AudioEqualizer *equalizer, int32_t priority, int32_t session);
 
 /**
- * @brief Set RTAudioEqualizer enable or disable.
- * @param equalizer is the pointer of struct RTAudioEqualizer.
- * @param enabled is the state of struct RTAudioEqualizer, true means enable, false means disable.
+ * @brief Set AudioEqualizer enable or disable.
+ * @param equalizer is the pointer of struct AudioEqualizer.
+ * @param enabled is the state of struct AudioEqualizer, true means enable, false means disable.
  * @return Returns a value listed below: \n
  * int32_t | Description
  * ----------------------| -----------------------
@@ -107,11 +107,11 @@ int32_t RTAudioEqualizer_Init(struct RTAudioEqualizer *equalizer, int32_t priori
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioEqualizer_SetEnabled(struct RTAudioEqualizer *equalizer, bool enabled);
+int32_t AudioEqualizer_SetEnabled(struct AudioEqualizer *equalizer, bool enabled);
 
 /**
- * @brief Get number of bands RTAudioEqualizer supports.
- * @param equalizer is the pointer of struct RTAudioEqualizer.
+ * @brief Get number of bands AudioEqualizer supports.
+ * @param equalizer is the pointer of struct AudioEqualizer.
  * @param bands is the total bands.
  * @return Returns a value listed below: \n
  * int32_t | Description
@@ -121,34 +121,34 @@ int32_t RTAudioEqualizer_SetEnabled(struct RTAudioEqualizer *equalizer, bool ena
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioEqualizer_SetNumberOfBands(struct RTAudioEqualizer *equalizer, uint32_t bands);
+int32_t AudioEqualizer_SetNumberOfBands(struct AudioEqualizer *equalizer, uint32_t bands);
 
 /**
- * @brief Get number of bands RTAudioEqualizer supports.
- * @param equalizer is the pointer of struct RTAudioEqualizer.
- * @return Returns the number of bands supported by the RTAudioEqualizer framework.
+ * @brief Get number of bands AudioEqualizer supports.
+ * @param equalizer is the pointer of struct AudioEqualizer.
+ * @return Returns the number of bands supported by the AudioEqualizer framework.
  * @since 1.0
  * @version 1.0
  */
-int16_t RTAudioEqualizer_GetNumberOfBands(struct RTAudioEqualizer *equalizer);
+int16_t AudioEqualizer_GetNumberOfBands(struct AudioEqualizer *equalizer);
 
 /**
- * @brief Get band level range RTAudioEqualizer supports.
- * @param equalizer is the pointer of struct RTAudioEqualizer.
- * @return Returns band level range supported by the RTAudioEqualizer framework.The return value
+ * @brief Get band level range AudioEqualizer supports.
+ * @param equalizer is the pointer of struct AudioEqualizer.
+ * @return Returns band level range supported by the AudioEqualizer framework.The return value
  * contains two int16_t integer, which is decibel * 100, for example (-1500, 1500), means (-15db, 15db).
  * @since 1.0
  * @version 1.0
  */
-int16_t *RTAudioEqualizer_GetBandLevelRange(struct RTAudioEqualizer *equalizer);
+int16_t *AudioEqualizer_GetBandLevelRange(struct AudioEqualizer *equalizer);
 
 /**
- * @brief Set RTAudioEqualizer band level.
- * @param equalizer is the pointer of struct RTAudioEqualizer.
- * @param band is the band number, for example, RTAudioEqualizer total supports 5 bands, which band level to set?
- * The band value range is [0, BAND_TATAL_NUM).BAND_TATAL_NUM is got from RTAudioEqualizer_GetNumberOfBands.
+ * @brief Set AudioEqualizer band level.
+ * @param equalizer is the pointer of struct AudioEqualizer.
+ * @param band is the band number, for example, AudioEqualizer total supports 5 bands, which band level to set?
+ * The band value range is [0, BAND_TATAL_NUM).BAND_TATAL_NUM is got from AudioEqualizer_GetNumberOfBands.
  * @param level is the level of band to set. The level value should be delta decibel * 100, and in the range framework
- * supports.See the {@link RTAudioEqualizer_GetBandLevelRange} for information
+ * supports.See the {@link AudioEqualizer_GetBandLevelRange} for information
  * @return Returns a value listed below: \n
  * int32_t | Description
  * ----------------------| -----------------------
@@ -158,23 +158,23 @@ int16_t *RTAudioEqualizer_GetBandLevelRange(struct RTAudioEqualizer *equalizer);
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioEqualizer_SetBandLevel(struct RTAudioEqualizer *equalizer, uint32_t band, uint32_t level);
+int32_t AudioEqualizer_SetBandLevel(struct AudioEqualizer *equalizer, uint32_t band, uint32_t level);
 
 /**
- * @brief Get RTAudioEqualizer band level.
- * @param equalizer is the pointer of struct RTAudioEqualizer.
- * @param band is the band number, for example, RTAudioEqualizer total supports 5 bands, which band level to get?
- * The band value range is [0, BAND_TATAL_NUM).BAND_TATAL_NUM is got from RTAudioEqualizer_GetNumberOfBands.
+ * @brief Get AudioEqualizer band level.
+ * @param equalizer is the pointer of struct AudioEqualizer.
+ * @param band is the band number, for example, AudioEqualizer total supports 5 bands, which band level to get?
+ * The band value range is [0, BAND_TATAL_NUM).BAND_TATAL_NUM is got from AudioEqualizer_GetNumberOfBands.
  * @return Returns a value of delta decibel * 100, and in the range framework supports.See the {@link
- * RTAudioEqualizer_GetBandLevelRange} for information
+ * AudioEqualizer_GetBandLevelRange} for information
  * @since 1.0
  * @version 1.0
  */
-int16_t RTAudioEqualizer_GetBandLevel(struct RTAudioEqualizer *equalizer, uint32_t band);
+int16_t AudioEqualizer_GetBandLevel(struct AudioEqualizer *equalizer, uint32_t band);
 
 /**
- * @brief Set RTAudioEqualizer center frequency.
- * @param equalizer is the pointer of struct RTAudioEqualizer.
+ * @brief Set AudioEqualizer center frequency.
+ * @param equalizer is the pointer of struct AudioEqualizer.
  * @param band is the band number.
  * @param freq is the new center frequency set to band in hz.
  * @return Returns a value listed below: \n
@@ -186,32 +186,32 @@ int16_t RTAudioEqualizer_GetBandLevel(struct RTAudioEqualizer *equalizer, uint32
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioEqualizer_SetCenterFreq(struct RTAudioEqualizer *equalizer, uint32_t band, uint32_t freq);
+int32_t AudioEqualizer_SetCenterFreq(struct AudioEqualizer *equalizer, uint32_t band, uint32_t freq);
 
 /**
- * @brief Get RTAudioEqualizer center frequency.
- * @param equalizer is the pointer of struct RTAudioEqualizer.
- * @param band is the band number, for example, RTAudioEqualizer total supports 5 bands, which band frequency to get?
- * The band value range is [0, BAND_TATAL_NUM).BAND_TATAL_NUM is got from RTAudioEqualizer_GetNumberOfBands.
+ * @brief Get AudioEqualizer center frequency.
+ * @param equalizer is the pointer of struct AudioEqualizer.
+ * @param band is the band number, for example, AudioEqualizer total supports 5 bands, which band frequency to get?
+ * The band value range is [0, BAND_TATAL_NUM).BAND_TATAL_NUM is got from AudioEqualizer_GetNumberOfBands.
  * @return Returns a value of center frequency in hz.
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioEqualizer_GetCenterFreq(struct RTAudioEqualizer *equalizer, uint32_t band);
+int32_t AudioEqualizer_GetCenterFreq(struct AudioEqualizer *equalizer, uint32_t band);
 
 /**
- * @brief Get RTAudioEqualizer frequency's band.
- * @param equalizer is the pointer of struct RTAudioEqualizer.
+ * @brief Get AudioEqualizer frequency's band.
+ * @param equalizer is the pointer of struct AudioEqualizer.
  * @param frequency is the frequency value.
  * @return Returns a value of band.
  * @since 1.0
  * @version 1.0
  */
-int16_t RTAudioEqualizer_GetBand(struct RTAudioEqualizer *equalizer, uint32_t frequency);
+int16_t AudioEqualizer_GetBand(struct AudioEqualizer *equalizer, uint32_t frequency);
 
 /**
- * @brief Set RTAudioEqualizer Q factor.
- * @param equalizer is the pointer of struct RTAudioEqualizer.
+ * @brief Set AudioEqualizer Q factor.
+ * @param equalizer is the pointer of struct AudioEqualizer.
  * @param band is the band number.
  * @param qfactor is the qfactor set to band.
  * @return Returns a value listed below: \n
@@ -223,17 +223,17 @@ int16_t RTAudioEqualizer_GetBand(struct RTAudioEqualizer *equalizer, uint32_t fr
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioEqualizer_SetQfactor(struct RTAudioEqualizer *equalizer, uint32_t band, uint32_t qfactor);
+int32_t AudioEqualizer_SetQfactor(struct AudioEqualizer *equalizer, uint32_t band, uint32_t qfactor);
 
 /**
- * @brief Get RTAudioEqualizer Q factor.
- * @param equalizer is the pointer of struct RTAudioEqualizer.
+ * @brief Get AudioEqualizer Q factor.
+ * @param equalizer is the pointer of struct AudioEqualizer.
  * @param band is the band number.
  * @return Returns qfactor of the band.
  * @since 1.0
  * @version 1.0
  */
-int16_t RTAudioEqualizer_GetQfactor(struct RTAudioEqualizer *equalizer, uint32_t band);
+int16_t AudioEqualizer_GetQfactor(struct AudioEqualizer *equalizer, uint32_t band);
 
 #ifdef __cplusplus
 }

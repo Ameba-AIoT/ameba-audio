@@ -52,15 +52,15 @@ extern "C" {
  */
 enum {
     /** category type of track, for media */
-    RTAUDIO_CATEGORY_MEDIA         = 0,
+    AUDIO_CATEGORY_MEDIA         = 0,
     /** category type of track, for calls*/
-    RTAUDIO_CATEGORY_COMMUNICATION = 1,
+    AUDIO_CATEGORY_COMMUNICATION = 1,
     /** category type of track, for tts */
-    RTAUDIO_CATEGORY_TTS        = 2,
+    AUDIO_CATEGORY_TTS        = 2,
     /** category type of track, for beep sound, some as key tone */
-    RTAUDIO_CATEGORY_BEEP          = 3,
+    AUDIO_CATEGORY_BEEP          = 3,
     /** total category type number of track */
-    RTAUDIO_CATEGORY_MAX_NUM       = 4,
+    AUDIO_CATEGORY_MAX_NUM       = 4,
 };
 
 /**
@@ -71,40 +71,40 @@ enum {
  */
 enum {
     /** invalid audio track and audio record data bit format*/
-    RTAUDIO_FORMAT_INVALID           = 0xFFFFFFFFu,
+    AUDIO_FORMAT_INVALID           = 0xFFFFFFFFu,
     /** audio track and audio record data bit format, 8bit per channel per frame*/
-    RTAUDIO_FORMAT_PCM_8_BIT         = 0x01u,
+    AUDIO_FORMAT_PCM_8_BIT         = 0x01u,
     /** audio track and audio record data bit format, 16bit per channel per frame*/
-    RTAUDIO_FORMAT_PCM_16_BIT        = 0x02u,
+    AUDIO_FORMAT_PCM_16_BIT        = 0x02u,
     /** audio track and audio record data bit format, 32bit per channel per frame*/
-    RTAUDIO_FORMAT_PCM_32_BIT        = 0x04u,
+    AUDIO_FORMAT_PCM_32_BIT        = 0x04u,
     /** audio track and audio record data bit format, float per channel per frame*/
-    RTAUDIO_FORMAT_PCM_FLOAT         = 0x08u,
+    AUDIO_FORMAT_PCM_FLOAT         = 0x08u,
     /** audio track and audio record data bit format, 24bit packed per channel per frame*/
-    RTAUDIO_FORMAT_PCM_24_BIT        = 0x10u,
+    AUDIO_FORMAT_PCM_24_BIT        = 0x10u,
     /** audio record and audio record data bit format, 24+8bit per channel per frame*/
-    RTAUDIO_FORMAT_PCM_8_24_BIT      = 0x20u,
+    AUDIO_FORMAT_PCM_8_24_BIT      = 0x20u,
 };
 
 enum {
     /** invalid device */
-    RTDEVICE_NONE               = 0x0u,
+    DEVICE_NONE               = 0x0u,
     /** audio device speaker */
-    RTDEVICE_OUT_SPEAKER        = 0x1u,
+    DEVICE_OUT_SPEAKER        = 0x1u,
     /** audio device i2s out */
-    RTDEVICE_OUT_I2S            = 0x2u,
+    DEVICE_OUT_I2S            = 0x2u,
     /** audio device i2s out */
-    RTDEVICE_OUT_HEADPHONE      = 0x4u,
+    DEVICE_OUT_HEADPHONE      = 0x4u,
     /** audio device a2dp out */
-    RTDEVICE_OUT_A2DP           = 0x8u,
+    DEVICE_OUT_A2DP           = 0x8u,
     /** audio device usb out */
-    RTDEVICE_OUT_USB            = 0x10u,
+    DEVICE_OUT_USB            = 0x10u,
     /** input device analog microphone */
-    RTDEVICE_IN_MIC             = 0x8000001u,
+    DEVICE_IN_MIC             = 0x8000001u,
     /** input device digital microphone */
-    RTDEVICE_IN_DMIC_REF_AMIC   = 0x8000002u,
+    DEVICE_IN_DMIC_REF_AMIC   = 0x8000002u,
     /** input device i2s */
-    RTDEVICE_IN_I2S             = 0x8000004u,
+    DEVICE_IN_I2S             = 0x8000004u,
 };
 
 /**
@@ -115,9 +115,9 @@ enum {
  */
 enum {
     /** output flag none */
-    RTAUDIO_OUTPUT_FLAG_NONE         = 0x0u,
+    AUDIO_OUTPUT_FLAG_NONE         = 0x0u,
     /** output flag no dma irq */
-    RTAUDIO_OUTPUT_FLAG_NOIRQ        = 0x1u,
+    AUDIO_OUTPUT_FLAG_NOIRQ        = 0x1u,
 };
 
 /**
@@ -128,9 +128,9 @@ enum {
  */
 enum {
     /** output flag none */
-    RTAUDIO_INPUT_FLAG_NONE         = 0x0u,
+    AUDIO_INPUT_FLAG_NONE         = 0x0u,
     /** output flag no dma irq */
-    RTAUDIO_INPUT_FLAG_NOIRQ        = 0x1u,
+    AUDIO_INPUT_FLAG_NOIRQ        = 0x1u,
 };
 
 /**
@@ -141,9 +141,9 @@ enum {
  */
 enum {
     /** invalid audio effect */
-    RTAUDIO_EFFECT_INVALID           = 0xFFFFFFFFu,
+    AUDIO_EFFECT_INVALID           = 0xFFFFFFFFu,
     /** audio equalizer of audio effect */
-    RTAUDIO_EFFECT_EQUALIZER         = 0x1u,
+    AUDIO_EFFECT_EQUALIZER         = 0x1u,
 };
 
 /**
@@ -154,19 +154,19 @@ enum {
  */
 enum {
     /** audio effect total bands */
-    RTAUDIO_EFFECT_PARAM_NUM_BANDS       = 0x0u,
+    AUDIO_EFFECT_PARAM_NUM_BANDS       = 0x0u,
     /** audio effect level range */
-    RTAUDIO_EFFECT_PARAM_LEVEL_RANGE     = 0x1u,
+    AUDIO_EFFECT_PARAM_LEVEL_RANGE     = 0x1u,
     /** audio effect band level */
-    RTAUDIO_EFFECT_PARAM_BAND_LEVEL      = 0x2u,
+    AUDIO_EFFECT_PARAM_BAND_LEVEL      = 0x2u,
     /** audio effect center frequency */
-    RTAUDIO_EFFECT_PARAM_CENTER_FREQ     = 0x3u,
+    AUDIO_EFFECT_PARAM_CENTER_FREQ     = 0x3u,
     /** audio effect band frequency range */
-    RTAUDIO_EFFECT_PARAM_BAND_FREQ_RANGE = 0x4u,
+    AUDIO_EFFECT_PARAM_BAND_FREQ_RANGE = 0x4u,
     /** audio effect get band */
-    RTAUDIO_EFFECT_PARAM_GET_BAND        = 0x5u,
+    AUDIO_EFFECT_PARAM_GET_BAND        = 0x5u,
     /** audio effect qfactor */
-    RTAUDIO_EFFECT_PARAM_QFACTOR         = 0x6u,
+    AUDIO_EFFECT_PARAM_QFACTOR         = 0x6u,
 };
 
 /**
@@ -177,31 +177,31 @@ enum {
  */
 enum {
     /** allows more data for service to write to HAL one time, default uing it */
-    RTAUDIO_OUT_MIN_FRAMES_STAGE1  = 0,
+    AUDIO_OUT_MIN_FRAMES_STAGE1  = 0,
     /** allows less data for service to write to HAL one time */
-    RTAUDIO_OUT_MIN_FRAMES_STAGE2  = 1,
+    AUDIO_OUT_MIN_FRAMES_STAGE2  = 1,
 };
 
 enum {
     /** audio patch node none */
-    RTAUDIO_PATCH_NODE_NONE        = 0x0u,
+    AUDIO_PATCH_NODE_NONE        = 0x0u,
     /** audio patch node: PORT */
-    RTAUDIO_PATCH_NODE_PORT        = 0x1u,
+    AUDIO_PATCH_NODE_PORT        = 0x1u,
     /** audio patch node: DEVICE */
-    RTAUDIO_PATCH_NODE_DEVICE      = 0x2u,
+    AUDIO_PATCH_NODE_DEVICE      = 0x2u,
 };
 
 /**
  * @brief Defines the audio patch config.
  */
-struct RTAudioPatchConfig {
+struct AudioPatchConfig {
     /** rate of the sample */
     uint32_t sample_rate;
     /** channel count of the sample */
     uint32_t channel_count;
     /** format of the sample */
     uint32_t format;
-    /** audio patch node type, RTAUDIO_PATCH_NODE_PORT or RTAUDIO_PATCH_NODE_DEVICE*/
+    /** audio patch node type, AUDIO_PATCH_NODE_PORT or AUDIO_PATCH_NODE_DEVICE*/
     uint32_t type;
     union {
         /** audio patch node is port*/
@@ -211,22 +211,22 @@ struct RTAudioPatchConfig {
     } node;
 };
 
-static inline size_t RTAudio_GetAudioBytesPerSample(int32_t format)
+static inline size_t Audio_GetAudioBytesPerSample(int32_t format)
 {
     size_t size = 0;
 
     switch (format) {
-    case RTAUDIO_FORMAT_PCM_8_BIT:
+    case AUDIO_FORMAT_PCM_8_BIT:
         size = sizeof(uint8_t);
         break;
-    case RTAUDIO_FORMAT_PCM_16_BIT:
+    case AUDIO_FORMAT_PCM_16_BIT:
         size = sizeof(int16_t);
         break;
-    case RTAUDIO_FORMAT_PCM_24_BIT:
+    case AUDIO_FORMAT_PCM_24_BIT:
         size = sizeof(uint8_t) * 3;
         break;
-    case RTAUDIO_FORMAT_PCM_8_24_BIT:
-    case RTAUDIO_FORMAT_PCM_32_BIT:
+    case AUDIO_FORMAT_PCM_8_24_BIT:
+    case AUDIO_FORMAT_PCM_32_BIT:
         size = sizeof(int32_t);
         break;
     default:

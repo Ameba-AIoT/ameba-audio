@@ -1,7 +1,7 @@
 # CUSTOMER IMPLEMENTATION DATA SOURCE PLAY EXAMPLE
 
 ## Description:
-**RTPlayer supports playing a customer implementation data source.
+**MediaPlayer supports playing a customer implementation data source.
 Mydata_source.c gives an example of the detailed implementation of a customized source.**
 
 # HW Configuration
