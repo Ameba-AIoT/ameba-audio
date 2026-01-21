@@ -24,8 +24,8 @@ extern "C" {
 
 #include "media/stream_source.h"
 
-typedef struct MyDataSource MyDataSource;
-struct MyDataSource {
+typedef struct MyStreamSource MyStreamSource;
+struct MyStreamSource {
     StreamSource base;
 
     char *data;
@@ -36,12 +36,12 @@ struct MyDataSource {
     bool alive;
 };
 
-StreamSource *MyDataSource_Create(char *source, int length);
-void MyDataSource_Destroy(MyDataSource *source);
+StreamSource *MyStreamSource_Create(char *source, int length);
+void MyStreamSource_Destroy(MyStreamSource *source);
 
-int32_t MyDataSource_CheckPrepared(const StreamSource *source);
-ssize_t MyDataSource_ReadAt(const StreamSource *source, off_t offset, void *data, size_t size);
-int32_t MyDataSource_GetLength(const StreamSource *source, off_t *size);
+int32_t MyStreamSource_CheckPrepared(const StreamSource *source);
+ssize_t MyStreamSource_ReadAt(const StreamSource *source, off_t offset, void *data, size_t size);
+int32_t MyStreamSource_GetLength(const StreamSource *source, off_t *size);
 
 #ifdef __cplusplus
 }
