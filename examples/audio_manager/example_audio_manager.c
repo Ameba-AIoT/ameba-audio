@@ -10,14 +10,14 @@
 #define EXAMPLE_MANAGER_DEBUG(fmt, args...)    printf("=> D/AudioManagerExample:[%s]: " fmt "\n", __func__, ## args)
 #define EXAMPLE_MANAGER_ERROR(fmt, args...)    printf("=> E/AudioManagerExample:[%s]: " fmt "\n", __func__, ## args)
 
-#define  RTAUDIO_MANAGER_DEBUG_HEAP_BEGIN() \
+#define  AUDIO_MANAGER_DEBUG_HEAP_BEGIN() \
 	unsigned int heap_start;\
 	unsigned int heap_end;\
 	unsigned int heap_min_ever_free;\
 	EXAMPLE_MANAGER_DEBUG("[Mem] mem debug info init \n");\
 	heap_start = rtos_mem_get_free_heap_size()
 
-#define  RTAUDIO_MANAGER_DEBUG_HEAP_END() \
+#define  AUDIO_MANAGER_DEBUG_HEAP_END() \
 	heap_end = rtos_mem_get_free_heap_size();\
 	heap_min_ever_free = rtos_mem_get_minimum_ever_free_heap_size();\
 	EXAMPLE_MANAGER_DEBUG("[Mem] start (0x%x), end (0x%x), \n", heap_start, heap_end);\
@@ -37,13 +37,13 @@ void example_audio_manager_thread(void *param)
 	uint32_t format;
 	switch (g_format) {
 	case 16:
-		format = RTAUDIO_FORMAT_PCM_16_BIT;
+		format = AUDIO_FORMAT_PCM_16_BIT;
 		break;
 	case 24:
-		format = RTAUDIO_FORMAT_PCM_8_24_BIT;
+		format = AUDIO_FORMAT_PCM_8_24_BIT;
 		break;
 	case 32:
-		format = RTAUDIO_FORMAT_PCM_32_BIT;
+		format = AUDIO_FORMAT_PCM_32_BIT;
 		break;
 	default:
 		EXAMPLE_MANAGER_ERROR("unsupported format:%ld", format);
@@ -52,50 +52,50 @@ void example_audio_manager_thread(void *param)
 
 #if PRESSURE_TEST
 	while (1) {
-		RTAUDIO_MANAGER_DEBUG_HEAP_BEGIN();
+		AUDIO_MANAGER_DEBUG_HEAP_BEGIN();
 #endif
-		struct RTAudioManager *audio_manager = RTAudioManager_GetInstance();
+		struct AudioManager *audio_manager = AudioManager_GetInstance();
 		if (!audio_manager) {
 			EXAMPLE_MANAGER_ERROR("create audio manager fail.");
 			goto error_handle;
 		}
 
-		struct RTAudioPatchConfig sources[1];
+		struct AudioPatchConfig sources[1];
 		sources[0].sample_rate = g_rate;
 		sources[0].channel_count = g_channels;
 		sources[0].format = format;
-		sources[0].type = RTAUDIO_PATCH_NODE_DEVICE;
-		sources[0].node.device = RTDEVICE_IN_I2S;
+		sources[0].type = AUDIO_PATCH_NODE_DEVICE;
+		sources[0].node.device = DEVICE_IN_I2S;
 
-		struct RTAudioPatchConfig sinks[1];
+		struct AudioPatchConfig sinks[1];
 		sinks[0].sample_rate = g_rate;
 		sinks[0].channel_count = g_channels;
 		sinks[0].format = format;
-		sinks[0].type = RTAUDIO_PATCH_NODE_DEVICE;
-		sinks[0].node.device = RTDEVICE_OUT_SPEAKER;
+		sinks[0].type = AUDIO_PATCH_NODE_DEVICE;
+		sinks[0].node.device = DEVICE_OUT_SPEAKER;
 
-		int32_t patch_index = RTAudioManager_CreateAudioPatch(audio_manager, 1, sources, 1, sinks);
+		int32_t patch_index = AudioManager_CreateAudioPatch(audio_manager, 1, sources, 1, sinks);
 
-		if (sinks[0].node.device == RTDEVICE_OUT_SPEAKER) {
-			RTAudioControl_SetHardwareVolume(0.5, 0.5);
+		if (sinks[0].node.device == DEVICE_OUT_SPEAKER) {
+			AudioControl_SetHardwareVolume(0.5, 0.5);
 		}
 
 #if PRESSURE_TEST
 		rtos_time_delay_ms(100000);
 
-		RTAudioManager_ReleaseAudioPatch(audio_manager, patch_index);
+		AudioManager_ReleaseAudioPatch(audio_manager, patch_index);
 
 		rtos_time_delay_ms(1000);
 
-		patch_index = RTAudioManager_CreateAudioPatch(audio_manager, 1, sources, 1, sinks);
+		patch_index = AudioManager_CreateAudioPatch(audio_manager, 1, sources, 1, sinks);
 
 		rtos_time_delay_ms(100000);
 
-		RTAudioManager_ReleaseAudioPatch(audio_manager, patch_index);
+		AudioManager_ReleaseAudioPatch(audio_manager, patch_index);
 
-		RTAudioManager_Destroy();
+		AudioManager_Destroy();
 
-		RTAUDIO_MANAGER_DEBUG_HEAP_END();
+		AUDIO_MANAGER_DEBUG_HEAP_END();
 	}
 #else
 		while (1) {

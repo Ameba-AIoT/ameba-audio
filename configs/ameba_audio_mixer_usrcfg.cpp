@@ -16,7 +16,7 @@
 #include "audio/audio_type.h"
 #include "include/ameba_audio_mixer_usrcfg.h"
 
-PrimaryAudioConfig kPrimaryAudioConfig = {1024, 4, RTAUDIO_OUT_MIN_FRAMES_STAGE1};
+PrimaryAudioConfig kPrimaryAudioConfig = {1024, 4, AUDIO_OUT_MIN_FRAMES_STAGE1};
 
 int64_t kStandbyDurationNs = -1;
 

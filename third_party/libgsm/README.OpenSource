@@ -1,0 +1,7 @@
+Name: libgsm
+License: 
+License File: COPYRIGHT
+URL: http://www.quut.com/gsm/
+Version: 1.0.19
+Description: Gsm is an implementation of the final draft GSM 06.10 standard for full-rate speech transcoding.
+

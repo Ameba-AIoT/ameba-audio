@@ -48,7 +48,7 @@
 extern "C" {
 #endif
 
-struct RTAudioRecord;
+struct AudioRecord;
 
 /**
  * @brief Defines information about audio capture parameters, including the sampling
@@ -65,32 +65,32 @@ typedef struct {
 	 * 1, 2, 4, 6, 8*/
 	uint32_t channel_count;
 	/** format of record
-	 * supports RTAUDIO_FORMAT_PCM_16_BIT, RTAUDIO_FORMAT_PCM_32_BIT,
-	 * RTAUDIO_FORMAT_PCM_24_BIT, RTAUDIO_FORMAT_PCM_8_24_BIT*/
+	 * supports AUDIO_FORMAT_PCM_16_BIT, AUDIO_FORMAT_PCM_32_BIT,
+	 * AUDIO_FORMAT_PCM_24_BIT, AUDIO_FORMAT_PCM_8_24_BIT*/
 	uint32_t format;
-	/** device of record, supports RTDEVICE_IN_MIC and RTDEVICE_IN_DMIC_REF_AMIC, RTDEVICE_IN_I2S*/
+	/** device of record, supports DEVICE_IN_MIC and DEVICE_IN_DMIC_REF_AMIC, DEVICE_IN_I2S*/
 	uint32_t device;
 	/** buffer bytes per one period of record*/
 	uint32_t buffer_bytes;
-} RTAudioRecordConfig;
+} AudioRecordConfig;
 
 /**
-* @brief Create RTAudioRecord.
+* @brief Create AudioRecord.
 */
-struct RTAudioRecord *RTAudioRecord_Create(void);
+struct AudioRecord *AudioRecord_Create(void);
 
 /**
- * @param record is the pointer of struct RTAudioRecord.
- * @brief Release RTAudioRecord.
+ * @param record is the pointer of struct AudioRecord.
+ * @brief Release AudioRecord.
  */
-void RTAudioRecord_Destroy(struct RTAudioRecord *record);
+void AudioRecord_Destroy(struct AudioRecord *record);
 
 /**
  * @brief Init audio record.
  *
- * @param record is the pointer of struct RTAudioRecord.
- * @param config a {@link RTAudioRecordConfig} instance used to configure record information.
- * @param flags is the input flags of struct RTAudioRecord.
+ * @param record is the pointer of struct AudioRecord.
+ * @param config a {@link AudioRecordConfig} instance used to configure record information.
+ * @param flags is the input flags of struct AudioRecord.
  * @return Returns a value listed below: \n
  * int32_t | Description
  * ----------------------| -----------------------
@@ -101,12 +101,12 @@ void RTAudioRecord_Destroy(struct RTAudioRecord *record);
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioRecord_Init(struct RTAudioRecord *record, const RTAudioRecordConfig *config, uint32_t flags);
+int32_t AudioRecord_Init(struct AudioRecord *record, const AudioRecordConfig *config, uint32_t flags);
 
 /**
  * @brief Start audio record.
  *
- * @param record is the pointer of struct RTAudioRecord.
+ * @param record is the pointer of struct AudioRecord.
  * @return Returns a value listed below: \n
  * int32_t | Description
  * ----------------------| -----------------------
@@ -116,30 +116,30 @@ int32_t RTAudioRecord_Init(struct RTAudioRecord *record, const RTAudioRecordConf
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioRecord_Start(struct RTAudioRecord *record);
+int32_t AudioRecord_Start(struct AudioRecord *record);
 
 /**
  * @brief Stop audio record.
  *
- * @param record is the pointer of struct RTAudioRecord.
+ * @param record is the pointer of struct AudioRecord.
  * @since 1.0
  * @version 1.0
  */
-void RTAudioRecord_Stop(struct RTAudioRecord *record);
+void AudioRecord_Stop(struct AudioRecord *record);
 
 /**
  * @brief Release audio record.
  *
- * @param record is the pointer of struct RTAudioRecord.
+ * @param record is the pointer of struct AudioRecord.
  * @since 1.0
  * @version 1.0
  */
-void RTAudioRecord_Destroy(struct RTAudioRecord *record);
+void AudioRecord_Destroy(struct AudioRecord *record);
 
 /**
  * @brief Read audio data.
  *
- * @param record is the pointer of struct RTAudioRecord.
+ * @param record is the pointer of struct AudioRecord.
  * @param buffer is the dst buffer of application.
  * @param size is the dst buffer data bytes.
  * @param blocking choice whether to block when read stuck, suggest:true.
@@ -147,12 +147,12 @@ void RTAudioRecord_Destroy(struct RTAudioRecord *record);
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioRecord_Read(struct RTAudioRecord *record, void *buffer, size_t size, bool blocking);
+int32_t AudioRecord_Read(struct AudioRecord *record, void *buffer, size_t size, bool blocking);
 
 /**
  * @brief Read audio data.
  *
- * @param record is the pointer of struct RTAudioRecord.
+ * @param record is the pointer of struct AudioRecord.
  * @param buffer is the dst buffer of application.
  * @param size is the dst buffer data bytes.
  * @param time_out_ms set time_out_ms to audio framework, if read blocks for more than time_out_ms, it will return.
@@ -160,22 +160,22 @@ int32_t RTAudioRecord_Read(struct RTAudioRecord *record, void *buffer, size_t si
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioRecord_ReadTimeout(struct RTAudioRecord *record, void *buffer, size_t size, uint32_t time_out_ms);
+int32_t AudioRecord_ReadTimeout(struct AudioRecord *record, void *buffer, size_t size, uint32_t time_out_ms);
 
 /**
  * @brief Get buffer bytes for record.
  *
- * @param record is the pointer of struct RTAudioRecord.
+ * @param record is the pointer of struct AudioRecord.
  * @return buffer bytes suggested to read for one period
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioRecord_GetBufferSize(struct RTAudioRecord *record);
+int32_t AudioRecord_GetBufferSize(struct AudioRecord *record);
 
 /**
  * @brief Set samplerate of record.
  *
- * @param record is the pointer of struct RTAudioRecord.
+ * @param record is the pointer of struct AudioRecord.
  * @param sample_rate the sample_rate of record.
  * @return Returns a value listed below: \n
  * int32_t | Description
@@ -185,22 +185,22 @@ int32_t RTAudioRecord_GetBufferSize(struct RTAudioRecord *record);
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioRecord_SetSampleRate(struct RTAudioRecord *record, uint32_t sample_rate);
+int32_t AudioRecord_SetSampleRate(struct AudioRecord *record, uint32_t sample_rate);
 
 /**
  * @brief Get samplerate of audio record.
  *
- * @param record is the pointer of struct RTAudioRecord.
+ * @param record is the pointer of struct AudioRecord.
  * @return samplerate
  * @since 1.0
  * @version 1.0
  */
-uint32_t RTAudioRecord_GetSampleRate(struct RTAudioRecord *record);
+uint32_t AudioRecord_GetSampleRate(struct AudioRecord *record);
 
 /**
  * @brief Set channel count of record.
  *
- * @param record is the pointer of struct RTAudioRecord.
+ * @param record is the pointer of struct AudioRecord.
  * @param channel_count the channel count of record.
  * @return Returns a value listed below: \n
  * int32_t | Description
@@ -210,34 +210,34 @@ uint32_t RTAudioRecord_GetSampleRate(struct RTAudioRecord *record);
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioRecord_SetChannelCount(struct RTAudioRecord *record, uint32_t channel_count);
+int32_t AudioRecord_SetChannelCount(struct AudioRecord *record, uint32_t channel_count);
 
 /**
  * @brief Get channel count of audio record.
  *
- * @param record is the pointer of struct RTAudioRecord.
+ * @param record is the pointer of struct AudioRecord.
  * @return channel count of record.
  * @since 1.0
  * @version 1.0
  */
-uint32_t RTAudioRecord_GetChannelCount(struct RTAudioRecord *record);
+uint32_t AudioRecord_GetChannelCount(struct AudioRecord *record);
 
 /**
  * @brief Get format of audio record.
  *
- * @param record is the pointer of struct RTAudioRecord.
+ * @param record is the pointer of struct AudioRecord.
  * @return format
  * @since 1.0
  * @version 1.0
  */
-uint32_t RTAudioRecord_GetFormat(struct RTAudioRecord *record);
+uint32_t AudioRecord_GetFormat(struct AudioRecord *record);
 
 /**
  * @brief Set format of record.
  *
- * @param record is the pointer of struct RTAudioRecord.
- * @param format supports RTAUDIO_FORMAT_PCM_16_BIT,
- * RTAUDIO_FORMAT_PCM_8_24_BIT, RTAUDIO_FORMAT_PCM_32_BIT.
+ * @param record is the pointer of struct AudioRecord.
+ * @param format supports AUDIO_FORMAT_PCM_16_BIT,
+ * AUDIO_FORMAT_PCM_8_24_BIT, AUDIO_FORMAT_PCM_32_BIT.
  * @return Returns a value listed below: \n
  * int32_t | Description
  * ----------------------| -----------------------
@@ -246,24 +246,24 @@ uint32_t RTAudioRecord_GetFormat(struct RTAudioRecord *record);
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioRecord_SetFormat(struct RTAudioRecord *record, uint32_t format);
+int32_t AudioRecord_SetFormat(struct AudioRecord *record, uint32_t format);
 
 /**
  * @brief Set params of record.
  *
- * @param record is the pointer of struct RTAudioRecord.
+ * @param record is the pointer of struct AudioRecord.
  * @param strs supports audio capture mode settings like "cap_mode=no_afe_pure_data".
  * The meaning of the string is to choose "no_afe_pure_data" mode for audio capture.
  * [amebalite] & [amebaSmart]: There are 4 modes, all take the default above amic setting for example,
  *              the data stucture is as follows:
- *              mode(no_afe_pure_data): take RTAudioRecordConfig's channel_count 3 for example:mic1+mic2+mic3;
+ *              mode(no_afe_pure_data): take AudioRecordConfig's channel_count 3 for example:mic1+mic2+mic3;
  *                                     for lite demo borad, mic3 is ref data as the hardware design.
- *              mode(do_afe_only_out): take RTAudioRecordConfig's channel_count 1 for example:out;
+ *              mode(do_afe_only_out): take AudioRecordConfig's channel_count 1 for example:out;
  *                                     out means the mic data after denoise.
- *              mode(no_afe_all_data): take RTAudioRecordConfig's channel_count 4 for example:mic1+mic2+mic3+out;
+ *              mode(no_afe_all_data): take AudioRecordConfig's channel_count 4 for example:mic1+mic2+mic3+out;
  *                                     for lite demo borad, mic3 is ref data as the hardware design.
  *                                     out is NULL, and for the app to set.
- *              mode(do_afe_all_data): take RTAudioRecordConfig's channel_count 4 for example:mic1+mic2+mic3+out;
+ *              mode(do_afe_all_data): take AudioRecordConfig's channel_count 4 for example:mic1+mic2+mic3+out;
  *                                     for lite demo borad, mic3 is ref data as the hardware design.
  *                                     out means the mic data after denoise.
  * If default setting meets your requirements, no need to set again.
@@ -277,12 +277,12 @@ int32_t RTAudioRecord_SetFormat(struct RTAudioRecord *record, uint32_t format);
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioRecord_SetParameters(struct RTAudioRecord *audio_record, const char *strs);
+int32_t AudioRecord_SetParameters(struct AudioRecord *audio_record, const char *strs);
 
 /**
  * @brief Get timestamp of audio_record.
  *
- * @param audio_record is the pointer of struct RTAudioRecord.
+ * @param audio_record is the pointer of struct AudioRecord.
  * @param tstamp the timestamp get from audio framework.
  * @return Returns a value listed below: \n
  * int32_t | Description
@@ -292,12 +292,12 @@ int32_t RTAudioRecord_SetParameters(struct RTAudioRecord *audio_record, const ch
  * @since 1.0
  * @version 1.0
  */
-int32_t    RTAudioRecord_GetTimestamp(struct RTAudioRecord *audio_record, RTAudioTimestamp *tstamp);
+int32_t    AudioRecord_GetTimestamp(struct AudioRecord *audio_record, AudioTimestamp *tstamp);
 
 /**
  * @brief Get present recording PTS of record.
  *
- * @param audio_record is the pointer of struct RTAudioRecord.
+ * @param audio_record is the pointer of struct AudioRecord.
  * @param now_ns the system time, or tsf time.
  * @param audio_ns the audio recording time.
  * @return Returns a value listed below: \n
@@ -308,12 +308,12 @@ int32_t    RTAudioRecord_GetTimestamp(struct RTAudioRecord *audio_record, RTAudi
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioRecord_GetPresentTime(struct RTAudioRecord *audio_record, int64_t *now_ns, int64_t *audio_ns);
+int32_t AudioRecord_GetPresentTime(struct AudioRecord *audio_record, int64_t *now_ns, int64_t *audio_ns);
 
 /**
  * @brief Get present recording PTS of record.
  *
- * @param audio_record is the pointer of struct RTAudioRecord.
+ * @param audio_record is the pointer of struct AudioRecord.
  * @param trigger_ns the time record is triggered(start or stop).
  * @return Returns a value listed below: \n
  * int32_t | Description
@@ -323,7 +323,7 @@ int32_t RTAudioRecord_GetPresentTime(struct RTAudioRecord *audio_record, int64_t
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioRecord_GetTriggerTimestamp(struct RTAudioRecord *audio_record, int64_t *trigger_ns);
+int32_t AudioRecord_GetTriggerTimestamp(struct AudioRecord *audio_record, int64_t *trigger_ns);
 
 #ifdef __cplusplus
 }

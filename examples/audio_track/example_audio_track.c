@@ -29,14 +29,14 @@
 #define EXAMPLE_AUDIO_DEBUG(fmt, args...)    RTK_LOGA("TrackDemo", "[%s]: " fmt "\n", __func__, ## args)
 #define EXAMPLE_AUDIO_ERROR(fmt, args...)    RTK_LOGA("TrackDemo", "[%s]: " fmt "\n", __func__, ## args)
 
-#define  RTAUDIO_TRACK_DEBUG_HEAP_BEGIN() \
+#define  AUDIO_TRACK_DEBUG_HEAP_BEGIN() \
 	unsigned int heap_start;\
 	unsigned int heap_end;\
 	unsigned int heap_min_ever_free;\
 	RTK_LOGA("TrackDemo", "[Mem] mem debug info init \n");\
 	heap_start = rtos_mem_get_free_heap_size()
 
-#define  RTAUDIO_TRACK_DEBUG_HEAP_END() \
+#define  AUDIO_TRACK_DEBUG_HEAP_END() \
     heap_end = rtos_mem_get_free_heap_size();\
 	heap_min_ever_free = rtos_mem_get_minimum_ever_free_heap_size();\
 	RTK_LOGA("TrackDemo", "[Mem] start (0x%x), end (0x%x), \n", heap_start, heap_end);\
@@ -53,7 +53,7 @@ static uint32_t  g_generate_cnt = 0;
 static float     g_vol = 0.6;
 static uint32_t  g_mute = 0;
 
-static struct RTAudioTrack *g_audio_track = NULL;
+static struct AudioTrack *g_audio_track = NULL;
 
 int32_t g_gain = -800;
 #if LITTLEFS_RAW
@@ -121,7 +121,7 @@ static void generate_sine(int8_t *buffer, uint32_t count, uint32_t rate, uint32_
 	*_phase = phase;
 }
 
-void test_eq(struct RTAudioEqualizer **audio_equalizer)
+void test_eq(struct AudioEqualizer **audio_equalizer)
 {
 
 	int16_t band_level = 0;
@@ -130,60 +130,60 @@ void test_eq(struct RTAudioEqualizer **audio_equalizer)
 	int16_t band_index = 0;
 	int32_t *freq_range = NULL;
 
-	*audio_equalizer = RTAudioEqualizer_Create();
-	RTAudioEqualizer_Init(*audio_equalizer, 0, 0);
-	int16_t bands = RTAudioEqualizer_GetNumberOfBands(*audio_equalizer);
+	*audio_equalizer = AudioEqualizer_Create();
+	AudioEqualizer_Init(*audio_equalizer, 0, 0);
+	int16_t bands = AudioEqualizer_GetNumberOfBands(*audio_equalizer);
 	EXAMPLE_AUDIO_DEBUG("total bands:%d", bands);
 
-	int16_t *range = RTAudioEqualizer_GetBandLevelRange(*audio_equalizer);
+	int16_t *range = AudioEqualizer_GetBandLevelRange(*audio_equalizer);
 	EXAMPLE_AUDIO_DEBUG("band range:(%d, %d)", *range, *(range + 1));
 	free(range);
 	range = NULL;
 
-	RTAudioEqualizer_SetCenterFreq(*audio_equalizer, 0, 40);
-	RTAudioEqualizer_SetCenterFreq(*audio_equalizer, 1, 90);
-	RTAudioEqualizer_SetCenterFreq(*audio_equalizer, 2, 180);
-	RTAudioEqualizer_SetCenterFreq(*audio_equalizer, 3, 380);
-	RTAudioEqualizer_SetCenterFreq(*audio_equalizer, 4, 760);
-	RTAudioEqualizer_SetCenterFreq(*audio_equalizer, 5, 1000);
-	RTAudioEqualizer_SetCenterFreq(*audio_equalizer, 6, 3020);
-	RTAudioEqualizer_SetCenterFreq(*audio_equalizer, 7, 6010);
-	RTAudioEqualizer_SetCenterFreq(*audio_equalizer, 8, 12010);
-	RTAudioEqualizer_SetCenterFreq(*audio_equalizer, 9, 18010);
+	AudioEqualizer_SetCenterFreq(*audio_equalizer, 0, 40);
+	AudioEqualizer_SetCenterFreq(*audio_equalizer, 1, 90);
+	AudioEqualizer_SetCenterFreq(*audio_equalizer, 2, 180);
+	AudioEqualizer_SetCenterFreq(*audio_equalizer, 3, 380);
+	AudioEqualizer_SetCenterFreq(*audio_equalizer, 4, 760);
+	AudioEqualizer_SetCenterFreq(*audio_equalizer, 5, 1000);
+	AudioEqualizer_SetCenterFreq(*audio_equalizer, 6, 3020);
+	AudioEqualizer_SetCenterFreq(*audio_equalizer, 7, 6010);
+	AudioEqualizer_SetCenterFreq(*audio_equalizer, 8, 12010);
+	AudioEqualizer_SetCenterFreq(*audio_equalizer, 9, 18010);
 
 	/*band level range from -1500->1500(-15db->15db)*/
-	RTAudioEqualizer_SetBandLevel(*audio_equalizer, 0, g_gain);
-	RTAudioEqualizer_SetBandLevel(*audio_equalizer, 1, g_gain);
-	RTAudioEqualizer_SetBandLevel(*audio_equalizer, 2, g_gain);
-	RTAudioEqualizer_SetBandLevel(*audio_equalizer, 3, g_gain);
-	RTAudioEqualizer_SetBandLevel(*audio_equalizer, 4, g_gain);
-	RTAudioEqualizer_SetBandLevel(*audio_equalizer, 5, g_gain);
-	RTAudioEqualizer_SetBandLevel(*audio_equalizer, 6, g_gain);
-	RTAudioEqualizer_SetBandLevel(*audio_equalizer, 7, g_gain);
-	RTAudioEqualizer_SetBandLevel(*audio_equalizer, 8, g_gain);
-	RTAudioEqualizer_SetBandLevel(*audio_equalizer, 9, g_gain);
+	AudioEqualizer_SetBandLevel(*audio_equalizer, 0, g_gain);
+	AudioEqualizer_SetBandLevel(*audio_equalizer, 1, g_gain);
+	AudioEqualizer_SetBandLevel(*audio_equalizer, 2, g_gain);
+	AudioEqualizer_SetBandLevel(*audio_equalizer, 3, g_gain);
+	AudioEqualizer_SetBandLevel(*audio_equalizer, 4, g_gain);
+	AudioEqualizer_SetBandLevel(*audio_equalizer, 5, g_gain);
+	AudioEqualizer_SetBandLevel(*audio_equalizer, 6, g_gain);
+	AudioEqualizer_SetBandLevel(*audio_equalizer, 7, g_gain);
+	AudioEqualizer_SetBandLevel(*audio_equalizer, 8, g_gain);
+	AudioEqualizer_SetBandLevel(*audio_equalizer, 9, g_gain);
 
-	RTAudioEqualizer_SetQfactor(*audio_equalizer, 0, 80);
-	RTAudioEqualizer_SetQfactor(*audio_equalizer, 1, 96);
-	RTAudioEqualizer_SetQfactor(*audio_equalizer, 2, 96);
-	RTAudioEqualizer_SetQfactor(*audio_equalizer, 3, 70);
-	RTAudioEqualizer_SetQfactor(*audio_equalizer, 4, 96);
-	RTAudioEqualizer_SetQfactor(*audio_equalizer, 5, 90);
-	RTAudioEqualizer_SetQfactor(*audio_equalizer, 6, 97);
-	RTAudioEqualizer_SetQfactor(*audio_equalizer, 7, 66);
-	RTAudioEqualizer_SetQfactor(*audio_equalizer, 8, 280);
-	RTAudioEqualizer_SetQfactor(*audio_equalizer, 9, 99);
+	AudioEqualizer_SetQfactor(*audio_equalizer, 0, 80);
+	AudioEqualizer_SetQfactor(*audio_equalizer, 1, 96);
+	AudioEqualizer_SetQfactor(*audio_equalizer, 2, 96);
+	AudioEqualizer_SetQfactor(*audio_equalizer, 3, 70);
+	AudioEqualizer_SetQfactor(*audio_equalizer, 4, 96);
+	AudioEqualizer_SetQfactor(*audio_equalizer, 5, 90);
+	AudioEqualizer_SetQfactor(*audio_equalizer, 6, 97);
+	AudioEqualizer_SetQfactor(*audio_equalizer, 7, 66);
+	AudioEqualizer_SetQfactor(*audio_equalizer, 8, 280);
+	AudioEqualizer_SetQfactor(*audio_equalizer, 9, 99);
 
-	RTAudioEqualizer_SetEnabled(*audio_equalizer, true);
+	AudioEqualizer_SetEnabled(*audio_equalizer, true);
 
 	for (; band_index < bands; band_index++) {
-		band_level = RTAudioEqualizer_GetBandLevel(*audio_equalizer, band_index);
+		band_level = AudioEqualizer_GetBandLevel(*audio_equalizer, band_index);
 		EXAMPLE_AUDIO_DEBUG("band %d level:%d", band_index, band_level);
 
-		center_freq = RTAudioEqualizer_GetCenterFreq(*audio_equalizer, band_index);
+		center_freq = AudioEqualizer_GetCenterFreq(*audio_equalizer, band_index);
 		EXAMPLE_AUDIO_DEBUG("band:%d, center freq:%ld", band_index, center_freq);
 
-		qfactor = RTAudioEqualizer_GetQfactor(*audio_equalizer, band_index);
+		qfactor = AudioEqualizer_GetQfactor(*audio_equalizer, band_index);
 		EXAMPLE_AUDIO_DEBUG("band:%d, qfactor:%ld", band_index, qfactor);
 		free(freq_range);
 		freq_range = NULL;
@@ -191,15 +191,15 @@ void test_eq(struct RTAudioEqualizer **audio_equalizer)
 
 }
 
-void end_test_eq(struct RTAudioEqualizer **audio_equalizer)
+void end_test_eq(struct AudioEqualizer **audio_equalizer)
 {
-	RTAudioEqualizer_SetEnabled(*audio_equalizer, false);
-	RTAudioEqualizer_Destroy(*audio_equalizer);
+	AudioEqualizer_SetEnabled(*audio_equalizer, false);
+	AudioEqualizer_Destroy(*audio_equalizer);
 }
 
 void play_sample(uint32_t channels, uint32_t rate, uint32_t bits, uint32_t period_size)
 {
-	struct RTAudioTrack *audio_track;
+	struct AudioTrack *audio_track;
 
 	uint64_t frames_written = 0;
 	uint32_t frame_size = channels * bits / 8;
@@ -208,7 +208,7 @@ void play_sample(uint32_t channels, uint32_t rate, uint32_t bits, uint32_t perio
 	uint32_t track_start_threshold = 0;
 	uint64_t play_frame_size = (uint64_t)rate * (uint64_t)PLAY_SECONDS;
 
-	RTAudioTimestamp tstamp;
+	AudioTimestamp tstamp;
 	uint32_t frames_played = 0;
 	uint64_t frames_played_at_us = 0;
 	int64_t now_us = 0;
@@ -230,13 +230,13 @@ void play_sample(uint32_t channels, uint32_t rate, uint32_t bits, uint32_t perio
 
 	switch (bits) {
 	case 16:
-		format = RTAUDIO_FORMAT_PCM_16_BIT;
+		format = AUDIO_FORMAT_PCM_16_BIT;
 		break;
 	case 24:
-		format = RTAUDIO_FORMAT_PCM_24_BIT;
+		format = AUDIO_FORMAT_PCM_24_BIT;
 		break;
 	case 32:
-		format = RTAUDIO_FORMAT_PCM_32_BIT;
+		format = AUDIO_FORMAT_PCM_32_BIT;
 		break;
 	default:
 		break;
@@ -252,39 +252,39 @@ void play_sample(uint32_t channels, uint32_t rate, uint32_t bits, uint32_t perio
 	EXAMPLE_AUDIO_DEBUG("audio track dump_buffer:%p", dump_buffer);
 #endif
 
-	audio_track = RTAudioTrack_Create();
+	audio_track = AudioTrack_Create();
 	if (!audio_track) {
-		EXAMPLE_AUDIO_ERROR("error: new RTAudioTrack failed");
+		EXAMPLE_AUDIO_ERROR("error: new AudioTrack failed");
 		return;
 	}
 
-	track_buf_size = RTAudioTrack_GetMinBufferBytes(audio_track, RTAUDIO_CATEGORY_MEDIA, rate, format, channels) * 16;
-	RTAudioTrackConfig  track_config;
-	track_config.category_type = RTAUDIO_CATEGORY_MEDIA;
+	track_buf_size = AudioTrack_GetMinBufferBytes(audio_track, AUDIO_CATEGORY_MEDIA, rate, format, channels) * 16;
+	AudioTrackConfig  track_config;
+	track_config.category_type = AUDIO_CATEGORY_MEDIA;
 	track_config.sample_rate = rate;
 	track_config.format = format;
 	track_config.channel_count = channels;
 	track_config.buffer_bytes = track_buf_size;
-	RTAudioTrack_Init(audio_track, &track_config, RTAUDIO_OUTPUT_FLAG_NONE);
+	AudioTrack_Init(audio_track, &track_config, AUDIO_OUTPUT_FLAG_NONE);
 
 	EXAMPLE_AUDIO_DEBUG("track buf size:%ld", track_buf_size);
 
 #if TEST_EQ
-	struct RTAudioEqualizer *audio_equalizer;
+	struct AudioEqualizer *audio_equalizer;
 	test_eq(&audio_equalizer);
 #endif
 
 	/*for mixer version, this mean sw volume, for passthrough version, sw volume is not supported*/
-	RTAudioTrack_SetVolume(audio_track, 1.0, 1.0);
-	RTAudioControl_SetHardwareVolume(g_vol, g_vol);
+	AudioTrack_SetVolume(audio_track, 1.0, 1.0);
+	AudioControl_SetHardwareVolume(g_vol, g_vol);
 
-	RTAudioTrack_SetStartThresholdBytes(audio_track, track_buf_size);
-	track_start_threshold = RTAudioTrack_GetStartThresholdBytes(audio_track);
+	AudioTrack_SetStartThresholdBytes(audio_track, track_buf_size);
+	track_start_threshold = AudioTrack_GetStartThresholdBytes(audio_track);
 	EXAMPLE_AUDIO_DEBUG("get start threshold:%lu", track_start_threshold);
 
 	ssize_t size = sine_frames_count * channels  * bits / 8;
 
-	if (RTAudioTrack_Start(audio_track) != AUDIO_OK) {
+	if (AudioTrack_Start(audio_track) != AUDIO_OK) {
 		EXAMPLE_AUDIO_ERROR("error: audio track start fail");
 		return;
 	}
@@ -324,7 +324,7 @@ void play_sample(uint32_t channels, uint32_t rate, uint32_t bits, uint32_t perio
 			EXAMPLE_AUDIO_DEBUG("fread from file(0x%x). size:%d, bytes_read:%ld", s_lfs_fd, size, bytes_read);
 		}
 #endif
-		RTAudioTrack_Write(audio_track, (u8 *)sine_buf, size, true);
+		AudioTrack_Write(audio_track, (u8 *)sine_buf, size, true);
 
 #if DUMP_ENABLE
 		if (frames_written  * frame_size + size <= DUMP_FRAME * frame_size) {
@@ -336,7 +336,7 @@ void play_sample(uint32_t channels, uint32_t rate, uint32_t bits, uint32_t perio
 #endif
 
 		now_us = rtos_time_get_current_system_time_ms() * 1000;
-		if (RTAudioTrack_GetTimestamp(audio_track, &tstamp) == AUDIO_OK) {
+		if (AudioTrack_GetTimestamp(audio_track, &tstamp) == AUDIO_OK) {
 			EXAMPLE_AUDIO_DEBUG("timestamp position:%lld, sec:%lld, nsec:%ld", tstamp.position, tstamp.time.tv_sec, tstamp.time.tv_nsec);
 			frames_played = tstamp.position;
 			frames_played_at_us = tstamp.time.tv_sec * 1000000LL + tstamp.time.tv_nsec / 1000;
@@ -360,12 +360,12 @@ void play_sample(uint32_t channels, uint32_t rate, uint32_t bits, uint32_t perio
 
 	rtos_time_delay_ms(wait_ms);
 
-	RTAudioTrack_Pause(audio_track);
-	RTAudioTrack_Flush(audio_track);
-	RTAudioTrack_Stop(audio_track);
-	RTAudioTrack_Destroy(audio_track);
+	AudioTrack_Pause(audio_track);
+	AudioTrack_Flush(audio_track);
+	AudioTrack_Stop(audio_track);
+	AudioTrack_Destroy(audio_track);
 
-	bool muted = RTAudioControl_GetAmplifierMute();
+	bool muted = AudioControl_GetAmplifierMute();
 	EXAMPLE_AUDIO_DEBUG("amp muted:%d", muted);
 
 #if DUMP_ENABLE
@@ -387,7 +387,7 @@ void example_audio_track_thread(void *param)
 	EXAMPLE_AUDIO_DEBUG("Audio track demo begin");
 	(void) param;
 
-	RTAUDIO_TRACK_DEBUG_HEAP_BEGIN();
+	AUDIO_TRACK_DEBUG_HEAP_BEGIN();
 	g_generate_cnt = 0;
 #if LITTLEFS_RAW
 	s_lfs_fd = (int)fopen(s_lfs_name, "r");
@@ -404,7 +404,7 @@ void example_audio_track_thread(void *param)
 #endif
 
 	//user should set sdk/component/soc/**/usrcfg/include/ameba_audio_hw_usrcfg.h's AUDIO_HW_AMPLIFIER_PIN to make sure amp is enabled.
-	RTAudioService_Init();
+	AudioService_Init();
 
 #if TEST_DELAY
 	rtos_time_delay_ms(5 * RTOS_TICK_RATE_HZ);
@@ -425,7 +425,7 @@ void example_audio_track_thread(void *param)
 		s_lfs_fd = NULL;
 	}
 #endif
-	RTAUDIO_TRACK_DEBUG_HEAP_END();
+	AUDIO_TRACK_DEBUG_HEAP_END();
 
 	rtos_task_delete(NULL);
 }
@@ -443,7 +443,7 @@ void example_audio_counter_time(void *param)
 	EXAMPLE_AUDIO_DEBUG("Audio track time begin");
 	(void) param;
 
-	RTAudioTimestamp tstamp;
+	AudioTimestamp tstamp;
 	int32_t frames_played = 0;
 	int64_t frames_played_ns = 0;
 	int64_t frames_played_at_ns = 0;
@@ -458,13 +458,13 @@ void example_audio_counter_time(void *param)
 			rtos_time_delay_ms(10 * RTOS_TICK_RATE_HZ);
 		}
 
-		if (RTAudioTrack_GetTimestamp(g_audio_track, &tstamp) == AUDIO_OK) {
+		if (AudioTrack_GetTimestamp(g_audio_track, &tstamp) == AUDIO_OK) {
 			frames_played = tstamp.position;
 			frames_played_at_ns = tstamp.time.tv_sec * 1000000000LL + tstamp.time.tv_nsec;
 			frames_played_ns = (int64_t)((double)frames_played / (double)g_track_rate * (double)1000000000);
 		}
 
-		if (RTAudioTrack_GetPresentTime(g_audio_track, &phase_played_at_ns, &phase_played_ns) != AUDIO_OK) {
+		if (AudioTrack_GetPresentTime(g_audio_track, &phase_played_at_ns, &phase_played_ns) != AUDIO_OK) {
 			EXAMPLE_AUDIO_ERROR("get present time fail");
 		}
 
@@ -564,14 +564,14 @@ u32 example_track_test(u16 argc, unsigned char **argv)
 void example_track_control_thread(void *param)
 {
 	(void) param;
-	RTAudioControl_SetHardwareVolume(g_vol, g_vol);
-	RTAudioControl_SetAmplifierMute(g_mute);
+	AudioControl_SetHardwareVolume(g_vol, g_vol);
+	AudioControl_SetAmplifierMute(g_mute);
 
 	float left, right;
 	bool muted;
 
-	RTAudioControl_GetHardwareVolume(&left, &right);
-	muted = RTAudioControl_GetAmplifierMute();
+	AudioControl_GetHardwareVolume(&left, &right);
+	muted = AudioControl_GetAmplifierMute();
 	EXAMPLE_AUDIO_DEBUG("amp vol:%f %f, muted:%d", left, right, muted);
 
 	rtos_task_delete(NULL);

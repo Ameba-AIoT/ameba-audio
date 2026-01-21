@@ -23,14 +23,14 @@
 #define EXAMPLE_AUDIO_DEBUG(fmt, args...)    printf("=> D/AudioUart:[%s]: " fmt "\n", __func__, ## args)
 #define EXAMPLE_AUDIO_ERROR(fmt, args...)    printf("=> E/AudioUart:[%s]: " fmt "\n", __func__, ## args)
 
-#define  RTAUDIO_UART_DEBUG_HEAP_BEGIN() \
+#define  AUDIO_UART_DEBUG_HEAP_BEGIN() \
 	unsigned int heap_start;\
 	unsigned int heap_end;\
 	unsigned int heap_min_ever_free;\
 	EXAMPLE_AUDIO_DEBUG("[Mem] mem debug info init");\
 	heap_start = rtos_mem_get_free_heap_size()
 
-#define  RTAUDIO_UART_DEBUG_HEAP_END() \
+#define  AUDIO_UART_DEBUG_HEAP_END() \
     heap_end = rtos_mem_get_free_heap_size();\
 	heap_min_ever_free = rtos_mem_get_minimum_ever_free_heap_size();\
 	EXAMPLE_AUDIO_DEBUG("[Mem] start (0x%x), end (0x%x), ", heap_start, heap_end);\
@@ -116,7 +116,7 @@ static void audio_uart_send_data(char *pstr, int32_t len)
 #endif
 }
 
-static int32_t audio_uart_eq_query(struct RTAudioEqualizer *audio_equalizer)
+static int32_t audio_uart_eq_query(struct AudioEqualizer *audio_equalizer)
 {
 	uint32_t eq_bands = 10;
 	cJSON *root;
@@ -130,9 +130,9 @@ static int32_t audio_uart_eq_query(struct RTAudioEqualizer *audio_equalizer)
 	//get above values from eq module.
 
 	for (uint32_t i = 0; i < eq_bands; i++) {
-		gain[i] = RTAudioEqualizer_GetBandLevel(audio_equalizer, i);
-		frequency[i] = RTAudioEqualizer_GetCenterFreq(audio_equalizer, i);
-		qfactor[i] = RTAudioEqualizer_GetQfactor(audio_equalizer, i);
+		gain[i] = AudioEqualizer_GetBandLevel(audio_equalizer, i);
+		frequency[i] = AudioEqualizer_GetCenterFreq(audio_equalizer, i);
+		qfactor[i] = AudioEqualizer_GetQfactor(audio_equalizer, i);
 		type[i] = 0;
 	}
 
@@ -193,7 +193,7 @@ static int32_t audio_uart_ack_reply(int32_t opt)
 	return 0;
 }
 
-static void audio_uart_process_receive_data(msg_attrib_t *pattrib, struct RTAudioEqualizer *audio_equalizer)
+static void audio_uart_process_receive_data(msg_attrib_t *pattrib, struct AudioEqualizer *audio_equalizer)
 {
 	unsigned char tempbuf[AUDIO_UART_RECEIVE_DATA_BUFLEN];
 	cJSON *root, *typeobj;
@@ -243,7 +243,7 @@ static void audio_uart_process_receive_data(msg_attrib_t *pattrib, struct RTAudi
 		uint32_t band_id = cj_band_id->valueint;
 		uint32_t frequency = cj_frequency->valueint;
 
-		RTAudioEqualizer_SetCenterFreq(audio_equalizer, band_id, frequency);
+		AudioEqualizer_SetCenterFreq(audio_equalizer, band_id, frequency);
 	}
 	audio_uart_ack_reply(0);
 	break;
@@ -253,7 +253,7 @@ static void audio_uart_process_receive_data(msg_attrib_t *pattrib, struct RTAudi
 		uint32_t band_id = cj_band_id->valueint;
 		uint32_t gain = cj_gain->valueint;
 
-		RTAudioEqualizer_SetBandLevel(audio_equalizer, band_id, gain * 100);
+		AudioEqualizer_SetBandLevel(audio_equalizer, band_id, gain * 100);
 	}
 	audio_uart_ack_reply(0);
 	break;
@@ -263,7 +263,7 @@ static void audio_uart_process_receive_data(msg_attrib_t *pattrib, struct RTAudi
 		uint32_t band_id = cj_band_id->valueint;
 		double q_factor = cj_qfactor->valuedouble;
 
-		RTAudioEqualizer_SetQfactor(audio_equalizer, band_id, (uint32_t)(q_factor * (double)100));
+		AudioEqualizer_SetQfactor(audio_equalizer, band_id, (uint32_t)(q_factor * (double)100));
 	}
 	audio_uart_ack_reply(0);
 	break;
@@ -334,7 +334,7 @@ static void audio_uart_init_uart(void)
 #endif
 }
 
-static void audio_uart_create_eq(struct RTAudioEqualizer **audio_equalizer)
+static void audio_uart_create_eq(struct AudioEqualizer **audio_equalizer)
 {
 
 	int16_t band_level = 0;
@@ -342,38 +342,38 @@ static void audio_uart_create_eq(struct RTAudioEqualizer **audio_equalizer)
 	int32_t qfactor = 0;
 	int16_t band_index = 0;
 
-	RTAudioService_Init();
+	AudioService_Init();
 
-	*audio_equalizer = RTAudioEqualizer_Create();
-	RTAudioEqualizer_Init(*audio_equalizer, 0, 0);
-	int16_t bands = RTAudioEqualizer_GetNumberOfBands(*audio_equalizer);
+	*audio_equalizer = AudioEqualizer_Create();
+	AudioEqualizer_Init(*audio_equalizer, 0, 0);
+	int16_t bands = AudioEqualizer_GetNumberOfBands(*audio_equalizer);
 	EXAMPLE_AUDIO_DEBUG("total bands:%d", bands);
 
-	int16_t *range = RTAudioEqualizer_GetBandLevelRange(*audio_equalizer);
+	int16_t *range = AudioEqualizer_GetBandLevelRange(*audio_equalizer);
 	EXAMPLE_AUDIO_DEBUG("band range:(%d, %d)", *range, *(range + 1));
 	free(range);
 	range = NULL;
 
-	RTAudioEqualizer_SetEnabled(*audio_equalizer, true);
+	AudioEqualizer_SetEnabled(*audio_equalizer, true);
 
 	for (; band_index < bands; band_index++) {
-		band_level = RTAudioEqualizer_GetBandLevel(*audio_equalizer, band_index);
+		band_level = AudioEqualizer_GetBandLevel(*audio_equalizer, band_index);
 		EXAMPLE_AUDIO_DEBUG("band %d level:%d", band_index, band_level);
 
-		center_freq = RTAudioEqualizer_GetCenterFreq(*audio_equalizer, band_index);
+		center_freq = AudioEqualizer_GetCenterFreq(*audio_equalizer, band_index);
 		EXAMPLE_AUDIO_DEBUG("band:%d, center freq:%ld", band_index, center_freq);
 
-		qfactor = RTAudioEqualizer_GetQfactor(*audio_equalizer, band_index);
+		qfactor = AudioEqualizer_GetQfactor(*audio_equalizer, band_index);
 		EXAMPLE_AUDIO_DEBUG("band:%d, qfactor:%ld", band_index, qfactor);
 
 	}
 
 }
 
-static void audio_uart_destroy_eq(struct RTAudioEqualizer **audio_equalizer)
+static void audio_uart_destroy_eq(struct AudioEqualizer **audio_equalizer)
 {
-	RTAudioEqualizer_SetEnabled(*audio_equalizer, false);
-	RTAudioEqualizer_Destroy(*audio_equalizer);
+	AudioEqualizer_SetEnabled(*audio_equalizer, false);
+	AudioEqualizer_Destroy(*audio_equalizer);
 }
 
 static void audio_uart_task(void *param)
@@ -382,11 +382,11 @@ static void audio_uart_task(void *param)
 	EXAMPLE_AUDIO_DEBUG("Audio uart demo begin");
 	(void) param;
 
-	RTAUDIO_UART_DEBUG_HEAP_BEGIN();
+	AUDIO_UART_DEBUG_HEAP_BEGIN();
 
 	g_receive_msg_data = (unsigned char *) calloc(AUDIO_UART_RECEIVE_DATA_BUFLEN, sizeof(unsigned char));
 
-	struct RTAudioEqualizer *audio_equalizer;
+	struct AudioEqualizer *audio_equalizer;
 	audio_uart_create_eq(&audio_equalizer);
 
 #if AUDIO_UART_USE_DMA_TX
@@ -426,7 +426,7 @@ static void audio_uart_task(void *param)
 
 	free(g_receive_msg_data);
 	rtos_time_delay_ms(1000);
-	RTAUDIO_UART_DEBUG_HEAP_END();
+	AUDIO_UART_DEBUG_HEAP_END();
 
 	rtos_task_delete(NULL);
 }

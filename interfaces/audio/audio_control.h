@@ -54,20 +54,20 @@ enum {
 	/* [amebalite] support AMIC1-AMIC3, DMIC1-DMIC4
 	 * [amebasmart] support AMIC1-AMIC5, DMIC1-DMIC8
 	 */
-	RTAUDIO_AMIC1         = 0,
-	RTAUDIO_AMIC2         = 1,
-	RTAUDIO_AMIC3         = 2,
-	RTAUDIO_AMIC4         = 3,
-	RTAUDIO_AMIC5         = 4,
-	RTAUDIO_DMIC1         = 5,
-	RTAUDIO_DMIC2         = 6,
-	RTAUDIO_DMIC3         = 7,
-	RTAUDIO_DMIC4         = 8,
-	RTAUDIO_DMIC5         = 9,
-	RTAUDIO_DMIC6         = 10,
-	RTAUDIO_DMIC7         = 11,
-	RTAUDIO_DMIC8         = 12,
-	RTAUDIO_MIC_MAX_NUM   = 13,
+	AUDIO_AMIC1         = 0,
+	AUDIO_AMIC2         = 1,
+	AUDIO_AMIC3         = 2,
+	AUDIO_AMIC4         = 3,
+	AUDIO_AMIC5         = 4,
+	AUDIO_DMIC1         = 5,
+	AUDIO_DMIC2         = 6,
+	AUDIO_DMIC3         = 7,
+	AUDIO_DMIC4         = 8,
+	AUDIO_DMIC5         = 9,
+	AUDIO_DMIC6         = 10,
+	AUDIO_DMIC7         = 11,
+	AUDIO_DMIC8         = 12,
+	AUDIO_MIC_MAX_NUM   = 13,
 };
 
 /**
@@ -77,11 +77,11 @@ enum {
  * @version 1.0
  */
 enum {
-	RTAUDIO_CAPTURE_USAGE_AMIC         = 0,
-	RTAUDIO_CAPTURE_USAGE_DMIC         = 1,
-	RTAUDIO_CAPTURE_USAGE_DMIC_REF_AMIC = 2,
-	RTAUDIO_CAPTURE_USAGE_LINE_IN      = 3,
-	RTAUDIO_CAPTURE_USAGE_MAX_NUM      = 4,
+	AUDIO_CAPTURE_USAGE_AMIC         = 0,
+	AUDIO_CAPTURE_USAGE_DMIC         = 1,
+	AUDIO_CAPTURE_USAGE_DMIC_REF_AMIC = 2,
+	AUDIO_CAPTURE_USAGE_LINE_IN      = 3,
+	AUDIO_CAPTURE_USAGE_MAX_NUM      = 4,
 };
 
 /**
@@ -91,16 +91,16 @@ enum {
  * @version 1.0
  */
 enum {
-	RTAUDIO_MICBST_GAIN_0DB          = 0,
-	RTAUDIO_MICBST_GAIN_5DB          = 1,
-	RTAUDIO_MICBST_GAIN_10DB         = 2,
-	RTAUDIO_MICBST_GAIN_15DB         = 3,
-	RTAUDIO_MICBST_GAIN_20DB         = 4,
-	RTAUDIO_MICBST_GAIN_25DB         = 5,
-	RTAUDIO_MICBST_GAIN_30DB         = 6,
-	RTAUDIO_MICBST_GAIN_35DB         = 7,
-	RTAUDIO_MICBST_GAIN_40DB         = 8,
-	RTAUDIO_MICBST_GAIN_MAX_NUM      = 9,
+	AUDIO_MICBST_GAIN_0DB          = 0,
+	AUDIO_MICBST_GAIN_5DB          = 1,
+	AUDIO_MICBST_GAIN_10DB         = 2,
+	AUDIO_MICBST_GAIN_15DB         = 3,
+	AUDIO_MICBST_GAIN_20DB         = 4,
+	AUDIO_MICBST_GAIN_25DB         = 5,
+	AUDIO_MICBST_GAIN_30DB         = 6,
+	AUDIO_MICBST_GAIN_35DB         = 7,
+	AUDIO_MICBST_GAIN_40DB         = 8,
+	AUDIO_MICBST_GAIN_MAX_NUM      = 9,
 };
 
 /**
@@ -110,9 +110,9 @@ enum {
  * @version 1.0
  */
 enum {
-	RTAUDIO_PLL_AUTO    = 0,
-	RTAUDIO_PLL_FASTER  = 1,
-	RTAUDIO_PLL_SLOWER  = 2,
+	AUDIO_PLL_AUTO    = 0,
+	AUDIO_PLL_FASTER  = 1,
+	AUDIO_PLL_SLOWER  = 2,
 };
 
 typedef struct {
@@ -136,7 +136,7 @@ typedef struct {
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioControl_SetHardwareVolume(float left_volume, float right_volume);
+int32_t AudioControl_SetHardwareVolume(float left_volume, float right_volume);
 
 /**
  * @brief Get Hardware Volume of audio dac.
@@ -151,7 +151,7 @@ int32_t RTAudioControl_SetHardwareVolume(float left_volume, float right_volume);
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioControl_GetHardwareVolume(float *left_volume, float *right_volume);
+int32_t AudioControl_GetHardwareVolume(float *left_volume, float *right_volume);
 
 /**
  * @brief Set Amplifier En Pin.
@@ -167,7 +167,7 @@ int32_t RTAudioControl_GetHardwareVolume(float *left_volume, float *right_volume
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioControl_SetAmplifierEnPin(uint32_t amp_pin);
+int32_t AudioControl_SetAmplifierEnPin(uint32_t amp_pin);
 
 /**
  * @brief Set Amplifier En Pin.
@@ -179,7 +179,7 @@ int32_t RTAudioControl_SetAmplifierEnPin(uint32_t amp_pin);
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioControl_GetAmplifierEnPin(void);
+int32_t AudioControl_GetAmplifierEnPin(void);
 
 /**
  * @brief Set Amplifier Mute.
@@ -195,7 +195,7 @@ int32_t RTAudioControl_GetAmplifierEnPin(void);
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioControl_SetAmplifierMute(bool mute);
+int32_t AudioControl_SetAmplifierMute(bool mute);
 
 /**
  * @brief Get Amplifier Mute State.
@@ -204,7 +204,7 @@ int32_t RTAudioControl_SetAmplifierMute(bool mute);
  * @since 1.0
  * @version 1.0
  */
-bool RTAudioControl_GetAmplifierMute(void);
+bool AudioControl_GetAmplifierMute(void);
 
 /**
  * @brief Set Audio Codec Mute.
@@ -218,7 +218,7 @@ bool RTAudioControl_GetAmplifierMute(void);
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioControl_SetPlaybackMute(bool mute);
+int32_t AudioControl_SetPlaybackMute(bool mute);
 
 /**
  * @brief Get Audio Codec Mute State.
@@ -227,12 +227,12 @@ int32_t RTAudioControl_SetPlaybackMute(bool mute);
  * @since 1.0
  * @version 1.0
  */
-bool RTAudioControl_GetPlaybackMute(void);
+bool AudioControl_GetPlaybackMute(void);
 
 /**
- * @brief Set Playback Device. Please set it before create RTAudioTrack.
+ * @brief Set Playback Device. Please set it before create AudioTrack.
  *
- * @param device_category the device of playback, maybe RTDEVICE_OUT_SPEAKER or RTDEVICE_OUT_HEADPHONE.
+ * @param device_category the device of playback, maybe DEVICE_OUT_SPEAKER or DEVICE_OUT_HEADPHONE.
  * @return Returns a value listed below: \n
  * int32_t | Description
  * ----------------------| -----------------------
@@ -241,23 +241,23 @@ bool RTAudioControl_GetPlaybackMute(void);
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioControl_SetPlaybackDevice(uint32_t device_category);
+int32_t AudioControl_SetPlaybackDevice(uint32_t device_category);
 
 /**
  * @brief Get Playback Device.
  *
- * @return Returns the device of playback, maybe RTDEVICE_OUT_SPEAKER or RTDEVICE_OUT_HEADPHONE.
+ * @return Returns the device of playback, maybe DEVICE_OUT_SPEAKER or DEVICE_OUT_HEADPHONE.
  *         If the value < 0, means get fail.
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioControl_GetPlaybackDevice(void);
+int32_t AudioControl_GetPlaybackDevice(void);
 
 /**
  * @brief Set Capture Mic type for channel.
  *
  * @param channel_num the channel number to set mic type.
- * @param mic_category the mic type, can be RTAUDIO_AMIC1...RTAUDIO_DMIC8.
+ * @param mic_category the mic type, can be AUDIO_AMIC1...AUDIO_DMIC8.
  *       [amebalite] support AMIC1-AMIC3, DMIC1-DMIC4
  *       [amebasmart] support AMIC1-AMIC5, DMIC1-DMIC8
  * @return Returns a value listed below: \n
@@ -268,19 +268,19 @@ int32_t RTAudioControl_GetPlaybackDevice(void);
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioControl_SetChannelMicCategory(uint32_t channel_num, uint32_t mic_category);
+int32_t AudioControl_SetChannelMicCategory(uint32_t channel_num, uint32_t mic_category);
 
 /**
  * @brief Get Mic Category.
  * @param channel_num the channel number to get mic type.
- * @return Returns the mic type, can be RTAUDIO_AMIC1...RTAUDIO_DMIC8.
+ * @return Returns the mic type, can be AUDIO_AMIC1...AUDIO_DMIC8.
  *         [amebalite] support AMIC1-AMIC3, DMIC1-DMIC4
  *         [amebasmart] support AMIC1-AMIC5, DMIC1-DMIC8
  *         If the value < 0, means get fail.
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioControl_GetChannelMicCategory(uint32_t channel_num);
+int32_t AudioControl_GetChannelMicCategory(uint32_t channel_num);
 
 /**
  * @brief Set Capture volume for channel.
@@ -298,7 +298,7 @@ int32_t RTAudioControl_GetChannelMicCategory(uint32_t channel_num);
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioControl_SetCaptureChannelVolume(uint32_t channel_num, uint32_t volume);
+int32_t AudioControl_SetCaptureChannelVolume(uint32_t channel_num, uint32_t volume);
 
 /**
  * @brief Get Capture volume for channel.
@@ -311,7 +311,7 @@ int32_t RTAudioControl_SetCaptureChannelVolume(uint32_t channel_num, uint32_t vo
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioControl_GetCaptureChannelVolume(uint32_t channel_num);
+int32_t AudioControl_GetCaptureChannelVolume(uint32_t channel_num);
 
 /**
  * @brief Set Capture volume for channel.
@@ -329,15 +329,15 @@ int32_t RTAudioControl_GetCaptureChannelVolume(uint32_t channel_num);
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioControl_SetCaptureVolume(uint32_t channels, uint32_t volume);
+int32_t AudioControl_SetCaptureVolume(uint32_t channels, uint32_t volume);
 
 /**
  * @brief Set Micbst Gain.
  *
- * @param mic_category the mic type, can be RTAUDIO_AMIC1...RTAUDIO_DMIC8.
+ * @param mic_category the mic type, can be AUDIO_AMIC1...AUDIO_DMIC8.
  *       [amebalite] support AMIC1-AMIC3, DMIC1-DMIC4
  *       [amebasmart] support AMIC1-AMIC5, DMIC1-DMIC8
- * @param gain can be RTAUDIO_MICBST_GAIN_0DB-RTAUDIO_MICBST_GAIN_40DB
+ * @param gain can be AUDIO_MICBST_GAIN_0DB-AUDIO_MICBST_GAIN_40DB
  * @return Returns a value listed below: \n
  * int32_t | Description
  * ----------------------| -----------------------
@@ -346,19 +346,19 @@ int32_t RTAudioControl_SetCaptureVolume(uint32_t channels, uint32_t volume);
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioControl_SetMicBstGain(uint32_t mic_category, uint32_t gain);
+int32_t AudioControl_SetMicBstGain(uint32_t mic_category, uint32_t gain);
 
 /**
  * @brief Get MicBst gain of microphone.
  *
- * @param mic_category the mic type, can be RTAUDIO_AMIC1...RTAUDIO_DMIC8.
+ * @param mic_category the mic type, can be AUDIO_AMIC1...AUDIO_DMIC8.
  *       [amebalite] support AMIC1-AMIC3, DMIC1-DMIC4
  *       [amebasmart] support AMIC1-AMIC5, DMIC1-DMIC8
- * @return gain of mic_category, can be RTAUDIO_MICBST_GAIN_0DB-RTAUDIO_MICBST_GAIN_40DB
+ * @return gain of mic_category, can be AUDIO_MICBST_GAIN_0DB-AUDIO_MICBST_GAIN_40DB
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioControl_GetMicBstGain(uint32_t mic_category);
+int32_t AudioControl_GetMicBstGain(uint32_t mic_category);
 
 /**
  * @brief Set adc's hfp fc.
@@ -382,7 +382,7 @@ int32_t RTAudioControl_GetMicBstGain(uint32_t mic_category);
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioControl_SetCaptureHpfFc(uint32_t channel_num, uint32_t fc);
+int32_t AudioControl_SetCaptureHpfFc(uint32_t channel_num, uint32_t fc);
 
 /**
  * @brief Get adc's hfp fc.
@@ -400,7 +400,7 @@ int32_t RTAudioControl_SetCaptureHpfFc(uint32_t channel_num, uint32_t fc);
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioControl_GetCaptureHpfFc(uint32_t channel_num);
+int32_t AudioControl_GetCaptureHpfFc(uint32_t channel_num);
 
 /**
  * @brief Set capture eq enable.
@@ -415,7 +415,7 @@ int32_t RTAudioControl_GetCaptureHpfFc(uint32_t channel_num);
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioControl_SetCaptureEqEnable(uint32_t channel_num, bool state);
+int32_t AudioControl_SetCaptureEqEnable(uint32_t channel_num, bool state);
 
 /**
  * @brief Set capture eq coef.
@@ -431,7 +431,7 @@ int32_t RTAudioControl_SetCaptureEqEnable(uint32_t channel_num, bool state);
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioControl_SetCaptureEqFilter(uint32_t channel_num, uint32_t band_sel, EqFilterCoef *eq_filter_coef);
+int32_t AudioControl_SetCaptureEqFilter(uint32_t channel_num, uint32_t band_sel, EqFilterCoef *eq_filter_coef);
 
 /**
  * @brief Set capture eq band state.
@@ -447,16 +447,16 @@ int32_t RTAudioControl_SetCaptureEqFilter(uint32_t channel_num, uint32_t band_se
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioControl_SetCaptureEqBand(uint32_t channel_num, uint32_t band_sel, bool state);
+int32_t AudioControl_SetCaptureEqBand(uint32_t channel_num, uint32_t band_sel, bool state);
 
 /**
  * @brief Set mic usage.
  *
- * @param mic_usage RTAUDIO_CAPTURE_USAGE_AMIC, or RTAUDIO_CAPTURE_USAGE_DMIC, if user's
- *        microphone data is recorded from amic, then set RTAUDIO_CAPTURE_USAGE_AMIC, if
- *        user's microphone data is recorded from dmic, then set RTAUDIO_CAPTURE_USAGE_DMIC.
+ * @param mic_usage AUDIO_CAPTURE_USAGE_AMIC, or AUDIO_CAPTURE_USAGE_DMIC, if user's
+ *        microphone data is recorded from amic, then set AUDIO_CAPTURE_USAGE_AMIC, if
+ *        user's microphone data is recorded from dmic, then set AUDIO_CAPTURE_USAGE_DMIC.
  *        The reference data is always recorded from amic, even if the usage is
- *        RTAUDIO_CAPTURE_USAGE_DMIC, the default setting is RTAUDIO_CAPTURE_USAGE_AMIC.
+ *        AUDIO_CAPTURE_USAGE_DMIC, the default setting is AUDIO_CAPTURE_USAGE_AMIC.
  * @return Returns a value listed below: \n
  * int32_t | Description
  * ----------------------| -----------------------
@@ -465,33 +465,33 @@ int32_t RTAudioControl_SetCaptureEqBand(uint32_t channel_num, uint32_t band_sel,
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioControl_SetMicUsage(uint32_t mic_usage);
+int32_t AudioControl_SetMicUsage(uint32_t mic_usage);
 
 /**
  * @brief Get mic usage.
  *
- * @param Returns RTAUDIO_CAPTURE_USAGE_AMIC, or RTAUDIO_CAPTURE_USAGE_DMIC, if user's
- *        microphone data is recorded from amic, then set RTAUDIO_CAPTURE_USAGE_AMIC, if
- *        user's microphone data is recorded from dmic, then set RTAUDIO_CAPTURE_USAGE_DMIC.
+ * @param Returns AUDIO_CAPTURE_USAGE_AMIC, or AUDIO_CAPTURE_USAGE_DMIC, if user's
+ *        microphone data is recorded from amic, then set AUDIO_CAPTURE_USAGE_AMIC, if
+ *        user's microphone data is recorded from dmic, then set AUDIO_CAPTURE_USAGE_DMIC.
  *        If mic data is from dmic, the reference data is recorded from amic, then set
- *        RTAUDIO_CAPTURE_USAGE_DMIC_REF_AMIC, the default setting is RTAUDIO_CAPTURE_USAGE_AMIC.
+ *        AUDIO_CAPTURE_USAGE_DMIC_REF_AMIC, the default setting is AUDIO_CAPTURE_USAGE_AMIC.
  *        if the return value<0, then get fail.
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioControl_GetMicUsage(void);
+int32_t AudioControl_GetMicUsage(void);
 
 /**
  * @brief Adjust PLL clk .
  *
  * @param rate sample rate of current stream
  * @param ppm ~1.55ppm per FOF step
- * @param action can be RTAUDIO_PLL_AUTO RTAUDIO_PLL_FASTER RTAUDIO_PLL_SLOWER
+ * @param action can be AUDIO_PLL_AUTO AUDIO_PLL_FASTER AUDIO_PLL_SLOWER
  * @return Returns the ppm adjusted.
  * @since 1.0
  * @version 1.0
  */
-float RTAudioControl_AdjustPLLClock(uint32_t rate, float ppm, uint32_t action);
+float AudioControl_AdjustPLLClock(uint32_t rate, float ppm, uint32_t action);
 
 /**
  * @brief Set Audio Record Mute.
@@ -506,7 +506,7 @@ float RTAudioControl_AdjustPLLClock(uint32_t rate, float ppm, uint32_t action);
  * @since 1.0
  * @version 1.0
  */
-int32_t RTAudioControl_SetRecordMute(uint32_t channel, bool mute);
+int32_t AudioControl_SetRecordMute(uint32_t channel, bool mute);
 
 /**
  * @brief Get Audio Record Mute State.
@@ -516,7 +516,7 @@ int32_t RTAudioControl_SetRecordMute(uint32_t channel, bool mute);
  * @since 1.0
  * @version 1.0
  */
-bool RTAudioControl_GetRecordMute(uint32_t channel);
+bool AudioControl_GetRecordMute(uint32_t channel);
 
 #ifdef __cplusplus
 }

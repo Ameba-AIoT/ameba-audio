@@ -1,8 +1,8 @@
 # CUSTOMER IMPLEMENTATION DATA SOURCE PLAY EXAMPLE
 
 ## Description:
-**RTPlayer provides the APIs to implement operations related to manage playback.
-example_player.c gives an example of the detailed implementation of an RTPlayer.**
+**MediaPlayer provides the APIs to implement operations related to manage playback.
+example_player.c gives an example of the detailed implementation of an MediaPlayer.**
 
 # HW Configuration
 Required Components: speaker

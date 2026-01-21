@@ -53,20 +53,20 @@ enum {
 #define EXAMPLE_AUDIO_DEBUG(fmt, args...)    printf("=> D/AudioRecordExample:[%s]: " fmt "\n", __func__, ## args)
 #define EXAMPLE_AUDIO_ERROR(fmt, args...)    printf("=> E/AudioRecordExample:[%s]: " fmt "\n", __func__, ## args)
 
-#define  RTAUDIO_RECORD_DEBUG_HEAP_BEGIN() \
+#define  AUDIO_RECORD_DEBUG_HEAP_BEGIN() \
 	unsigned int heap_start;\
 	unsigned int heap_end;\
 	unsigned int heap_min_ever_free;\
 	EXAMPLE_AUDIO_DEBUG("[Mem] mem debug info init \n");\
 	heap_start = rtos_mem_get_free_heap_size()
 
-#define  RTAUDIO_RECORD_DEBUG_HEAP_END() \
+#define  AUDIO_RECORD_DEBUG_HEAP_END() \
     heap_end = rtos_mem_get_free_heap_size();\
 	heap_min_ever_free = rtos_mem_get_minimum_ever_free_heap_size();\
 	EXAMPLE_AUDIO_DEBUG("[Mem] start (0x%x), end (0x%x), \n", heap_start, heap_end);\
 	EXAMPLE_AUDIO_DEBUG(" diff (%d), peak (%d) \n", heap_start - heap_end, heap_start - heap_min_ever_free)
 
-static struct RTAudioRecord *g_audio_record = NULL;
+static struct AudioRecord *g_audio_record = NULL;
 static unsigned int  g_only_record = 0;
 static unsigned int  g_noirq_test = 0;
 static unsigned int  g_test_ref = 0;
@@ -76,8 +76,8 @@ static unsigned int  g_record_channel = 2;
 static unsigned int  g_record_mode = 0;
 static unsigned int  g_record_format = 16;
 static unsigned int  g_record_bytes_one_time = 8192;
-static unsigned int  g_record_mic_category = RTDEVICE_IN_MIC;
-static unsigned int  g_record_channel_src[MAX_CHANNEL_COUNT] = {RTAUDIO_AMIC1};
+static unsigned int  g_record_mic_category = DEVICE_IN_MIC;
+static unsigned int  g_record_channel_src[MAX_CHANNEL_COUNT] = {AUDIO_AMIC1};
 static unsigned int  g_hpf_fc = 3;
 static unsigned int  g_eq_filter_type = 0;
 static unsigned int  Record_Sample(void);
@@ -99,17 +99,17 @@ static int GetFormatForBits(void)
 	int format;
 	switch (g_record_format) {
 	case 16:
-		format = RTAUDIO_FORMAT_PCM_16_BIT;
+		format = AUDIO_FORMAT_PCM_16_BIT;
 		break;
 	case 24:
-		format = RTAUDIO_FORMAT_PCM_24_BIT;
+		format = AUDIO_FORMAT_PCM_24_BIT;
 		break;
 	case 32:
-		format = RTAUDIO_FORMAT_PCM_32_BIT;
+		format = AUDIO_FORMAT_PCM_32_BIT;
 		break;
 	default:
 		EXAMPLE_AUDIO_ERROR("format:%d not supportd \n", g_record_format);
-		return RTAUDIO_FORMAT_INVALID;
+		return AUDIO_FORMAT_INVALID;
 	}
 
 	return format;
@@ -177,32 +177,32 @@ static unsigned int Record_Sample()
 #if DUMP_BUFFER
 	int dumped_size = 0;
 #endif
-	uint32_t flags = RTAUDIO_OUTPUT_FLAG_NONE;
-	uint32_t record_flags = RTAUDIO_INPUT_FLAG_NONE;
+	uint32_t flags = AUDIO_OUTPUT_FLAG_NONE;
+	uint32_t record_flags = AUDIO_INPUT_FLAG_NONE;
 	int64_t bytes_read = 0;
 	unsigned int frames = 0;
 	int format = GetFormatForBits();
 	int64_t record_size = (int64_t)g_record_rate * (int64_t)RECORD_TIME_SECONDS * (int64_t)g_record_channel * (int64_t)g_record_format / (int64_t)8;
 	int track_buf_size = 4096;
 
-	if (format == (int)RTAUDIO_FORMAT_INVALID) {
+	if (format == (int)AUDIO_FORMAT_INVALID) {
 		EXAMPLE_AUDIO_ERROR("invalid record format bits:%u \n", g_record_format);
 		return 0;
 	}
 
 	if (g_noirq_test) {
-		flags |= RTAUDIO_OUTPUT_FLAG_NOIRQ;
-		record_flags |= RTAUDIO_INPUT_FLAG_NOIRQ;
+		flags |= AUDIO_OUTPUT_FLAG_NOIRQ;
+		record_flags |= AUDIO_INPUT_FLAG_NOIRQ;
 	}
 
-	struct RTAudioRecord *audio_record;
-	audio_record = RTAudioRecord_Create();
+	struct AudioRecord *audio_record;
+	audio_record = AudioRecord_Create();
 	if (!audio_record) {
 		EXAMPLE_AUDIO_ERROR("record create failed \n");
 		return 0;
 	}
 
-	RTAudioRecordConfig record_config;
+	AudioRecordConfig record_config;
 	record_config.sample_rate = g_record_rate;
 	record_config.format = format;
 	record_config.channel_count = g_record_channel;
@@ -211,22 +211,22 @@ static unsigned int Record_Sample()
 	if (g_noirq_test) {
 		record_config.buffer_bytes = g_record_bytes_one_time;
 	}
-	RTAudioRecord_Init(audio_record, &record_config, flags);
+	AudioRecord_Init(audio_record, &record_config, flags);
 
-	struct RTAudioTrack *audio_track;
+	struct AudioTrack *audio_track;
 	if (!g_only_record) {
-		RTAudioService_Init();
-		audio_track = RTAudioTrack_Create();
+		AudioService_Init();
+		audio_track = AudioTrack_Create();
 		if (!audio_track) {
-			EXAMPLE_AUDIO_ERROR("new RTAudioTrack failed, destroy record \n");
-			RTAudioRecord_Destroy(audio_record);
+			EXAMPLE_AUDIO_ERROR("new AudioTrack failed, destroy record \n");
+			AudioRecord_Destroy(audio_record);
 			return 0;
 		}
 
-		track_buf_size = RTAudioTrack_GetMinBufferBytes(audio_track, RTAUDIO_CATEGORY_MEDIA, g_record_rate, format, g_record_channel) * 4;
+		track_buf_size = AudioTrack_GetMinBufferBytes(audio_track, AUDIO_CATEGORY_MEDIA, g_record_rate, format, g_record_channel) * 4;
 
-		RTAudioTrackConfig  track_config;
-		track_config.category_type = RTAUDIO_CATEGORY_MEDIA;
+		AudioTrackConfig  track_config;
+		track_config.category_type = AUDIO_CATEGORY_MEDIA;
 		track_config.sample_rate = g_record_rate;
 		track_config.format = format;
 		track_config.channel_count = g_record_channel;
@@ -235,46 +235,46 @@ static unsigned int Record_Sample()
 		} else {
 			track_config.buffer_bytes = track_buf_size;
 		}
-		RTAudioTrack_Init(audio_track, &track_config, flags);
+		AudioTrack_Init(audio_track, &track_config, flags);
 	}
 
-	RTAudioRecord_Start(audio_record);
+	AudioRecord_Start(audio_record);
 	if (!g_only_record) {
-		RTAudioTrack_Start(audio_track);
+		AudioTrack_Start(audio_track);
 	}
 	g_audio_record = audio_record;
 
 	for (unsigned int i = 0; i < MAX_CHANNEL_COUNT; i++) {
-		RTAudioControl_SetChannelMicCategory(i, g_record_channel_src[i]);
+		AudioControl_SetChannelMicCategory(i, g_record_channel_src[i]);
 	}
 
-	RTAudioControl_SetCaptureVolume(4, 0x2f);
-	RTAudioControl_SetMicBstGain(RTAUDIO_AMIC2, MICBST_GAIN_30DB);
-	RTAudioControl_SetCaptureHpfFc(0, g_hpf_fc);
-	int32_t ch0_hpf_fc = RTAudioControl_GetCaptureHpfFc(0);
+	AudioControl_SetCaptureVolume(4, 0x2f);
+	AudioControl_SetMicBstGain(AUDIO_AMIC2, MICBST_GAIN_30DB);
+	AudioControl_SetCaptureHpfFc(0, g_hpf_fc);
+	int32_t ch0_hpf_fc = AudioControl_GetCaptureHpfFc(0);
 	EXAMPLE_AUDIO_DEBUG("hpf fc for channel 0 is:%ld", ch0_hpf_fc);
 
 	if (g_eq_filter_type) {
-		RTAudioControl_SetCaptureEqEnable(0, true);
+		AudioControl_SetCaptureEqEnable(0, true);
 		EqFilterCoef coef;
 		FillEqFilterCoef(&coef);
-		RTAudioControl_SetCaptureEqFilter(0, 0, &coef);
-		RTAudioControl_SetCaptureEqBand(0, 0, true);
+		AudioControl_SetCaptureEqFilter(0, 0, &coef);
+		AudioControl_SetCaptureEqBand(0, 0, true);
 	}
 
 	switch (g_record_mode) {
 	case 0:
-		RTAudioRecord_SetParameters(audio_record, "cap_mode=no_afe_pure_data");
+		AudioRecord_SetParameters(audio_record, "cap_mode=no_afe_pure_data");
 		break;
 	case 1:
-		RTAudioRecord_SetParameters(audio_record, "cap_mode=no_afe_all_data");
+		AudioRecord_SetParameters(audio_record, "cap_mode=no_afe_all_data");
 		break;
 	default:
 		break;
 	}
 
 	if (g_noirq_test) {
-		RTAudioControl_AdjustPLLClock(g_record_rate, 0, RTAUDIO_PLL_AUTO);
+		AudioControl_AdjustPLLClock(g_record_rate, 0, AUDIO_PLL_AUTO);
 	}
 
 	size = g_record_bytes_one_time;
@@ -298,7 +298,7 @@ static unsigned int Record_Sample()
 	EXAMPLE_AUDIO_DEBUG("Capturing sample: %u ch, %u hz, record bytes one time:%d, dump_buffer:%p \n", g_record_channel, g_record_rate,
 						g_record_bytes_one_time, dump_buffer);
 	do {
-		size_read = RTAudioRecord_Read(audio_record, buffer, size, true);
+		size_read = AudioRecord_Read(audio_record, buffer, size, true);
 		if ((unsigned int)size_read != size) {
 			EXAMPLE_AUDIO_DEBUG("opps size wanted:%d, size actually read:%d \n", size, size_read);
 		}
@@ -315,13 +315,13 @@ static unsigned int Record_Sample()
 
 		//drop first 100ms data of record, and instead send 0, because record need some time to be stable, it's normal.
 		if (!g_only_record && bytes_read >= 100 * g_record_rate * g_record_channel * g_record_format / 8 / 1000) {
-			RTAudioTrack_Write(audio_track, buffer, size, true);
+			AudioTrack_Write(audio_track, buffer, size, true);
 		} else if (!g_only_record && !g_noirq_test) {
 #if !TEST_MIXER_ARCH
 			memset(buffer, 0, size);
-			RTAudioTrack_Write(audio_track, buffer, size, true);
+			AudioTrack_Write(audio_track, buffer, size, true);
 			//To give another 0 buf at beginning, in case of xrun. For real case, please add ringbuffer between record and track.
-			RTAudioTrack_Write(audio_track, buffer, size, true);
+			AudioTrack_Write(audio_track, buffer, size, true);
 #endif
 		}
 
@@ -345,11 +345,11 @@ static unsigned int Record_Sample()
 	dump_buffer = NULL;
 #endif
 
-	RTAudioRecord_Stop(audio_record);
-	RTAudioRecord_Destroy(audio_record);
+	AudioRecord_Stop(audio_record);
+	AudioRecord_Destroy(audio_record);
 	if (!g_only_record) {
-		RTAudioTrack_Stop(audio_track);
-		RTAudioTrack_Destroy(audio_track);
+		AudioTrack_Stop(audio_track);
+		AudioTrack_Destroy(audio_track);
 	}
 
 	return frames;
@@ -357,34 +357,34 @@ static unsigned int Record_Sample()
 
 static void Play_Sample(unsigned int channels, unsigned int rate)
 {
-	struct RTAudioTrack *audio_track;
+	struct AudioTrack *audio_track;
 	int track_buf_size = 4096;
 	unsigned int frames_played = 0;
 	unsigned int play_frame_size = rate * REF_PLAY_SECONDS;
-	uint32_t flags = RTAUDIO_OUTPUT_FLAG_NONE;
+	uint32_t flags = AUDIO_OUTPUT_FLAG_NONE;
 
-	RTAudioService_Init();
-	audio_track = RTAudioTrack_Create();
+	AudioService_Init();
+	audio_track = AudioTrack_Create();
 	if (!audio_track) {
-		EXAMPLE_AUDIO_ERROR("new RTAudioTrack failed");
+		EXAMPLE_AUDIO_ERROR("new AudioTrack failed");
 		return;
 	}
 
-	track_buf_size = RTAudioTrack_GetMinBufferBytes(audio_track, RTAUDIO_CATEGORY_MEDIA, rate, RTAUDIO_FORMAT_PCM_16_BIT, channels) * 4;
-	RTAudioTrackConfig  track_config;
-	track_config.category_type = RTAUDIO_CATEGORY_MEDIA;
+	track_buf_size = AudioTrack_GetMinBufferBytes(audio_track, AUDIO_CATEGORY_MEDIA, rate, AUDIO_FORMAT_PCM_16_BIT, channels) * 4;
+	AudioTrackConfig  track_config;
+	track_config.category_type = AUDIO_CATEGORY_MEDIA;
 	track_config.sample_rate = rate;
-	track_config.format = RTAUDIO_FORMAT_PCM_16_BIT;
+	track_config.format = AUDIO_FORMAT_PCM_16_BIT;
 	track_config.channel_count = channels;
 	track_config.buffer_bytes = track_buf_size;
-	RTAudioTrack_Init(audio_track, &track_config, flags);
+	AudioTrack_Init(audio_track, &track_config, flags);
 
-	RTAudioTrack_Start(audio_track);
+	AudioTrack_Start(audio_track);
 
 	ssize_t size = 96 * 2;
 	while (1) {
 
-		RTAudioTrack_Write(audio_track, (u8 *)sine_48000, size, true);
+		AudioTrack_Write(audio_track, (u8 *)sine_48000, size, true);
 		frames_played += size / 4;
 
 		if (frames_played >= play_frame_size) {
@@ -392,8 +392,8 @@ static void Play_Sample(unsigned int channels, unsigned int rate)
 		}
 	}
 
-	RTAudioTrack_Stop(audio_track);
-	RTAudioTrack_Destroy(audio_track);
+	AudioTrack_Stop(audio_track);
+	AudioTrack_Destroy(audio_track);
 
 }
 
@@ -402,10 +402,10 @@ static void RecordTask(void *param)
 	unsigned int frames;
 	(void) param;
 
-	RTAUDIO_RECORD_DEBUG_HEAP_BEGIN();
+	AUDIO_RECORD_DEBUG_HEAP_BEGIN();
 	frames = Record_Sample();
 	rtos_time_delay_ms(2 * RTOS_TICK_RATE_HZ);
-	RTAUDIO_RECORD_DEBUG_HEAP_END();
+	AUDIO_RECORD_DEBUG_HEAP_END();
 
 	printf("Recorded %u frames \n", frames);
 	rtos_task_delete(NULL);
@@ -435,7 +435,7 @@ void example_audio_counter_time(void *param)
 	EXAMPLE_AUDIO_DEBUG("Audio record time begin");
 	(void) param;
 
-	RTAudioTimestamp tstamp;
+	AudioTimestamp tstamp;
 	int32_t frames_captured = 0;
 	int64_t frames_captured_ns = 0;
 	int64_t frames_captured_at_ns = 0;
@@ -450,13 +450,13 @@ void example_audio_counter_time(void *param)
 			rtos_time_delay_ms(10 * RTOS_TICK_RATE_HZ);
 		}
 
-		if (RTAudioRecord_GetTimestamp(g_audio_record, &tstamp) == AUDIO_OK) {
+		if (AudioRecord_GetTimestamp(g_audio_record, &tstamp) == AUDIO_OK) {
 			frames_captured = tstamp.position;
 			frames_captured_at_ns = tstamp.time.tv_sec * 1000000000LL + tstamp.time.tv_nsec;
 			frames_captured_ns = (int64_t)((double)frames_captured / (double)g_record_rate * (double)1000000000);
 		}
 
-		if (RTAudioRecord_GetPresentTime(g_audio_record, &phase_captured_at_ns, &phase_captured_ns) != AUDIO_OK) {
+		if (AudioRecord_GetPresentTime(g_audio_record, &phase_captured_at_ns, &phase_captured_ns) != AUDIO_OK) {
 			EXAMPLE_AUDIO_ERROR("get present time fail");
 		}
 
@@ -485,11 +485,11 @@ void example_audio_counter_time(void *param)
 }
 #endif
 
-void RTAudioRecordTestApp(char **argv)
+void AudioRecordTestApp(char **argv)
 {
-	g_record_channel_src[0] = RTAUDIO_AMIC1;
-	g_record_channel_src[1] = RTAUDIO_AMIC2;
-	g_record_channel_src[2] = RTAUDIO_AMIC3;
+	g_record_channel_src[0] = AUDIO_AMIC1;
+	g_record_channel_src[1] = AUDIO_AMIC2;
+	g_record_channel_src[2] = AUDIO_AMIC3;
 
 	/* parse command line arguments */
 	while (*argv) {
@@ -562,11 +562,11 @@ void RTAudioRecordTestApp(char **argv)
 			argv++;
 			if (*argv) {
 				if (atoi(*argv) == 1) {
-					g_record_mic_category = RTDEVICE_IN_DMIC_REF_AMIC;
+					g_record_mic_category = DEVICE_IN_DMIC_REF_AMIC;
 				} else if (atoi(*argv) == 2) {
-					g_record_mic_category = RTDEVICE_IN_I2S;
+					g_record_mic_category = DEVICE_IN_I2S;
 				} else {
-					g_record_mic_category = RTDEVICE_IN_MIC;
+					g_record_mic_category = DEVICE_IN_MIC;
 				}
 			}
 		} else if (strcmp(*argv, "-hpf") == 0) {
@@ -609,6 +609,6 @@ u32 example_record_test(u16 argc, unsigned char **argv)
 
 {
 	(void) argc;
-	RTAudioRecordTestApp((char **)argv);
+	AudioRecordTestApp((char **)argv);
 	return TRUE;
 }
