@@ -40,18 +40,17 @@ if(CONFIG_AUDIO_DEVICE_USB)
     ameba_add_subdirectory_if_exist(usb_audio)
 endif()
 
+if(CONFIG_SUPPORT_AUDIO_CMD)
+    ameba_add_subdirectory_if_exist(cmds)
+endif()
+
 ameba_submodule_register(audio
 p_EXAMPLE_DIRS
-    examples/audio_track
-    examples/audio_record
     examples/audio_manager
     examples/audio_time
     examples/audio_hal_render
     examples/audio_hal_capture
     examples/audio_converter
-    examples/mydata_source_player
-    examples/pc_recorder
-    examples/player
     examples/speexdsp
     examples/voice
 )
