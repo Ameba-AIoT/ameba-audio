@@ -1,12 +1,30 @@
-#define LOG_TAG "MyDataSource"
+/*
+ * Copyright (c) 2021 Realtek, LLC.
+ * All rights reserved.
+ *
+ * Licensed under the Realtek License, Version 1.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License from Realtek
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#define LOG_TAG "MyStreamS"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "mydata_source.h"
+
 #include "os_wrapper.h"
 
+#include "log/log.h"
 #include "common/audio_errnos.h"
+
+#include "mystream_source.h"
 
 /* prepare delay simulation */
 //#define MDS_PREPARE_DELAY_TEST
@@ -23,7 +41,7 @@
 int kMDSPrepareDelayTimeMs = 3000;
 volatile int g_prepared = 0;
 volatile bool g_prepare_thread_alive = 0;
-void MyDataSource_PrepareTestThread(void *Data);
+void MyStreamSource_PrepareTestThread(void *Data);
 #endif
 
 #ifdef MDS_READ_UNSMOOTH_TEST
@@ -33,34 +51,34 @@ int kMDSReadRetry = 0;
 #endif
 
 #ifdef MDS_UNKNOWN_LENGTH_TEST
-int kMDSLengthIncreaseTotalTimeMs = 10000;
+int kMDSLengthIncreaseTotalTimeMs = 100;
 volatile int g_source_total_length = 0;
 volatile bool g_length_increase_thread_alive = 0;
-void MyDataSource_UnknownLengthTestThread(void *Data);
+void MyStreamSource_UnknownLengthTestThread(void *Data);
 #endif
 
-void MyDataSource_WaitLoopExit(void);
+void MyStreamSource_WaitLoopExit(void);
 
 
 // ----------------------------------------------------------------------
-// MyDataSource
-StreamSource *MyDataSource_Create(char *data, int length)
+// MyStreamSource
+StreamSource *MyStreamSource_Create(char *data, int length)
 {
-    printf("MyDataSource_Create(%p, %d)\n", data, length);
+    MEDIA_LOGD("MyStreamSource_Create(%p, %d)", data, length);
     if (!data) {
-        printf("invalid source or ring_buffer\n");
+        MEDIA_LOGE("invalid source or ring_buffer.");
         return NULL;
     }
 
-    MyDataSource *data_source = calloc(1, sizeof(MyDataSource));
+    MyStreamSource *data_source = calloc(1, sizeof(MyStreamSource));
     if (!data_source) {
-        printf("fail to alloc MyDataSource.\n");
+        MEDIA_LOGE("fail to alloc MyStreamSource.");
         return NULL;
     }
 
-    data_source->base.CheckPrepared = MyDataSource_CheckPrepared;
-    data_source->base.ReadAt = MyDataSource_ReadAt;
-    data_source->base.GetLength = MyDataSource_GetLength;
+    data_source->base.CheckPrepared = MyStreamSource_CheckPrepared;
+    data_source->base.ReadAt = MyStreamSource_ReadAt;
+    data_source->base.GetLength = MyStreamSource_GetLength;
 
     data_source->data = data;
     data_source->data_length = length;
@@ -71,38 +89,38 @@ StreamSource *MyDataSource_Create(char *data, int length)
     data_source->unknown_data_length = 1;
     g_source_total_length = length;
     g_length_increase_thread_alive = 0;
-    printf("g_source_total_length: %d, last_data_gained: %d\n", g_source_total_length, data_source->last_data_gained);
-    rtos_task_create(NULL, "MyDataSource_UnknownLengthTestThread", MyDataSource_UnknownLengthTestThread, (void *)data_source, 2048 * 4, 0);
+    MEDIA_LOGD("g_source_total_length: %d, last_data_gained: %d", g_source_total_length, data_source->last_data_gained);
+    rtos_task_create(NULL, "UnknownLengthThread", MyStreamSource_UnknownLengthTestThread, (void *)data_source, 2048 * 4, 0);
 #endif
 
-    printf("length: %d, unknown_data_length: %d\n", data_source->data_length, data_source->unknown_data_length);
+    MEDIA_LOGD("length: %d, unknown_data_length: %d", data_source->data_length, data_source->unknown_data_length);
 
 #ifdef MDS_PREPARE_DELAY_TEST
     g_prepared = 0;
     g_prepare_thread_alive = 0;
-    rtos_task_create(NULL, "MyDataSource_PrepareTestThread", MyDataSource_PrepareTestThread, (void *)data_source, 2048 * 4, 0);
+    rtos_task_create(NULL, "MyStreamSource_PrepareTestThread", MyStreamSource_PrepareTestThread, (void *)data_source, 2048 * 4, 0);
 #endif
 
     return (StreamSource *)data_source;
 }
 
-void MyDataSource_Destroy(MyDataSource *source)
+void MyStreamSource_Destroy(MyStreamSource *source)
 {
     if (!source) {
         return;
     }
 
-    printf("MyDataSource_Destroy\n");
+    MEDIA_LOGD("MyStreamSource_Destroy");
 
     source->alive = 0;
 
-    MyDataSource_WaitLoopExit();
+    MyStreamSource_WaitLoopExit();
 
     free((void *)source);
     source = NULL;
 }
 
-int32_t MyDataSource_CheckPrepared(const StreamSource *source)
+int32_t MyStreamSource_CheckPrepared(const StreamSource *source)
 {
     if (!source) {
         return AUDIO_ERR_NO_INIT;
@@ -114,28 +132,28 @@ int32_t MyDataSource_CheckPrepared(const StreamSource *source)
     }
 #endif
 
-    MyDataSource *data_source = (MyDataSource *)source;
+    MyStreamSource *data_source = (MyStreamSource *)source;
 
     return data_source->data ? AUDIO_OK : AUDIO_ERR_NO_INIT;
 }
 
-ssize_t MyDataSource_ReadAt(const StreamSource *source, off_t offset, void *data, size_t size)
+ssize_t MyStreamSource_ReadAt(const StreamSource *source, off_t offset, void *data, size_t size)
 {
     if (!source || !data || !size) {
-        printf("ReadAt invalid param, source: %p, data: %p, size: %d\n", source, data, size);
+        MEDIA_LOGE("ReadAt invalid param, source: %p, data: %p, size: %d", source, data, size);
         return (ssize_t)AUDIO_ERR_INVALID_OPERATION;
     }
 
-    //printf("MyDataSource_ReadAt offset: %d, size: %d\n", offset, size);
+    //MEDIA_LOGD("MyStreamSource_ReadAt offset: %d, size: %d", offset, size);
 
-    MyDataSource *data_source = (MyDataSource *)source;
+    MyStreamSource *data_source = (MyStreamSource *)source;
 
     if (offset >= data_source->data_length) {
         if (data_source->unknown_data_length && !data_source->last_data_gained) {
-            //printf("ReadAt offset(%d) beyond unknown length data, now data_length(%d)\n", offset, data_source->data_length);
+            //MEDIA_LOGE("ReadAt offset(%d) beyond unknown length data, now data_length(%d)", offset, data_source->data_length);
             return (ssize_t)STREAM_SOURCE_READ_AGAIN;
         }
-        printf("ReadAt offset(%ld) beyond data length(%d), unknown_length(%d), source(%p), data(%p)\n",
+        MEDIA_LOGD("ReadAt offset(%ld) beyond data length(%d), unknown_length(%d), source(%p), data(%p)",
                offset,
                data_source->data_length, data_source->unknown_data_length,
                data_source, data);
@@ -143,7 +161,7 @@ ssize_t MyDataSource_ReadAt(const StreamSource *source, off_t offset, void *data
     }
 
     if ((data_source->data_length - (int)offset) < (int)size) {
-        //printf("free size %d is smaller than read size %d, so change read size\n", data_source->data_length - offset, size);
+        //MEDIA_LOGD("free size %d is smaller than read size %d, so change read size", data_source->data_length - offset, size);
         size = data_source->data_length - offset;
     }
 
@@ -154,12 +172,12 @@ ssize_t MyDataSource_ReadAt(const StreamSource *source, off_t offset, void *data
             kMDSReadRetry = 0;
             kMDSReadCount++;
         }
-        printf("read again %d-%d\n", kMDSReadCount, kMDSReadRetry);
+        MEDIA_LOGD("read again %d-%d", kMDSReadCount, kMDSReadRetry);
         return (ssize_t)STREAM_SOURCE_READ_AGAIN;
     }
 #endif
 
-    //printf("memcpy %p, %p, %d\n", data, data_source->data + offset, (size_t)size);
+    //MEDIA_LOGD("memcpy %p, %p, %d", data, data_source->data + offset, (size_t)size);
     memcpy(data, data_source->data + offset, (size_t)size);
 
 #ifdef MDS_READ_UNSMOOTH_TEST
@@ -169,13 +187,13 @@ ssize_t MyDataSource_ReadAt(const StreamSource *source, off_t offset, void *data
     return size;
 }
 
-int32_t MyDataSource_GetLength(const StreamSource *source, off_t *size)
+int32_t MyStreamSource_GetLength(const StreamSource *source, off_t *size)
 {
     if (!source) {
         return STREAM_SOURCE_FAIL;
     }
 
-    MyDataSource *data_source = (MyDataSource *)source;
+    MyStreamSource *data_source = (MyStreamSource *)source;
     *size = data_source->data_length;
 
     if (data_source->unknown_data_length && !data_source->last_data_gained) {
@@ -188,7 +206,7 @@ int32_t MyDataSource_GetLength(const StreamSource *source, off_t *size)
 
 // ----------------------------------------------------------------------
 // Private Interfaces
-void MyDataSource_WaitLoopExit(void)
+void MyStreamSource_WaitLoopExit(void)
 {
     int count = 10 * 1000 / MDS_SLEEP_TIME_MS; //wait 3s
 
@@ -211,16 +229,16 @@ void MyDataSource_WaitLoopExit(void)
         }
 
         rtos_time_delay_ms(MDS_SLEEP_TIME_MS);
-        //printf("wait task exit time=%d.\n", count);
+        //MEDIA_LOGD("wait task exit time=%d.", count);
         count--;
     }
 }
 
 #ifdef MDS_PREPARE_DELAY_TEST
-void MyDataSource_PrepareTestThread(void *Data)
+void MyStreamSource_PrepareTestThread(void *Data)
 {
-    MyDataSource *data_source = (MyDataSource *)Data;
-    printf("[MyDataSource_PrepareTestThread] start\n");
+    MyStreamSource *data_source = (MyStreamSource *)Data;
+    MEDIA_LOGD("[MyStreamSource_PrepareTestThread] start");
     g_prepare_thread_alive = 1;
 
     unsigned int count = kMDSPrepareDelayTimeMs / MDS_SLEEP_TIME_MS;
@@ -231,23 +249,23 @@ void MyDataSource_PrepareTestThread(void *Data)
 
     g_prepared = 1;
     g_prepare_thread_alive = 0;
-    printf("[MyDataSource_PrepareTestThread] exit\n");
+    MEDIA_LOGD("[MyStreamSource_PrepareTestThread] exit");
     rtos_task_delete(NULL);
 }
 #endif
 
 #ifdef MDS_UNKNOWN_LENGTH_TEST
-void MyDataSource_UnknownLengthTestThread(void *Data)
+void MyStreamSource_UnknownLengthTestThread(void *Data)
 {
-    MyDataSource *data_source = (MyDataSource *)Data;
-    printf("[MyDataSource_UnknownLengthTestThread] start, g_source_total_length: %d\n", g_source_total_length);
+    MyStreamSource *data_source = (MyStreamSource *)Data;
+    MEDIA_LOGD("[UnknownLengthThread] start, g_source_total_length: %d", g_source_total_length);
 
     g_length_increase_thread_alive = 1;
     int count = kMDSLengthIncreaseTotalTimeMs / MDS_SLEEP_TIME_MS;
     int block_length = g_source_total_length / count;
     int delta = g_source_total_length % count;
 
-    printf("count(%d), block_length(%d), delta(%d), data_source->data_length(%d)\n", count, block_length, delta, data_source->data_length);
+    MEDIA_LOGD("count(%d), block_length(%d), delta(%d), data_source->data_length(%d)", count, block_length, delta, data_source->data_length);
     do {
         data_source->data_length += block_length;
         count--;
@@ -257,7 +275,7 @@ void MyDataSource_UnknownLengthTestThread(void *Data)
     data_source->data_length += delta;
     data_source->last_data_gained = 1;
     g_length_increase_thread_alive = 0;
-    printf("[MyDataSource_UnknownLengthTestThread] exit, total data_length: %d\n", data_source->data_length);
+    MEDIA_LOGD("[UnknownLengthThread] exit, total data_length: %d", data_source->data_length);
     rtos_task_delete(NULL);
 }
 #endif

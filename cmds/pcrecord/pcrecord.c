@@ -1,4 +1,22 @@
-#include "example_pc_recorder.h"
+/*
+ * Copyright (c) 2021 Realtek, LLC.
+ * All rights reserved.
+ *
+ * Licensed under the Realtek License, Version 1.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License from Realtek
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#define LOG_TAG "PCRecord"
+
+#include "log/log.h"
+#include "pcrecord.h"
 
 #ifdef CONFIG_AUDIO_MIXER
 #include "audio/audio_service.h"
@@ -27,7 +45,6 @@ extern s32 wifi_get_join_status(u8 *join_status);
 
 #define MAX_URL_LEN         64
 #define SERVER_PORT         80
-#define LOG_TAG "PlayerTest"
 
 static int start_cnt = 0;
 static int end_cnt = 0;
@@ -83,7 +100,7 @@ static unsigned short sine_48000[96] = {
 };
 #endif
 
-const struct pr_msg msg_type[] = {
+const struct pr_msg pr_msg_type[] = {
     {PR_MSG_ACK,        "ack"       },
     {PR_MSG_ERROR,      "error"     },
     {PR_MSG_CONFIG,     "config"    },
@@ -100,7 +117,7 @@ void pc_playback_task(void *param);
 #if defined(CONFIG_MEDIA_PLAYER) && CONFIG_MEDIA_PLAYER
 void OnStateChangedPC(const struct MediaPlayerCallback *listener, const struct MediaPlayer *player, int state)
 {
-    printf("OnStateChanged(%p %p), (%d)\n", listener, player, state);
+    MEDIA_LOGD("OnStateChanged(%p %p), (%d)", listener, player, state);
 
     switch (state) {
     case MEDIA_PLAYER_PREPARED: { //entered for async prepare
@@ -113,19 +130,19 @@ void OnStateChangedPC(const struct MediaPlayerCallback *listener, const struct M
     }
 
     case MEDIA_PLAYER_STOPPED: { //stop received, then reset
-        printf("start reset\n");
+        MEDIA_LOGD("start reset");
         g_pc_playing_status = STOPPED;
         break;
     }
 
     case MEDIA_PLAYER_PAUSED: { //pause received when do pause or start rewinding
-        printf("paused\n");
+        MEDIA_LOGD("paused");
         g_pc_playing_status = PAUSED;
         break;
     }
 
     case MEDIA_PLAYER_REWIND_COMPLETE: { //rewind done received, then start
-        printf("rewind complete\n");
+        MEDIA_LOGD("rewind complete");
         g_pc_playing_status = REWIND_COMPLETE;
         break;
     }
@@ -137,26 +154,26 @@ void OnInfoPC(const struct MediaPlayerCallback *listener, const struct MediaPlay
     (void) listener;
     (void) player;
     (void) extra;
-    //printf("OnInfo (%p %p), (%d, %d)\n", listener, player, info, extra);
+    //MEDIA_LOGD("OnInfo (%p %p), (%d, %d)", listener, player, info, extra);
 
     switch (info) {
     case MEDIA_PLAYER_INFO_BUFFERING_START: {
-        printf("MEDIA_PLAYER_INFO_BUFFERING_START\n");
+        MEDIA_LOGD("MEDIA_PLAYER_INFO_BUFFERING_START");
         break;
     }
 
     case MEDIA_PLAYER_INFO_BUFFERING_END: {
-        printf("MEDIA_PLAYER_INFO_BUFFERING_END\n");
+        MEDIA_LOGD("MEDIA_PLAYER_INFO_BUFFERING_END");
         break;
     }
 
     case MEDIA_PLAYER_INFO_BUFFERING_INFO_UPDATE: {
-        //printf("MEDIA_PLAYER_INFO_BUFFERING_INFO_UPDATE %d\n", extra);
+        //MEDIA_LOGD("MEDIA_PLAYER_INFO_BUFFERING_INFO_UPDATE %d", extra);
         break;
     }
 
     case MEDIA_PLAYER_INFO_NOT_REWINDABLE: {
-        printf("MEDIA_PLAYER_INFO_NOT_REWINDABLE\n");
+        MEDIA_LOGD("MEDIA_PLAYER_INFO_NOT_REWINDABLE");
         break;
     }
     }
@@ -164,52 +181,52 @@ void OnInfoPC(const struct MediaPlayerCallback *listener, const struct MediaPlay
 
 void OnErrorPC(const struct MediaPlayerCallback *listener, const struct MediaPlayer *player, int error, int extra)
 {
-    printf("OnError (%p %p), (%d, %d)\n", player, listener, error, extra);
+    MEDIA_LOGD("OnError (%p %p), (%d, %d)", player, listener, error, extra);
 }
 
 void pc_StartPlay(struct MediaPlayer *player, const char *url)
 {
     if (player == NULL) {
-        printf("start play fail, player is NULL!\n");
+        MEDIA_LOGE("start play fail, player is NULL!");
         return;
     }
 
-    printf("start to play: %s\n", url);
+    MEDIA_LOGD("start to play: %s", url);
     int32_t ret = 0;
 
     g_pc_playing_status = PLAYING;
 
-    printf("SetSource\n");
+    MEDIA_LOGD("SetSource");
     ret = MediaPlayer_SetSource(player, url);
     if (ret) {
-        printf("SetDataSource fail:error=%d\n", (int)ret);
+        MEDIA_LOGE("SetDataSource fail:error=%d", (int)ret);
         return ;
     }
 
-    printf("Prepare\n");
+    MEDIA_LOGD("Prepare");
     ret = MediaPlayer_Prepare(player);
     if (ret) {
-        printf("prepare  fail:error=%d\n", (int)ret);
+        MEDIA_LOGE("prepare  fail:error=%d", (int)ret);
         return ;
     }
 
-    printf("Start\n");
+    MEDIA_LOGD("Start");
     ret = MediaPlayer_Start(player);
     if (ret) {
-        printf("start  fail:error=%d\n", (int)ret);
+        MEDIA_LOGE("start  fail:error=%d", (int)ret);
         return ;
     }
 
     int64_t duration = 0;
     MediaPlayer_GetDuration(player, &duration);
-    printf("duration is %lldms\n", duration);
+    MEDIA_LOGD("duration is %lldms", duration);
 
     while (g_pc_playing_status == PLAYING) {
         rtos_time_delay_ms(1000);
     }
 
     if (g_pc_playing_status == PLAYING_COMPLETED) {
-        printf("play complete, now stop.\n");
+        MEDIA_LOGD("play complete, now stop.");
         MediaPlayer_Stop(player);
     }
 
@@ -218,11 +235,11 @@ void pc_StartPlay(struct MediaPlayer *player, const char *url)
     }
 
     if (g_pc_playing_status == STOPPED) {
-        printf("play stopped, now reset.\n");
+        MEDIA_LOGD("play stopped, now reset.");
         MediaPlayer_Reset(player);
     }
 
-    printf("play %s done!!!!\n", url);
+    MEDIA_LOGD("play %s done!!!!", url);
 }
 
 
@@ -230,7 +247,7 @@ int pc_player_test(const char *url)
 {
     struct MediaPlayerCallback *callback = (struct MediaPlayerCallback *)rtos_mem_malloc(sizeof(struct MediaPlayerCallback));
     if (!callback) {
-        printf("Calloc MediaPlayerCallback fail.\n");
+        MEDIA_LOGE("Calloc MediaPlayerCallback fail.");
         return -1;
     }
 
@@ -250,7 +267,7 @@ int pc_player_test(const char *url)
 
     rtos_time_delay_ms(1000);
 
-    printf("exit\n");
+    MEDIA_LOGD("exit");
     return 0;
 }
 #endif
@@ -263,7 +280,7 @@ void pr_uart_send_string(char *pstr, int len)
 
     ret = serial_send_stream_dma(&pr_sobj, pstr, len);
     if (ret != 0) {
-        printf("%s Error(%d)\n", __FUNCTION__, (int)ret);
+        MEDIA_LOGE("%s Error(%d)", __FUNCTION__, (int)ret);
     }
 #else
     while (len) {
@@ -305,7 +322,7 @@ static void uart_dma_tx_done(uint32_t id)
 {
     (void) id;
     rtos_sema_give(pr_dma_tx_sema);
-    //printf("%s\n", __func__);
+    //MEDIA_LOGD("%s", __func__);
 }
 
 void pr_uart_init_mbed(void)
@@ -348,7 +365,7 @@ int pr_audiorecord_query(void)
     msg_js = cJSON_Print(msg_obj);
     cJSON_Delete(msg_obj);
 
-    printf("[PC RECORDER INFO] %s, %s\n", __func__, msg_js);
+    MEDIA_LOGD("[PCRECORD INFO] %s, %s", __func__, msg_js);
     rtos_mutex_take(pr_tx_mutex, MUTEX_WAIT_TIMEOUT);
     pr_uart_send_string(msg_js, strlen(msg_js));
     rtos_mutex_give(pr_tx_mutex);
@@ -359,14 +376,14 @@ int pr_audiorecord_query(void)
 
 int pr_audiorecord_config(msg_attrib_t *pattrib)
 {
-    printf("[PC RECORDER INFO] ================>Free Heap: %d\n", (int)rtos_mem_get_free_heap_size());
+    MEDIA_LOGD("[PCRECORD INFO] ================>Free Heap: %d", (int)rtos_mem_get_free_heap_size());
 
     pr_adapter.rx_cnt = 0;
     pr_adapter.tx_cnt = 0;
 
     audio_record = AudioRecord_Create();
     if (!audio_record) {
-        printf("[PC RECORDER INFO] record create failed");
+        MEDIA_LOGE("[PCRECORD INFO] record create failed");
         return -1;
     }
 
@@ -394,7 +411,7 @@ int pr_audiorecord_config(msg_attrib_t *pattrib)
 int pr_audiorecord_start(msg_attrib_t *pattrib)
 {
     if (!audio_record) {
-        printf("[PC RECORDER INFO] record start fail\n");
+        MEDIA_LOGE("[PCRECORD INFO] record start fail");
         return -1;
     }
     AudioRecord_Start(audio_record);
@@ -410,24 +427,24 @@ int pr_audiorecord_start(msg_attrib_t *pattrib)
 int pr_audiorecord_stop(void)
 {
     if (pr_adapter.record_stop) {
-        printf("[PC RECORDER INFO] audio record already stopped\n");
+        MEDIA_LOGD("[PCRECORD INFO] audio record already stopped");
         return 0;
     }
 
     pr_adapter.record_stop = 1;
     pr_adapter.record_status = RECORD_IDLE;
 
-    printf("[PC RECORDER INFO] audio record task exit\n");
+    MEDIA_LOGD("[PCRECORD INFO] audio record task exit");
 
     AudioRecord_Stop(audio_record);
     AudioRecord_Destroy(audio_record);
 
-    printf("[PC RECORDER INFO] audio record stopped\n");
+    MEDIA_LOGD("[PCRECORD INFO] audio record stopped");
 
 #if defined(CONFIG_MEDIA_PLAYER) && CONFIG_MEDIA_PLAYER
     MediaPlayer_Stop(g_pc_player);
 #endif
-    printf("[PC RECORDER INFO] audio player stopped\n");
+    MEDIA_LOGD("[PCRECORD INFO] audio player stopped");
     return 0;
 }
 
@@ -475,10 +492,10 @@ int pc_msg_response_ack(int opt)
     msg_js = cJSON_Print(msg_obj);
     cJSON_Delete(msg_obj);
 
-    printf("[PC RECORDER INFO] %s, %s\n", __func__, msg_js);
+    MEDIA_LOGD("[PCRECORD INFO] %s, %s", __func__, msg_js);
     rtos_mutex_take(pr_tx_mutex, MUTEX_WAIT_TIMEOUT);
     pr_uart_send_string(msg_js, strlen(msg_js));
-    printf("[PC RECORDER INFO] %s, send ack done(%d)\n", __func__, strlen(msg_js));
+    MEDIA_LOGD("[PCRECORD INFO] %s, send ack done(%d)", __func__, strlen(msg_js));
     rtos_mutex_give(pr_tx_mutex);
 
     rtos_mem_free(msg_js);
@@ -553,24 +570,24 @@ void pc_msg_process(msg_attrib_t *pattrib)
     tempbuf[datasize++] = '\0';
     pc_datasize = 0;
 
-    printf("[PC RECORDER INFO] %s, msg(%d): %s\n", __func__, datasize, tempbuf);
+    MEDIA_LOGD("[PCRECORD INFO] %s, msg(%d): %s", __func__, datasize, tempbuf);
 
     if (datasize == 0) {
-        printf("[PC RECORDER INFO] null data\n");
+        MEDIA_LOGE("[PCRECORD INFO] null data");
         return;
     }
 
     if (check_cjson(tempbuf, datasize) == FALSE) {
-        printf("[PC RECORDER INFO] invaild json\n");
+        MEDIA_LOGE("[PCRECORD INFO] invaild json");
         return;
     }
 
     if ((root = cJSON_Parse(tempbuf)) != NULL) {
         if ((typeobj = cJSON_GetObjectItem(root, "type")) != NULL) {
-            printf("[PC RECORDER INFO] type: %s\n", typeobj->valuestring);
-            for (unsigned int i = 0; i < sizeof(msg_type) / sizeof(struct pr_msg); i++) {
-                if (!strcmp(typeobj->valuestring, msg_type[i].item_str)) {
-                    pattrib->type = msg_type[i].item;
+            MEDIA_LOGD("[PCRECORD INFO] type: %s", typeobj->valuestring);
+            for (unsigned int i = 0; i < sizeof(pr_msg_type) / sizeof(struct pr_msg); i++) {
+                if (!strcmp(typeobj->valuestring, pr_msg_type[i].item_str)) {
+                    pattrib->type = pr_msg_type[i].item;
                     break;
                 }
             }
@@ -609,12 +626,12 @@ void pc_msg_process(msg_attrib_t *pattrib)
             memcpy(pattrib->url, curl->valuestring, strlen(curl->valuestring));
             if (player_is_running) {
                 rtos_time_delay_ms(200);
-                printf("[PC RECORDER INFO] %s, Player is running\n", __func__);
+                MEDIA_LOGD("[PCRECORD INFO] %s, Player is running", __func__);
             } else {
                 pr_adapter.record_stop = 0; // add for play before start record
                 if (rtos_task_create(&playback_task, ((const char *)"playback_task"), pc_playback_task,
                                      pattrib, 8192 * 4, 2) != RTK_SUCCESS) {
-                    printf("\n\r%s rtos_task_create(playback_task) failed", __FUNCTION__);
+                    MEDIA_LOGD("%s rtos_task_create(playback_task) failed", __FUNCTION__);
                 }
             }
         }
@@ -646,12 +663,12 @@ void pc_msg_process(msg_attrib_t *pattrib)
         }
         memcpy(pattrib->chmap + pattrib->offset, tempbuf, strlen(tempbuf));
 
-        printf("[PC RECORDER INFO] samplerate: %d\n", pattrib->samplerate);
-        printf("[PC RECORDER INFO] device: %d\n", pattrib->device);
-        printf("[PC RECORDER INFO] format: %d\n", pattrib->format);
-        printf("[PC RECORDER INFO] chnum: %d\n", pattrib->chnum);
-        printf("[PC RECORDER INFO] refch: %d\n", pattrib->refch);
-        printf("[PC RECORDER INFO] parameters, %s\n", pattrib->chmap);
+        MEDIA_LOGD("[PCRECORD INFO] samplerate: %d", pattrib->samplerate);
+        MEDIA_LOGD("[PCRECORD INFO] device: %d", pattrib->device);
+        MEDIA_LOGD("[PCRECORD INFO] format: %d", pattrib->format);
+        MEDIA_LOGD("[PCRECORD INFO] chnum: %d", pattrib->chnum);
+        MEDIA_LOGD("[PCRECORD INFO] refch: %d", pattrib->refch);
+        MEDIA_LOGD("[PCRECORD INFO] parameters, %s", pattrib->chmap);
 
         opt = pr_audiorecord_config(pattrib);
     }
@@ -679,7 +696,7 @@ void pc_msg_process(msg_attrib_t *pattrib)
         volume = cJSON_GetObjectItem(root, "value");
         vol = (float)(volume->valueint) / 100.0f;
 
-        printf("[PC RECORDER INFO] volume: %f\n", vol);
+        MEDIA_LOGD("[PCRECORD INFO] volume: %f", vol);
 
 #if defined(CONFIG_AUDIO_MIXER) && CONFIG_AUDIO_MIXER
         AudioControl_SetHardwareVolume(vol, vol);
@@ -688,7 +705,7 @@ void pc_msg_process(msg_attrib_t *pattrib)
     }
     break;
     default:
-        printf("[PC RECORDER INFO] %s, unsupport type\n", __func__);
+        MEDIA_LOGE("[PCRECORD INFO] %s, unsupport type", __func__);
         pc_msg_response_ack(opt);
     }
 
@@ -735,7 +752,7 @@ void pc_tx_task(void *param)
 
         rtos_time_delay_ms(2);
     }
-    printf("[PC RECORDER INFO] %s, exit\n", __func__);
+    MEDIA_LOGD("[PCRECORD INFO] %s, exit", __func__);
     rtos_task_delete(tx_task);
 }
 
@@ -755,7 +772,7 @@ static void pc_recorder_task(void *param)
             break;
         }
     }
-    printf("[PC RECORDER INFO] %s, exit\n", __func__);
+    MEDIA_LOGD("[PCRECORD INFO] %s, exit", __func__);
     recorder_is_running = false;
     rtos_task_delete(record_task);
 }
@@ -775,20 +792,20 @@ int pc_parse_url(char *url, char *host, char *resource, char *format)
             memcpy(host, url, (pos - url));
             url = pos;
         }
-        printf("[PC RECORDER INFO] server: %s\n\r", host);
+        MEDIA_LOGD("[PCRECORD INFO] server: %s\r", host);
 
         pos = strstr(url, "/");
         if (pos) {
             resource[0] = '/';
             memcpy(resource + 1, pos + 1, strlen(pos + 1));
         }
-        printf("[PC RECORDER INFO] resource: %s\n\r", resource);
+        MEDIA_LOGD("[PCRECORD INFO] resource: %s", resource);
 
         pos = strstr(resource, ".");
         if (pos) {
             memcpy(format, pos + 1, strlen(pos + 1));
         }
-        printf("[PC RECORDER INFO] format: %s\n\r", format);
+        MEDIA_LOGD("[PCRECORD INFO] format: %s", format);
         return 0;
     }
     return -1;
@@ -817,7 +834,7 @@ void pc_playback_task(void *param)
         // if url is m3u format, should get the playlist first
         server_fd = socket(AF_INET, SOCK_STREAM, 0);
 
-        printf("[PC RECORDER INFO] create socket: %d\n", server_fd);
+        MEDIA_LOGD("[PCRECORD INFO] create socket: %d", server_fd);
 
         int recv_timeout_ms = 5000;
         struct timeval tv;
@@ -833,7 +850,7 @@ void pc_playback_task(void *param)
         if (server_host != NULL) {
             memcpy((void *) &server_addr.sin_addr, (void *) server_host->h_addr, 4);
         } else {
-            printf("ERROR: server host\n");
+            MEDIA_LOGE("ERROR: server host");
             goto exit;
         }
 reconnect:
@@ -848,7 +865,7 @@ reconnect:
             char *http0 = NULL, *http1 = NULL;
             char *p = NULL;
 
-            printf("[PC RECORDER INFO] connect success\n");
+            MEDIA_LOGD("[PCRECORD INFO] connect success");
 
             sprintf((char *)buf, "GET %s HTTP/1.1\r\nHost: %s\r\n\r\n", resource, host);
             write(server_fd, (char const *)buf, strlen((char const *)buf));
@@ -868,7 +885,7 @@ reconnect:
                         body = header + strlen("\r\n\r\n");
                         *(body - 2) = 0;
                         header_removed = 1;
-                        printf("\nHTTP Header: %s\n", buf);
+                        MEDIA_LOGD("HTTP Header: %s", buf);
 
                         // Remove header size to get first read size of data from body head
                         read_size = pos - ((unsigned char *) body - buf);
@@ -883,7 +900,7 @@ reconnect:
                         }
                     } else {
                         if (pos >= PC_BUFLEN) {
-                            printf("ERROR: HTTP header\n");
+                            MEDIA_LOGE("ERROR: HTTP header");
                             goto exit;
                         }
 
@@ -917,7 +934,7 @@ reconnect:
                         memcpy(item->item_str, "http://", strlen("http://"));
                         memcpy(item->item_str + strlen("http://"), p, http1 - http0 - strlen("http://") - 2); // remove \r\n
                         list_add_tail(&item->node, &pr_url_list);
-                        printf("== %s\n", item->item_str);
+                        MEDIA_LOGD("== %s", item->item_str);
                         p += (http1 - http0 - strlen("http://"));
                     } else {
                         if (r_content_len == content_len) {
@@ -925,7 +942,7 @@ reconnect:
                             memset(item->item_str, 0, MAX_URL_LEN);
                             memcpy(item->item_str, http0, strlen(http0) - 2); // remove \r\n
                             list_add_tail(&item->node, &pr_url_list);
-                            printf("## %s\n", item->item_str);
+                            MEDIA_LOGD("## %s", item->item_str);
                         } else {
                             memset(buf, 0, PC_BUFLEN);
                             memcpy(buf, http0, strlen(http0));
@@ -943,7 +960,7 @@ reconnect:
             }
 
         } else {
-            printf("[PC RECORDER INFO] connect failed\n");
+            MEDIA_LOGE("[PCRECORD INFO] connect failed");
             if (pr_adapter.record_stop) {
                 goto exit;
             }
@@ -951,7 +968,7 @@ reconnect:
             goto reconnect;
         }
 
-        printf("close server fd\n");
+        MEDIA_LOGD("close server fd");
         close(server_fd);
 
         char *purl = NULL;
@@ -960,7 +977,7 @@ reconnect:
         list_del(&item->node);
 
         while (purl) {
-            printf("%s, len: %d\n", purl, strlen(purl));
+            MEDIA_LOGD("%s, len: %d", purl, strlen(purl));
 
             pc_player_test(purl);
             list_add_tail(&item->node, &pr_url_list);
@@ -999,11 +1016,11 @@ exit:
     int track_buf_size = 4096;
     unsigned int channels = 2;
     unsigned int rate = 48000;
-    printf("[PC RECORDER INFO] play sample channels:%d, rate:%d\n", channels, rate);
+    MEDIA_LOGD("[PCRECORD INFO] play sample channels:%d, rate:%d", channels, rate);
 
     audio_track = AudioTrack_Create();
     if (!audio_track) {
-        printf("[PC RECORDER INFO] new AudioTrack failed\n");
+        MEDIA_LOGE("[PCRECORD INFO] new AudioTrack failed");
         return;
     }
     uint32_t format = AUDIO_FORMAT_PCM_16_BIT;
@@ -1020,7 +1037,7 @@ exit:
 
     ssize_t size = track_buf_size / 4;
 
-    printf("[PC RECORDER INFO] audio track get size = %d\n", size);
+    MEDIA_LOGD("[PCRECORD INFO] audio track get size = %d", size);
 
     if (rate == 48000) {
         size = 96 * 2;
@@ -1036,7 +1053,7 @@ exit:
     AudioTrack_Destroy(audio_track);
 
 #endif
-    printf("[PC RECORDER INFO] %s, exit\n", __func__);
+    MEDIA_LOGD("[PCRECORD INFO] %s, exit", __func__);
     player_is_running = false;
     rtos_task_delete(playback_task);
 }
@@ -1047,7 +1064,7 @@ void pc_recorder_start(msg_attrib_t *pattrib)
     (void) pattrib;
     if (recorder_is_running) {
         rtos_time_delay_ms(200);
-        printf("[PC RECORDER INFO] %s, Recorder is running\n", __func__);
+        MEDIA_LOGD("[PCRECORD INFO] %s, Recorder is running", __func__);
         return;
     }
     pr_adapter.record_stop = 0;
@@ -1056,29 +1073,30 @@ void pc_recorder_start(msg_attrib_t *pattrib)
 
     if (rtos_task_create(&record_task, ((const char *)"pc_recorder_task"), pc_recorder_task,
                          NULL, 1024 * 4, 9) != RTK_SUCCESS) {
-        printf("\n\r%s rtos_task_create(pc_recorder_task) failed", __FUNCTION__);
+        MEDIA_LOGE("%s rtos_task_create(pc_recorder_task) failed", __FUNCTION__);
     }
 #if PR_UART_USE_DMA_TX == 0
     if (rtos_task_create(&tx_task, ((const char *)"pc_tx_task"), pc_tx_task,
                          NULL, 1024 * 4, 3) != RTK_SUCCESS) {
-        printf("\n\r%s rtos_task_create(pc_tx_task) failed", __FUNCTION__);
+        MEDIA_LOGE("%s rtos_task_create(pc_tx_task) failed", __FUNCTION__);
     }
 #endif
 }
 
-void pc_recorder_main(void *param)
+uint32_t pcrecord_cmd_handle(int argc, char *argv[])
 {
-    (void)param;
+    (void)argc;
+    (void)argv;
     u8 join_status = RTW_JOINSTATUS_UNKNOWN;
 
     rtos_time_delay_ms(1000);
 
     while (!((wifi_get_join_status(&join_status) == RTK_SUCCESS)  && (join_status == RTW_JOINSTATUS_SUCCESS))) {
-        printf("Please connect to WIFI\n");
+        MEDIA_LOGD("Please connect to WIFI");
         rtos_time_delay_ms(1000);
     }
 
-    printf("[PC RECORDER INFO] %s, start\n", __func__);
+    MEDIA_LOGD("[PCRECORD INFO] %s, start", __func__);
 
 #if PR_UART_USE_DMA_TX
     rtos_sema_create(&pr_dma_tx_sema, 1, RTOS_SEMA_MAX_COUNT);
@@ -1103,15 +1121,8 @@ void pc_recorder_main(void *param)
     AudioControl_SetHardwareVolume(0.6, 0.6);
 #endif
     if (rtos_task_create(NULL, (char const *)"pc_rx_task", pc_rx_task, NULL, 2048 * 4, 1) != RTK_SUCCESS) {
-        printf("\n\r[%s] Create pc_rx_task failed", __FUNCTION__);
+        MEDIA_LOGE("[%s] Create pc_rx_task failed", __FUNCTION__);
     }
 
-    rtos_task_delete(NULL);
-}
-
-void example_pc_recorder(void)
-{
-    if (rtos_task_create(NULL, (char const *)"pr_main", pc_recorder_main, NULL, 2048 * 4, 1) != RTK_SUCCESS) {
-        printf("\n\r[%s] Create pr_main failed", __FUNCTION__);
-    }
+    return TRUE;
 }

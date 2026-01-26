@@ -1,0 +1,65 @@
+menu "CONFIG AUDIO CMD"
+    config SUPPORT_AUDIO_CMD
+        bool "Enable Audio CMD"
+        default n
+    if SUPPORT_AUDIO_CMD
+        if SUPPORT_AUDIO_CMD_ARECORD
+            config CMD_ARECORD_MENU
+                bool "arecord"
+                select AUDIO_FWK_MENU
+                select CMD_ARECORD if WHC_HOST || WHC_NONE
+        endif
+
+        if SUPPORT_AUDIO_CMD_APLAY
+            config CMD_APLAY_MENU
+                bool "aplay"
+                select AUDIO_FWK_MENU
+                select CMD_APLAY if WHC_HOST || WHC_NONE
+        endif
+
+        if SUPPORT_AUDIO_CMD_PLAYER
+            config CMD_PLAYER_MENU
+                bool "player"
+                select AUDIO_FWK_MENU
+                select MEDIA_PLAYER_MENU
+                select MEDIA_DEMUX_WAV_MENU
+                select MEDIA_DEMUX_MP3_MENU
+                select MEDIA_DEMUX_AAC_MENU
+                select MEDIA_DEMUX_MP4_MENU
+                select MEDIA_DEMUX_FLAC_MENU
+                select MEDIA_DEMUX_OGG_MENU
+                select MEDIA_DEMUX_AMR_MENU
+                select MEDIA_CODEC_PCM_MENU
+                select MEDIA_CODEC_MP3_MENU
+                select MEDIA_CODEC_HAAC_MENU
+                select MEDIA_CODEC_VORBIS_MENU
+                select MEDIA_CODEC_OPUS_MENU
+                select MEDIA_CODEC_AMR_MENU
+                select MEDIA_CODEC_G711_MENU
+                select MEDIA_CODEC_GSM_MENU
+                select CMD_PLAYER if WHC_HOST || WHC_NONE
+        endif
+
+        if SUPPORT_AUDIO_CMD_PCRECORD
+            config CMD_PCRECORD_MENU
+                bool "pcrecord"
+                select AUDIO_FWK_MENU
+                select MEDIA_PLAYER_MENU
+                select MEDIA_DEMUX_MP3_MENU
+                select MEDIA_CODEC_MP3_MENU
+                select CMD_PCRECORD if WHC_HOST || WHC_NONE
+        endif
+    endif
+endmenu
+
+config CMD_ARECORD
+bool
+
+config CMD_APLAY
+bool
+
+config CMD_PLAYER
+bool
+
+config CMD_PCRECORD
+bool
