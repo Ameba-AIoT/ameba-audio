@@ -449,9 +449,7 @@ uint32_t audio_uart_cmd(uint16_t argc, unsigned char **argv)
 
 CMD_TABLE_DATA_SECTION
 const COMMAND_TABLE uart_test_cmd_table[] = {
-	{
-		(const u8 *)"audio_uart",  1, audio_uart_cmd, (const u8 *)"\t audio_uart\n"
-	},
+	{"audio_uart", audio_uart_cmd},
 };
 #else
 void app_example(void)
