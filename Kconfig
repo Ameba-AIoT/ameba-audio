@@ -117,6 +117,10 @@ menu "Audio Config"
             select OPUS_LIB if WHC_HOST || WHC_NONE
     endmenu
 
+if SUPPORT_AUDIO_CMD_ARECORD || SUPPORT_AUDIO_CMD_APLAY || SUPPORT_AUDIO_CMD_PLAYER || SUPPORT_AUDIO_CMD_PCRECORD
+    rsource "cmds/Kconfig"
+endif
+
 endmenu
 
 
