@@ -1,0 +1,25 @@
+name: Sync to Gitee 
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code from Github
+      uses: actions/checkout@v4
+      with:
+        ref: master
+        fetch-depth: 0
+    - name: Debug GITEE_TOKEN
+      run: echo "TOKEN_LENGTH=${#GITEE_TOKEN}"
+      env:
+        GITEE_TOKEN: ${{ secrets.TOKEN_GITEE }}
+    - name: Mirror to Gitee
+      env:
+        GITEE_TOKEN: ${{ secrets.TOKEN_GITEE}}
+      run: |
+        git remote add gitee https://JenkinsRsWlan5:${GITEE_TOKEN}@gitee.com/ameba-aiot/ameba-audio.git
+        git push gitee HEAD:refs/heads/master --force
