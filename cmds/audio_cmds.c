@@ -141,53 +141,29 @@ CMD_TABLE_DATA_SECTION
 const COMMAND_TABLE audio_cmd_table[] = {
 #ifdef CONFIG_CMD_ARECORD
     {
-        (const u8 *)"arecord", 1, arecord_cmd_thread,
-        (const u8 *)"\tarecord\n"
-                    "\t\ttest cmd: arecord [-r] rate [-b] record_bytes_one_time [-c] record_channels [-m] record_mode [-f] format  \n"
-                    "\t\t          [-or] 1:only do record, 0:record then play [-noirq] 1:irq mode, 0:no irq mode [-ref] 1:test ref 0: not test ref\n"
-                    "\t\t          [-pres] 1: pressure test, 0: record fixed time [-cxs] mic source for channelx, exp, -c0s: mic src for channel0 \n"
-                    "\t\tdefault params: [-r] 16000 [-b] 8192 [-c] 2 [-m] 0 [-f] format 16 [-or] 0 [-noirq] 0 [-ref] 0\n"
-                    "\t\trecord_mode: 0:no_afe_pure_data; 1:no_afe_all_data \n"
-                    "\t\ttest demo: arecord -r 16000 -b 8192 \n"
-                    "\t\ttest noirq, -b should be 8ms bytes: arecord -c 1 -b 256 -noirq 1 -r 16000;\n"
+        "arecord", arecord_cmd_thread
     },
 #endif
 
 #ifdef CONFIG_CMD_APLAY
     {
-        (const u8 *)"aplay", 1, aplay_cmd_thread,
-        (const u8 *)"\taplay\n"
-                    "\t\ttest cmd: aplay [-r] rate [-b] write_frames_one_time [-c] track_channels [-f] format\n"
-                    "\t\tdefault params: [-r] 16000 [-p] 1024 [-c] 2 [-f] format 16 \n"
-                    "\t\ttest demo: aplay -r 48000 -c 1 \n"
-                    "\t\tcareful: if you set SINE_GEN_EVERY_TIME as 0, please remember to set -b as [integer * rate * 1 / g_freq]\n"
+        "aplay", aplay_cmd_thread
     },
 
     {
-        (const u8 *)"amixer", 1, amixer_cmd_thread,
-        (const u8 *)"\tamixer\n"
-                    "\t\ttest cmd: amixer [-v] volume [-m] mute\n"
+        "amixer", amixer_cmd_thread
     },
 #endif
 
 #ifdef CONFIG_CMD_PLAYER
     {
-        (const u8 *)"player", 1, player_cmd_thread,
-        (const u8 *)"\tplayer\n"
-                    "\t\t[-f file]        An audio file buffer or path\n"
-                    "\t\t[-s 0/1]         Use stream source flag\n"
-                    "\t\tExamples:\n"
-                    "\t\t1. play a http file:\n"
-                    "\t\t   player -f http://aod.cos.tx.xmcdn.com/group72/M02/0A/07/wKgO0F4tEivQbT6uAEBqyNIMu88237.mp3\n"
-                    "\t\t2. play stream source\n"
-                    "\t\t   player -f buffer -s 1\n"
+        "player", player_cmd_thread
     },
 #endif
 
 #ifdef CONFIG_CMD_PCRECORD
     {
-        (const u8 *)"pcrecord", 1, pcrecord_cmd_thread,
-        (const u8 *)"\tpcrecord\n"
+        "pcrecord", pcrecord_cmd_thread
     },
 #endif
 };
