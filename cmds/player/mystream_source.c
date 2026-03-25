@@ -13,15 +13,15 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "MyStreamS"
+#define TAG "MyStreamS"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "os_wrapper.h"
+#include "ameba_soc.h"
 
-#include "log/log.h"
 #include "common/audio_errnos.h"
 
 #include "mystream_source.h"
@@ -64,15 +64,15 @@ void MyStreamSource_WaitLoopExit(void);
 // MyStreamSource
 StreamSource *MyStreamSource_Create(char *data, int length)
 {
-    MEDIA_LOGD("MyStreamSource_Create(%p, %d)", data, length);
+    RTK_LOGD(TAG, "MyStreamSource_Create(%p, %d)", data, length);
     if (!data) {
-        MEDIA_LOGE("invalid source or ring_buffer.");
+        RTK_LOGE(TAG, "invalid source or ring_buffer.");
         return NULL;
     }
 
     MyStreamSource *data_source = calloc(1, sizeof(MyStreamSource));
     if (!data_source) {
-        MEDIA_LOGE("fail to alloc MyStreamSource.");
+        RTK_LOGE(TAG, "fail to alloc MyStreamSource.");
         return NULL;
     }
 
@@ -89,11 +89,11 @@ StreamSource *MyStreamSource_Create(char *data, int length)
     data_source->unknown_data_length = 1;
     g_source_total_length = length;
     g_length_increase_thread_alive = 0;
-    MEDIA_LOGD("g_source_total_length: %d, last_data_gained: %d", g_source_total_length, data_source->last_data_gained);
-    rtos_task_create(NULL, "UnknownLengthThread", MyStreamSource_UnknownLengthTestThread, (void *)data_source, 2048 * 4, 0);
+    RTK_LOGD(TAG, "g_source_total_length: %d, last_data_gained: %d", g_source_total_length, data_source->last_data_gained);
+    rtos_task_create(NULL, "UnknownLengthThread", MyStreamSource_UnknownLengthTestThread, (void *)data_source, 1024, 0);
 #endif
 
-    MEDIA_LOGD("length: %d, unknown_data_length: %d", data_source->data_length, data_source->unknown_data_length);
+    RTK_LOGD(TAG, "length: %d, unknown_data_length: %d", data_source->data_length, data_source->unknown_data_length);
 
 #ifdef MDS_PREPARE_DELAY_TEST
     g_prepared = 0;
@@ -110,7 +110,7 @@ void MyStreamSource_Destroy(MyStreamSource *source)
         return;
     }
 
-    MEDIA_LOGD("MyStreamSource_Destroy");
+    RTK_LOGD(TAG, "MyStreamSource_Destroy");
 
     source->alive = 0;
 
@@ -140,20 +140,20 @@ int32_t MyStreamSource_CheckPrepared(const StreamSource *source)
 ssize_t MyStreamSource_ReadAt(const StreamSource *source, off_t offset, void *data, size_t size)
 {
     if (!source || !data || !size) {
-        MEDIA_LOGE("ReadAt invalid param, source: %p, data: %p, size: %d", source, data, size);
+        RTK_LOGE(TAG, "ReadAt invalid param, source: %p, data: %p, size: %d", source, data, size);
         return (ssize_t)AUDIO_ERR_INVALID_OPERATION;
     }
 
-    //MEDIA_LOGD("MyStreamSource_ReadAt offset: %d, size: %d", offset, size);
+    //RTK_LOGD(TAG, "MyStreamSource_ReadAt offset: %d, size: %d", offset, size);
 
     MyStreamSource *data_source = (MyStreamSource *)source;
 
     if (offset >= data_source->data_length) {
         if (data_source->unknown_data_length && !data_source->last_data_gained) {
-            //MEDIA_LOGE("ReadAt offset(%d) beyond unknown length data, now data_length(%d)", offset, data_source->data_length);
+            //RTK_LOGE(TAG, "ReadAt offset(%d) beyond unknown length data, now data_length(%d)", offset, data_source->data_length);
             return (ssize_t)STREAM_SOURCE_READ_AGAIN;
         }
-        MEDIA_LOGD("ReadAt offset(%ld) beyond data length(%d), unknown_length(%d), source(%p), data(%p)",
+        RTK_LOGD(TAG, "ReadAt offset(%ld) beyond data length(%d), unknown_length(%d), source(%p), data(%p)",
                offset,
                data_source->data_length, data_source->unknown_data_length,
                data_source, data);
@@ -161,7 +161,7 @@ ssize_t MyStreamSource_ReadAt(const StreamSource *source, off_t offset, void *da
     }
 
     if ((data_source->data_length - (int)offset) < (int)size) {
-        //MEDIA_LOGD("free size %d is smaller than read size %d, so change read size", data_source->data_length - offset, size);
+        //RTK_LOGD(TAG, "free size %d is smaller than read size %d, so change read size", data_source->data_length - offset, size);
         size = data_source->data_length - offset;
     }
 
@@ -172,12 +172,12 @@ ssize_t MyStreamSource_ReadAt(const StreamSource *source, off_t offset, void *da
             kMDSReadRetry = 0;
             kMDSReadCount++;
         }
-        MEDIA_LOGD("read again %d-%d", kMDSReadCount, kMDSReadRetry);
+        RTK_LOGD(TAG, "read again %d-%d", kMDSReadCount, kMDSReadRetry);
         return (ssize_t)STREAM_SOURCE_READ_AGAIN;
     }
 #endif
 
-    //MEDIA_LOGD("memcpy %p, %p, %d", data, data_source->data + offset, (size_t)size);
+    //RTK_LOGD(TAG, "memcpy %p, %p, %d", data, data_source->data + offset, (size_t)size);
     memcpy(data, data_source->data + offset, (size_t)size);
 
 #ifdef MDS_READ_UNSMOOTH_TEST
@@ -229,7 +229,7 @@ void MyStreamSource_WaitLoopExit(void)
         }
 
         rtos_time_delay_ms(MDS_SLEEP_TIME_MS);
-        //MEDIA_LOGD("wait task exit time=%d.", count);
+        //RTK_LOGD(TAG, "wait task exit time=%d.", count);
         count--;
     }
 }
@@ -238,7 +238,7 @@ void MyStreamSource_WaitLoopExit(void)
 void MyStreamSource_PrepareTestThread(void *Data)
 {
     MyStreamSource *data_source = (MyStreamSource *)Data;
-    MEDIA_LOGD("[MyStreamSource_PrepareTestThread] start");
+    RTK_LOGD(TAG, "[MyStreamSource_PrepareTestThread] start");
     g_prepare_thread_alive = 1;
 
     unsigned int count = kMDSPrepareDelayTimeMs / MDS_SLEEP_TIME_MS;
@@ -249,7 +249,7 @@ void MyStreamSource_PrepareTestThread(void *Data)
 
     g_prepared = 1;
     g_prepare_thread_alive = 0;
-    MEDIA_LOGD("[MyStreamSource_PrepareTestThread] exit");
+    RTK_LOGD(TAG, "[MyStreamSource_PrepareTestThread] exit");
     rtos_task_delete(NULL);
 }
 #endif
@@ -258,14 +258,14 @@ void MyStreamSource_PrepareTestThread(void *Data)
 void MyStreamSource_UnknownLengthTestThread(void *Data)
 {
     MyStreamSource *data_source = (MyStreamSource *)Data;
-    MEDIA_LOGD("[UnknownLengthThread] start, g_source_total_length: %d", g_source_total_length);
+    RTK_LOGD(TAG, "[UnknownLengthThread] start, g_source_total_length: %d", g_source_total_length);
 
     g_length_increase_thread_alive = 1;
     int count = kMDSLengthIncreaseTotalTimeMs / MDS_SLEEP_TIME_MS;
     int block_length = g_source_total_length / count;
     int delta = g_source_total_length % count;
 
-    MEDIA_LOGD("count(%d), block_length(%d), delta(%d), data_source->data_length(%d)", count, block_length, delta, data_source->data_length);
+    RTK_LOGD(TAG, "count(%d), block_length(%d), delta(%d), data_source->data_length(%d)", count, block_length, delta, data_source->data_length);
     do {
         data_source->data_length += block_length;
         count--;
@@ -275,7 +275,7 @@ void MyStreamSource_UnknownLengthTestThread(void *Data)
     data_source->data_length += delta;
     data_source->last_data_gained = 1;
     g_length_increase_thread_alive = 0;
-    MEDIA_LOGD("[UnknownLengthThread] exit, total data_length: %d", data_source->data_length);
+    RTK_LOGD(TAG, "[UnknownLengthThread] exit, total data_length: %d", data_source->data_length);
     rtos_task_delete(NULL);
 }
 #endif
