@@ -106,7 +106,6 @@ static void arecord_help(void);
 static struct AudioRecord *g_arecord = NULL;
 static unsigned int  g_only_record = 0;
 static unsigned int  g_noirq_test = 0;
-static unsigned int  g_test_ref = 0;
 static unsigned int  g_pressure_test = 0;
 static unsigned int  g_record_rate = 16000;
 static unsigned int  g_record_channel = 2;
@@ -118,18 +117,6 @@ static unsigned int  g_record_channel_src[MAX_CHANNEL_COUNT] = {AUDIO_AMIC1};
 static unsigned int  g_hpf_fc = 3;
 static unsigned int  g_eq_filter_type = 0;
 static unsigned int  Record_Sample(void);
-static          void Play_Sample(unsigned int channels, unsigned int rate);
-
-static u16 sine_48000[96] = {
-    0X0000, 0X0000, 0X10B5, 0X10B5, 0X2120, 0X2120, 0X30FB, 0X30FB, 0X3FFF, 0X3FFF, 0X4DEB, 0X4DEB,
-    0X5A82, 0X5A82, 0X658C, 0X658C, 0X6ED9, 0X6ED9, 0X7641, 0X7641, 0X7BA3, 0X7BA3, 0X7EE7, 0X7EE7,
-    0X7FFF, 0X7FFF, 0X7EE7, 0X7EE7, 0X7BA3, 0X7BA3, 0X7641, 0X7641, 0X6ED9, 0X6ED9, 0X658C, 0X658C,
-    0X5A82, 0X5A82, 0X4DEB, 0X4DEB, 0X3FFF, 0X3FFF, 0X30FB, 0X30FB, 0X2120, 0X2120, 0X10B5, 0X10B5,
-    0X0000, 0X0000, 0XEF4A, 0XEF4A, 0XDEDF, 0XDEDF, 0XCF04, 0XCF04, 0XC000, 0XC000, 0XB214, 0XB214,
-    0XA57D, 0XA57D, 0X9A73, 0X9A73, 0X9126, 0X9126, 0X89BE, 0X89BE, 0X845C, 0X845C, 0X8118, 0X8118,
-    0X8000, 0X8000, 0X8118, 0X8118, 0X845C, 0X845C, 0X89BE, 0X89BE, 0X9126, 0X9126, 0X9A73, 0X9A73,
-    0XA57D, 0XA57D, 0XB214, 0XB214, 0XC000, 0XC000, 0XCF04, 0XCF04, 0XDEDF, 0XDEDF, 0XEF4A, 0XEF4A
-};
 
 static int GetFormatForBits(void)
 {
@@ -392,48 +379,6 @@ static unsigned int Record_Sample()
     return frames;
 }
 
-static void Play_Sample(unsigned int channels, unsigned int rate)
-{
-    struct AudioTrack *audio_track;
-    int track_buf_size = 4096;
-    unsigned int frames_played = 0;
-    unsigned int play_frame_size = rate * REF_PLAY_SECONDS;
-    uint32_t flags = AUDIO_OUTPUT_FLAG_NONE;
-
-    AudioService_Init();
-    audio_track = AudioTrack_Create();
-    if (!audio_track) {
-        EXAMPLE_AUDIO_ERROR("new AudioTrack failed");
-        return;
-    }
-
-    track_buf_size = AudioTrack_GetMinBufferBytes(audio_track, AUDIO_CATEGORY_MEDIA, rate, AUDIO_FORMAT_PCM_16_BIT, channels) * 4;
-    AudioTrackConfig  track_config;
-    track_config.category_type = AUDIO_CATEGORY_MEDIA;
-    track_config.sample_rate = rate;
-    track_config.format = AUDIO_FORMAT_PCM_16_BIT;
-    track_config.channel_count = channels;
-    track_config.buffer_bytes = track_buf_size;
-    AudioTrack_Init(audio_track, &track_config, flags);
-
-    AudioTrack_Start(audio_track);
-
-    ssize_t size = 96 * 2;
-    while (1) {
-
-        AudioTrack_Write(audio_track, (u8 *)sine_48000, size, true);
-        frames_played += size / 4;
-
-        if (frames_played >= play_frame_size) {
-            break;
-        }
-    }
-
-    AudioTrack_Stop(audio_track);
-    AudioTrack_Destroy(audio_track);
-
-}
-
 static void RecordTask(void *param)
 {
     unsigned int frames;
@@ -446,17 +391,6 @@ static void RecordTask(void *param)
 
     RTK_LOGI(TAG, "Recorded %u frames", frames);
     free(param);
-    rtos_task_delete(NULL);
-}
-
-static void PlayTask(void *Data)
-{
-    unsigned int channels = 2;
-    unsigned int rate = 48000;
-
-    Play_Sample(channels, rate);
-
-    free(Data);
     rtos_task_delete(NULL);
 }
 
@@ -589,13 +523,6 @@ static uint32_t arecord_handler(cmd_params_t *params)
 
     if (RTK_SUCCESS != rtos_task_create(NULL, ((const char *)"RecordTask"), RecordTask, NULL, 5376, 5)) {
         EXAMPLE_AUDIO_ERROR("%s rtos_task_create(RecordTask) failed \n", __FUNCTION__);
-    }
-
-    if (g_test_ref) {
-        rtos_time_delay_ms(1000);//for test noise
-        if (RTK_SUCCESS != rtos_task_create(NULL, (const char *const)"PlayTask", PlayTask, NULL, 4864, 5)) {
-            EXAMPLE_AUDIO_ERROR("create PlayTask error \n");
-        }
     }
 
 #if TEST_TIMESTAMP
