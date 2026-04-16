@@ -50,5 +50,10 @@ ameba_add_merge_module_library(audio_passthrough ${c_CMPT_AUDIO_DIR}/libs/${c_SO
     audio_control_passthrough
     audio_stream_passthrough
     audio_effect_passthrough
+    audio_effect_sw_algorithm_bundle
+    audio_effect_sw_algorithm_common
+    audio_effect_sw_algorithm_eq
+    audio_effect_sw_algorithm_wrapper
+
 )
 ##########################################################################################

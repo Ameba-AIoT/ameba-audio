@@ -501,7 +501,7 @@ struct AudioHwStreamOut *CreateAudioHwStreamOut(struct AudioHwCard *card, const 
 
 	/*stream_tx_init can only be set here, because if it's in first write, then set parameters will stuck.Because setparameters should be called before write*/
 	if (out->out_pcm == NULL) {
-		HAL_AUDIO_INFO("startAudioHwStreamOut samplerate:%" PRIu32 ", format:%" PRIu32 ", channel:%" PRIu32 ", framesize:%" PRIu32 ", period_size:%" PRIu32 "",
+		HAL_AUDIO_INFO("startAudioHwStreamOut samplerate:%lu, format:%lu, channel:%lu, framesize:%lu, period_size:%lu",
 					   out->config.rate, out->config.format,
 					   out->config.channels,
 					   out->config.frame_size, out->config.period_size);

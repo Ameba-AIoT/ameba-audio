@@ -60,7 +60,6 @@ ameba_list_append(private_includes
 
 ameba_add_merge_module_library(base ${c_CMPT_AUDIO_DIR}/libs/${c_SOC_TYPE}/${c_MCU_TYPE}
     audio_base_xlib
-    audio_base_log
     audio_base_cutils_src
     audio_base_osal
     audio_base_osal_cxx
