@@ -71,7 +71,7 @@ struct MediaPlayer *g_player;
 
 void OnStateChanged(const struct MediaPlayerCallback *listener, const struct MediaPlayer *player, int state)
 {
-    RTK_LOGI(TAG, "OnStateChanged(%p %p), (%d)", listener, player, state);
+    RTK_LOGI(TAG, "OnStateChanged(%p %p), (%d)\n", listener, player, state);
 
     switch (state) {
     case MEDIA_PLAYER_PREPARED: { //entered for async prepare
@@ -85,19 +85,19 @@ void OnStateChanged(const struct MediaPlayerCallback *listener, const struct Med
     }
 
     case MEDIA_PLAYER_STOPPED: { //stop received, then reset
-        RTK_LOGI(TAG, "start reset");
+        RTK_LOGI(TAG, "start reset\n");
         g_playing_status = STOPPED;
         break;
     }
 
     case MEDIA_PLAYER_PAUSED: { //pause received when do pause or start rewinding
-        RTK_LOGI(TAG, "paused");
+        RTK_LOGI(TAG, "paused\n");
         g_playing_status = PAUSED;
         break;
     }
 
     case MEDIA_PLAYER_REWIND_COMPLETE: { //rewind done received, then start
-        RTK_LOGI(TAG, "rewind complete");
+        RTK_LOGI(TAG, "rewind complete\n");
         g_playing_status = REWIND_COMPLETE;
         break;
     }
@@ -106,26 +106,26 @@ void OnStateChanged(const struct MediaPlayerCallback *listener, const struct Med
 
 void OnInfo(const struct MediaPlayerCallback *listener, const struct MediaPlayer *player, int info, int extra)
 {
-    RTK_LOGI(TAG, "OnInfo (%p %p), (%d, %d)", listener, player, info, extra);
+    RTK_LOGI(TAG, "OnInfo (%p %p), (%d, %d)\n", listener, player, info, extra);
 
     switch (info) {
     case MEDIA_PLAYER_INFO_BUFFERING_START: {
-        RTK_LOGI(TAG, "MEDIA_PLAYER_INFO_BUFFERING_START");
+        RTK_LOGI(TAG, "MEDIA_PLAYER_INFO_BUFFERING_START\n");
         break;
     }
 
     case MEDIA_PLAYER_INFO_BUFFERING_END: {
-        RTK_LOGI(TAG, "MEDIA_PLAYER_INFO_BUFFERING_END");
+        RTK_LOGI(TAG, "MEDIA_PLAYER_INFO_BUFFERING_END\n");
         break;
     }
 
     case MEDIA_PLAYER_INFO_BUFFERING_INFO_UPDATE: {
-        RTK_LOGI(TAG, "MEDIA_PLAYER_INFO_BUFFERING_INFO_UPDATE %d", extra);
+        RTK_LOGI(TAG, "MEDIA_PLAYER_INFO_BUFFERING_INFO_UPDATE %d\n", extra);
         break;
     }
 
     case MEDIA_PLAYER_INFO_NOT_REWINDABLE: {
-        RTK_LOGI(TAG, "MEDIA_PLAYER_INFO_NOT_REWINDABLE");
+        RTK_LOGI(TAG, "MEDIA_PLAYER_INFO_NOT_REWINDABLE\n");
         break;
     }
     }
@@ -133,23 +133,23 @@ void OnInfo(const struct MediaPlayerCallback *listener, const struct MediaPlayer
 
 void OnError(const struct MediaPlayerCallback *listener, const struct MediaPlayer *player, int error, int extra)
 {
-    RTK_LOGI(TAG, "OnError (%p %p), (%d, %d)", player, listener, error, extra);
+    RTK_LOGI(TAG, "OnError (%p %p), (%d, %d)\n", player, listener, error, extra);
 }
 
 void StartPlay(struct MediaPlayer *player, const char *url)
 {
     if (player == NULL) {
-        RTK_LOGI(TAG, "start play fail, player is NULL!");
+        RTK_LOGI(TAG, "start play fail, player is NULL!\n");
         return;
     }
 
-    RTK_LOGI(TAG, "start to play: %s", url);
+    RTK_LOGI(TAG, "start to play: %s\n", url);
     int32_t ret = 0;
     StreamSource *stream_source = NULL;
 
     g_playing_status = IDLE;
 
-    RTK_LOGI(TAG, "SetSource");
+    RTK_LOGI(TAG, "SetSource\n");
 
     if (g_streaming) {
         stream_source = MyStreamSource_Create((char *)ready_to_convert0, sizeof(ready_to_convert0));
@@ -159,14 +159,14 @@ void StartPlay(struct MediaPlayer *player, const char *url)
     }
 
     if (ret) {
-        RTK_LOGE(TAG, "SetDataSource fail:error=%d", (int)ret);
+        RTK_LOGE(TAG, "SetDataSource fail:error=%d\n", (int)ret);
         goto exit;
     }
 
 #ifdef USE_PREPARE_ASYNC
     ret = MediaPlayer_PrepareAsync(player);
     if (ret) {
-        RTK_LOGE(TAG, "prepare async fail:error=%ld", ret);
+        RTK_LOGE(TAG, "prepare async fail:error=%ld\n", ret);
         goto exit;
     }
 
@@ -175,23 +175,23 @@ void StartPlay(struct MediaPlayer *player, const char *url)
     while (g_playing_status != PREPARED) {
         rtos_time_delay_ms(20);
         if (g_playing_status == IDLE) {
-            RTK_LOGE(TAG, "player not prepared, now goto exit!");
+            RTK_LOGE(TAG, "player not prepared, now goto exit!\n");
             goto exit;
         }
     }
 #else
-    RTK_LOGI(TAG, "Prepare");
+    RTK_LOGI(TAG, "Prepare\n");
     ret = MediaPlayer_Prepare(player);
     if (ret) {
-        RTK_LOGE(TAG, "prepare fail:error=%d", (int)ret);
+        RTK_LOGE(TAG, "prepare fail:error=%d\n", (int)ret);
         goto exit;
     }
 #endif
 
-    RTK_LOGI(TAG, "Start");
+    RTK_LOGI(TAG, "Start\n");
     ret = MediaPlayer_Start(player);
     if (ret) {
-        RTK_LOGE(TAG, "start fail:error=%d", (int)ret);
+        RTK_LOGE(TAG, "start fail:error=%d\n", (int)ret);
         goto exit;
     }
 
@@ -199,14 +199,14 @@ void StartPlay(struct MediaPlayer *player, const char *url)
 
     int64_t duration = 0;
     MediaPlayer_GetDuration(player, &duration);
-    RTK_LOGI(TAG, "duration is %lldms", duration);
+    RTK_LOGI(TAG, "duration is %lldms\n", duration);
 
     while (g_playing_status == PLAYING || g_playing_status == PAUSED) {
         rtos_time_delay_ms(1000);
     }
 
     if (g_playing_status == PLAYING_COMPLETED || g_playing_status == IDLE) {
-        RTK_LOGI(TAG, "play complete, now stop.");
+        RTK_LOGI(TAG, "play complete, now stop.\n");
         MediaPlayer_Stop(player);
     }
 
@@ -215,7 +215,7 @@ void StartPlay(struct MediaPlayer *player, const char *url)
     }
 
     if (g_playing_status == STOPPED) {
-        RTK_LOGI(TAG, "play stopped, now reset.");
+        RTK_LOGI(TAG, "play stopped, now reset.\n");
         MediaPlayer_Reset(player);
     }
 
@@ -224,7 +224,7 @@ exit:
         MyStreamSource_Destroy((MyStreamSource *)stream_source);
     }
 
-    RTK_LOGI(TAG, "play %s done!!!!", url);
+    RTK_LOGI(TAG, "play %s done!!!!\n", url);
 }
 
 void player_thread(void *param)
@@ -233,14 +233,14 @@ void player_thread(void *param)
     MEM_DEBUG_DECLARE(mem_dbg);
     MEM_DEBUG_INIT(mem_dbg);
 
-    RTK_LOGI(TAG, "player test start......");
+    RTK_LOGI(TAG, "player test start......\n");
 
     AudioService_Init();
-    RTK_LOGI(TAG, "AudioService_Init done");
+    RTK_LOGI(TAG, "AudioService_Init done\n");
 
     struct MediaPlayerCallback *callback = (struct MediaPlayerCallback *)malloc(sizeof(struct MediaPlayerCallback));
     if (!callback) {
-        RTK_LOGE(TAG, "Calloc MediaPlayerCallback fail.");
+        RTK_LOGE(TAG, "Calloc MediaPlayerCallback fail.\n");
         return;
     }
 
@@ -281,7 +281,7 @@ void player_thread(void *param)
 
     rtos_time_delay_ms(1 * 1000);
 
-    RTK_LOGI(TAG, "player test done......");
+    RTK_LOGI(TAG, "player test done......\n");
 
     MEM_DEBUG_DUMP(mem_dbg);
     rtos_task_delete(NULL);
@@ -319,7 +319,7 @@ static uint32_t player_handler(cmd_params_t *params)
     parse_player_params(params, &p);
 
 	if (strlen(p.url) == 0) {
-        RTK_LOGE(TAG, "No file specified, use -f option");
+        RTK_LOGE(TAG, "No file specified, use -f option\n");
         return FALSE;
     }
 
@@ -328,7 +328,7 @@ static uint32_t player_handler(cmd_params_t *params)
     g_streaming = p.streaming;
     g_volume = p.volume;
 
-    RTK_LOGI(TAG, "Playing: %s, streaming=%d, volume=%f", p.url, p.streaming, p.volume);
+    RTK_LOGI(TAG, "Playing: %s, streaming=%d, volume=%f\n", p.url, p.streaming, p.volume);
 
     if (rtos_task_create(NULL, "player_thread", player_thread, NULL,
                         5632, 1) != RTK_SUCCESS) {
