@@ -16,6 +16,9 @@
 #ifndef AMEBA_BASE_OSAL_OSAL_C_INCLUDE_OSAL_C_OSAL_THREAD_H
 #define AMEBA_BASE_OSAL_OSAL_C_INCLUDE_OSAL_C_OSAL_THREAD_H
 
+#include <stddef.h>
+#include <stdbool.h>
+
 #include "osal_c/osal_errnos.h"
 
 #ifdef __cplusplus

@@ -248,7 +248,7 @@ int32_t ameba_audio_ctl_set_amp_pin(StreamControl *control, uint32_t pin)
 	}
 
 	if (control->board_amp_pin != (int32_t)pin) {
-		HAL_AUDIO_INFO("set amp pin from %" PRId32 " to %" PRIu32 "", control->board_amp_pin, pin);
+		HAL_AUDIO_INFO("set amp pin from %ld to %lu", control->board_amp_pin, pin);
 		control->board_amp_pin = pin;
 		AmpPinConfig amp_info;
 		amp_info.pinmux = pin;
@@ -388,7 +388,7 @@ int32_t ameba_audio_ctl_set_mic_category_for_adc(StreamControl *control, uint32_
 	control->adc_use_status |= ((uint32_t)0x00000001 << channel);
 
 	if (control->mic_category_for_adc[channel] != mic_category) {
-		HAL_AUDIO_VERBOSE("ADC: %" PRIu32 " use mic: %" PRIu32 "", channel, mic_category);
+		HAL_AUDIO_VERBOSE("ADC: %lu use mic: %lu", channel, mic_category);
 		control->mic_category_for_adc[channel] = mic_category;
 	}
 
@@ -484,11 +484,11 @@ int32_t ameba_audio_ctl_set_mic_bst_gain(StreamControl *control, uint32_t mic_ca
 		amic_num = AMIC5;
 		break;
 	default:
-		HAL_AUDIO_ERROR("mic category not supported:%" PRIu32 "", mic_category);
+		HAL_AUDIO_ERROR("mic category not supported:%lu", mic_category);
 		return HAL_OSAL_ERR_INVALID_OPERATION;
 	}
 
-	HAL_AUDIO_INFO("ameba_audio_ctl_set_mic_bst_gain mic: %" PRIu32 ", gain: %" PRIu32 "",
+	HAL_AUDIO_INFO("ameba_audio_ctl_set_mic_bst_gain mic: %lu, gain: %lu",
 				   amic_num, gain);
 	if (control->gain_for_micbst[amic_num - 1] != gain) {
 		if (ameba_audio_is_audio_ip_in_use(CODEC)) {
@@ -526,7 +526,7 @@ int32_t ameba_audio_ctl_get_mic_bst_gain(StreamControl *control, uint32_t mic_ca
 		amic_num = AMIC5;
 		break;
 	default:
-		HAL_AUDIO_ERROR("mic category not supported:%" PRIu32 "", mic_category);
+		HAL_AUDIO_ERROR("mic category not supported:%lu", mic_category);
 		return HAL_OSAL_ERR_INVALID_OPERATION;
 	}
 
