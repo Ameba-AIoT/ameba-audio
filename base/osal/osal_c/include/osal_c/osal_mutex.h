@@ -16,29 +16,84 @@
 #ifndef AMEBA_BASE_OSAL_OSAL_C_INCLUDE_OSAL_C_OSAL_MUTEX_H
 #define AMEBA_BASE_OSAL_OSAL_C_INCLUDE_OSAL_C_OSAL_MUTEX_H
 
-#ifdef __linux__
+#if defined(__linux__)
 #include <pthread.h>
 #else
-#include "FreeRTOS_POSIX.h"
+#include "os_wrapper.h"
 #endif
 
 #include "osal_c/osal_errnos.h"
+#include "osal_c/osal_macros.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 typedef struct osal_mutex_t {
+#if defined(__linux__)
     pthread_mutex_t handle;
+#else
+    rtos_mutex_t handle;
+#endif
 } osal_mutex_t;
 
 #define OSAL_DECLARE_MUTEX(mutex) osal_mutex_t mutex
 
-status_t osal_mutex_init(osal_mutex_t *mutex);
-status_t osal_mutex_destroy(osal_mutex_t *mutex);
-status_t osal_mutex_lock(osal_mutex_t *mutex);
-status_t osal_mutex_try_lock(osal_mutex_t *mutex);
-status_t osal_mutex_unlock(osal_mutex_t *mutex);
+#if defined(__linux__)
+
+OSAL_STATIC_INLINE
+int osal_mutex_init(osal_mutex_t *mutex) {
+    return -pthread_mutex_init(&mutex->handle, NULL);
+}
+
+OSAL_STATIC_INLINE
+void osal_mutex_destroy(osal_mutex_t *mutex) {
+    return -pthread_mutex_destroy(&mutex->handle);
+}
+
+OSAL_STATIC_INLINE
+int osal_mutex_lock(osal_mutex_t *mutex) {
+    return -pthread_mutex_lock(&mutex->handle);
+}
+
+OSAL_STATIC_INLINE
+int osal_mutex_try_lock(osal_mutex_t *mutex) {
+    return -pthread_mutex_trylock(&mutex->handle);
+}
+
+OSAL_STATIC_INLINE
+int osal_mutex_unlock(osal_mutex_t *mutex) {
+    return -pthread_mutex_unlock(&mutex->handle);
+}
+
+#else // !defined(__linux__)
+
+OSAL_STATIC_INLINE
+int osal_mutex_init(osal_mutex_t *mutex) {
+    return rtos_mutex_create(&mutex->handle);
+}
+
+OSAL_STATIC_INLINE
+int osal_mutex_destroy(osal_mutex_t *mutex) {
+    return rtos_mutex_delete(mutex->handle);
+}
+
+OSAL_STATIC_INLINE
+int osal_mutex_lock(osal_mutex_t *mutex) {
+    return rtos_mutex_take(mutex->handle, MUTEX_WAIT_TIMEOUT);
+}
+
+OSAL_STATIC_INLINE
+int osal_mutex_try_lock(osal_mutex_t *mutex) {
+    return rtos_mutex_take(mutex->handle, 0);
+}
+
+OSAL_STATIC_INLINE
+int osal_mutex_unlock(osal_mutex_t *mutex) {
+    return rtos_mutex_give(mutex->handle);
+}
+
+#endif
 
 #ifdef __cplusplus
 }
