@@ -45,7 +45,8 @@ typedef struct {
 } osal_timespec;
 
 void osal_sleep(uint32_t sec);
-void osal_msleep(uint32_t ms);
+void osal_msleep(uint32_t msec);
+void osal_usleep(uint32_t usec);
 
 int32_t osal_get_time(osal_clock_t clock, osal_timespec *time);
 int64_t osal_get_sys_time_ms(osal_clock_t clock);
