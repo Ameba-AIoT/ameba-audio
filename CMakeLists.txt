@@ -34,6 +34,7 @@ if(CONFIG_AUDIO_FWK)
     ameba_add_subdirectory_if_exist(foundation)
     ameba_add_subdirectory_if_exist(base)
     include(base.cmake)
+    include(foundation.cmake)
 endif()
 
 if(CONFIG_AUDIO_DEVICE_USB)

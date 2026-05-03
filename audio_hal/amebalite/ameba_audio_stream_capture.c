@@ -79,7 +79,6 @@ static void ameba_audio_stream_rx_sport_init(CaptureStream **stream, StreamConfi
 
 static void ameba_audio_stream_rx_codec_adc_reset(void)
 {
-	HAL_AUDIO_ENTER;
 	uint32_t idx = 1;
 	for (; idx <= MAX_AD_NUM; idx++) {
 		uint32_t adc_chn_idx = ameba_audio_stream_get_adc_chn_idx(idx);
@@ -152,7 +151,7 @@ static void ameba_audio_stream_rx_adc_mic_configure(StreamConfig config)
 		uint32_t adc_chn_idx = ameba_audio_stream_get_adc_chn_idx(i);
 		uint32_t mic_idx = ameba_audio_stream_get_mic_idx(dc->mic_category_for_adc[i - 1]);
 
-		HAL_AUDIO_INFO("adc_idx: %" PRIu32 ", adc_chn: %" PRIu32 ", mic_idx: %" PRIu32 ", mic_category: %" PRIu32 ", ",
+		HAL_AUDIO_INFO("adc_idx: %lu, adc_chn: %lu, mic_idx: %lu, mic_category: %lu, ",
 					   adc_idx, adc_chn_idx, mic_idx, dc->mic_category_for_adc[i - 1]);
 
 		switch (dc->mic_category_for_adc[i - 1]) {
@@ -287,7 +286,7 @@ uint32_t ameba_audio_stream_rx_sport_interrupt(void *data)
 		cstream->stream.sport_irq_count = 0;
 	}
 
-	HAL_AUDIO_PVERBOSE("total_counter:%" PRIu64 " \n", cstream->stream.total_counter);
+	HAL_AUDIO_PVERBOSE("total_counter:%llu \n", cstream->stream.total_counter);
 	AUDIO_SP_ClearRXCounterIrq(cstream->stream.sport_dev_num);
 
 	return 0;
@@ -319,7 +318,7 @@ int32_t  ameba_audio_stream_rx_get_position(Stream *stream, uint64_t *captured_f
 	tstamp->tv_sec = nsec / 1000000000LL;
 	tstamp->tv_nsec = nsec - tstamp->tv_sec * 1000000000LL;
 
-	HAL_AUDIO_PVERBOSE("captured_frames:%" PRIu64 ", trigger:%" PRIu64 ", usec:%" PRIu64 ", tv_sec:%" PRIu64 ", tv_nsec:%" PRIu32 "",
+	HAL_AUDIO_PVERBOSE("captured_frames:%llu, trigger:%llu, usec:%llu, tv_sec:%llu, tv_nsec:%lu",
 					   *captured_frames, cstream->stream.trigger_tstamp, nsec, tstamp->tv_sec, tstamp->tv_nsec);
 
 	return 0;
@@ -758,7 +757,7 @@ static void ameba_audio_stream_rx_check_and_start_gdma(CaptureStream *cstream)
 
 static int32_t ameba_audio_stream_rx_read_in_noirq_mode(Stream *stream, void *data, uint32_t bytes)
 {
-	HAL_AUDIO_CVERBOSE("bytes:%" PRId32 "", __func__, bytes);
+	HAL_AUDIO_CVERBOSE("bytes:%ld", __func__, bytes);
 
 	uint32_t total_bytes_0 = bytes;
 	uint32_t bytes_to_read_0 = total_bytes_0;

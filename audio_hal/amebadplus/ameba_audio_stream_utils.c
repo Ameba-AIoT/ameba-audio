@@ -309,18 +309,18 @@ void ameba_audio_dump_gdma_regs(u8 GDMA_ChNum)
 {
 	GDMA_TypeDef *GDMA = ((GDMA_TypeDef *)GDMA_BASE);
 
-	HAL_AUDIO_DUMP_INFO("GDMA->CH[%d].SAR:%lx", GDMA_ChNum, GDMA->CH[GDMA_ChNum].SAR);
-	HAL_AUDIO_DUMP_INFO("GDMA->CH[%d].DAR:%lx", GDMA_ChNum, GDMA->CH[GDMA_ChNum].DAR);
-	HAL_AUDIO_DUMP_INFO("GDMA->CH[%d].CTL_LOW:%lx", GDMA_ChNum, GDMA->CH[GDMA_ChNum].CTL_LOW);
-	HAL_AUDIO_DUMP_INFO("GDMA->CH[%d].CTL_HIGH:%lx", GDMA_ChNum, GDMA->CH[GDMA_ChNum].CTL_HIGH);
-	HAL_AUDIO_DUMP_INFO("GDMA->CH[%d].CFG_LOW:%lx", GDMA_ChNum, GDMA->CH[GDMA_ChNum].CFG_LOW);
-	HAL_AUDIO_DUMP_INFO("GDMA->CH[%d].CFG_HIGH:%lx", GDMA_ChNum, GDMA->CH[GDMA_ChNum].CFG_HIGH);
-	HAL_AUDIO_DUMP_INFO("GDMA->CH[%d].ChEnReg:%lx", GDMA_ChNum, GDMA->ChEnReg);
+	HAL_AUDIO_INFO("GDMA->CH[%d].SAR:%lx", GDMA_ChNum, GDMA->CH[GDMA_ChNum].SAR);
+	HAL_AUDIO_INFO("GDMA->CH[%d].DAR:%lx", GDMA_ChNum, GDMA->CH[GDMA_ChNum].DAR);
+	HAL_AUDIO_INFO("GDMA->CH[%d].CTL_LOW:%lx", GDMA_ChNum, GDMA->CH[GDMA_ChNum].CTL_LOW);
+	HAL_AUDIO_INFO("GDMA->CH[%d].CTL_HIGH:%lx", GDMA_ChNum, GDMA->CH[GDMA_ChNum].CTL_HIGH);
+	HAL_AUDIO_INFO("GDMA->CH[%d].CFG_LOW:%lx", GDMA_ChNum, GDMA->CH[GDMA_ChNum].CFG_LOW);
+	HAL_AUDIO_INFO("GDMA->CH[%d].CFG_HIGH:%lx", GDMA_ChNum, GDMA->CH[GDMA_ChNum].CFG_HIGH);
+	HAL_AUDIO_INFO("GDMA->CH[%d].ChEnReg:%lx", GDMA_ChNum, GDMA->ChEnReg);
 
-	HAL_AUDIO_DUMP_INFO("GDMA->CH[%d].MASK_TFR:%lx", GDMA_ChNum, GDMA->MASK_TFR);
-	HAL_AUDIO_DUMP_INFO("GDMA->CH[%d].MASK_BLOCK:%lx", GDMA_ChNum, GDMA->MASK_BLOCK);
-	HAL_AUDIO_DUMP_INFO("GDMA->CH[%d].MASK_ERR:%lx", GDMA_ChNum, GDMA->MASK_ERR);
-	HAL_AUDIO_DUMP_INFO("GDMA->CH[%d].STATUS_BLOCK:%lx", GDMA_ChNum, GDMA->STATUS_BLOCK);
+	HAL_AUDIO_INFO("GDMA->CH[%d].MASK_TFR:%lx", GDMA_ChNum, GDMA->MASK_TFR);
+	HAL_AUDIO_INFO("GDMA->CH[%d].MASK_BLOCK:%lx", GDMA_ChNum, GDMA->MASK_BLOCK);
+	HAL_AUDIO_INFO("GDMA->CH[%d].MASK_ERR:%lx", GDMA_ChNum, GDMA->MASK_ERR);
+	HAL_AUDIO_INFO("GDMA->CH[%d].STATUS_BLOCK:%lx", GDMA_ChNum, GDMA->STATUS_BLOCK);
 
 }
 
@@ -328,65 +328,65 @@ void ameba_audio_dump_sport_regs(uint32_t SPORTx)
 {
 	uint32_t tmp;
 	AUDIO_SPORT_TypeDef *sportx = (AUDIO_SPORT_TypeDef *)SPORTx;
-	HAL_AUDIO_DUMP_INFO("dump sportx:0x%p", sportx);
+	HAL_AUDIO_INFO("dump sportx:0x%p", sportx);
 	tmp = sportx->SP_REG_MUX;
-	HAL_AUDIO_DUMP_INFO("REG_SP_REG_MUX:%lx", tmp);
+	HAL_AUDIO_INFO("REG_SP_REG_MUX:%lx", tmp);
 	tmp = sportx->SP_CTRL0;
-	HAL_AUDIO_DUMP_INFO("REG_SP_CTRL0:%lx", tmp);
+	HAL_AUDIO_INFO("REG_SP_CTRL0:%lx", tmp);
 	tmp = sportx->SP_CTRL1;
-	HAL_AUDIO_DUMP_INFO("REG_SP_CTRL1:%lx", tmp);
+	HAL_AUDIO_INFO("REG_SP_CTRL1:%lx", tmp);
 	tmp = sportx->SP_INT_CTRL;
-	HAL_AUDIO_DUMP_INFO("REG_SP_INT_CTRL:%lx", tmp);
+	HAL_AUDIO_INFO("REG_SP_INT_CTRL:%lx", tmp);
 	tmp = sportx->RSVD0;
-	HAL_AUDIO_DUMP_INFO("REG_RSVD0:%lx", tmp);
+	HAL_AUDIO_INFO("REG_RSVD0:%lx", tmp);
 	tmp = sportx->SP_TRX_COUNTER_STATUS;
-	HAL_AUDIO_DUMP_INFO("REG_SP_TRX_COUNTER_STATUS:%lx", tmp);
+	HAL_AUDIO_INFO("REG_SP_TRX_COUNTER_STATUS:%lx", tmp);
 	tmp = sportx->SP_ERR;
-	HAL_AUDIO_DUMP_INFO("REG_SP_ERR:%lx", tmp);
+	HAL_AUDIO_INFO("REG_SP_ERR:%lx", tmp);
 	tmp = sportx->SP_SR_TX_BCLK;
-	HAL_AUDIO_DUMP_INFO("REG_SP_SR_TX_BCLK:%lx", tmp);
+	HAL_AUDIO_INFO("REG_SP_SR_TX_BCLK:%lx", tmp);
 	tmp = sportx->SP_TX_LRCLK;
-	HAL_AUDIO_DUMP_INFO("REG_SP_TX_LRCLK:%lx", tmp);
+	HAL_AUDIO_INFO("REG_SP_TX_LRCLK:%lx", tmp);
 	tmp = sportx->SP_FIFO_CTRL;
-	HAL_AUDIO_DUMP_INFO("REG_SP_FIFO_CTRL:%lx", tmp);
+	HAL_AUDIO_INFO("REG_SP_FIFO_CTRL:%lx", tmp);
 	tmp = sportx->SP_FORMAT;
-	HAL_AUDIO_DUMP_INFO("REG_SP_FORMAT:%lx", tmp);
+	HAL_AUDIO_INFO("REG_SP_FORMAT:%lx", tmp);
 	tmp = sportx->SP_RX_BCLK;
-	HAL_AUDIO_DUMP_INFO("REG_SP_RX_BCLK:%lx", tmp);
+	HAL_AUDIO_INFO("REG_SP_RX_BCLK:%lx", tmp);
 	tmp = sportx->SP_RX_LRCLK;
-	HAL_AUDIO_DUMP_INFO("REG_SP_RX_LRCLK:%lx", tmp);
+	HAL_AUDIO_INFO("REG_SP_RX_LRCLK:%lx", tmp);
 	tmp = sportx->SP_DSP_COUNTER;
-	HAL_AUDIO_DUMP_INFO("REG_SP_DSP_COUNTER:%lx", tmp);
+	HAL_AUDIO_INFO("REG_SP_DSP_COUNTER:%lx", tmp);
 	tmp = sportx->RSVD1;
-	HAL_AUDIO_DUMP_INFO("REG_RSVD1:%lx", tmp);
+	HAL_AUDIO_INFO("REG_RSVD1:%lx", tmp);
 	tmp = sportx->SP_DIRECT_CTRL0;
-	HAL_AUDIO_DUMP_INFO("REG_SP_DIRECT_CTRL0:%lx", tmp);
+	HAL_AUDIO_INFO("REG_SP_DIRECT_CTRL0:%lx", tmp);
 	tmp = sportx->RSVD2;
-	HAL_AUDIO_DUMP_INFO("REG_RSVD2:%lx", tmp);
+	HAL_AUDIO_INFO("REG_RSVD2:%lx", tmp);
 	tmp = sportx->SP_FIFO_IRQ;
-	HAL_AUDIO_DUMP_INFO("REG_SP_FIFO_IRQ:%lx", tmp);
+	HAL_AUDIO_INFO("REG_SP_FIFO_IRQ:%lx", tmp);
 	tmp = sportx->SP_DIRECT_CTRL1;
-	HAL_AUDIO_DUMP_INFO("REG_SP_DIRECT_CTRL1:%lx", tmp);
+	HAL_AUDIO_INFO("REG_SP_DIRECT_CTRL1:%lx", tmp);
 	tmp = sportx->SP_DIRECT_CTRL2;
-	HAL_AUDIO_DUMP_INFO("REG_SP_DIRECT_CTRL2:%lx", tmp);
+	HAL_AUDIO_INFO("REG_SP_DIRECT_CTRL2:%lx", tmp);
 	tmp = sportx->RSVD3;
-	HAL_AUDIO_DUMP_INFO("REG_RSVD3:%lx", tmp);
+	HAL_AUDIO_INFO("REG_RSVD3:%lx", tmp);
 	tmp = sportx->SP_DIRECT_CTRL3;
-	HAL_AUDIO_DUMP_INFO("REG_SP_DIRECT_CTRL3:%lx", tmp);
+	HAL_AUDIO_INFO("REG_SP_DIRECT_CTRL3:%lx", tmp);
 	tmp = sportx->SP_DIRECT_CTRL4;
-	HAL_AUDIO_DUMP_INFO("REG_SP_DIRECT_CTRL4:%lx", tmp);
+	HAL_AUDIO_INFO("REG_SP_DIRECT_CTRL4:%lx", tmp);
 	tmp = sportx->SP_RX_COUNTER1;
-	HAL_AUDIO_DUMP_INFO("REG_SP_RX_COUNTER1:%lx", tmp);
+	HAL_AUDIO_INFO("REG_SP_RX_COUNTER1:%lx", tmp);
 	tmp = sportx->SP_RX_COUNTER2;
-	HAL_AUDIO_DUMP_INFO("REG_SP_RX_COUNTER2:%lx", tmp);
+	HAL_AUDIO_INFO("REG_SP_RX_COUNTER2:%lx", tmp);
 	tmp = sportx->SP_TX_FIFO_0_WR_ADDR;
-	HAL_AUDIO_DUMP_INFO("REG_SP_TX_FIFO_0_WR_ADDR:%lx", tmp);
+	HAL_AUDIO_INFO("REG_SP_TX_FIFO_0_WR_ADDR:%lx", tmp);
 	tmp = sportx->SP_RX_FIFO_0_RD_ADDR;
-	HAL_AUDIO_DUMP_INFO("REG_SP_RX_FIFO_0_RD_ADDR:%lx", tmp);
+	HAL_AUDIO_INFO("REG_SP_RX_FIFO_0_RD_ADDR:%lx", tmp);
 	tmp = sportx->SP_TX_FIFO_1_WR_ADDR;
-	HAL_AUDIO_DUMP_INFO("REG_SP_TX_FIFO_1_WR_ADDR:%lx", tmp);
+	HAL_AUDIO_INFO("REG_SP_TX_FIFO_1_WR_ADDR:%lx", tmp);
 	tmp = sportx->SP_RX_FIFO_1_RD_ADDR;
-	HAL_AUDIO_DUMP_INFO("REG_SP_RX_FIFO_1_RD_ADDR:%lx", tmp);
+	HAL_AUDIO_INFO("REG_SP_RX_FIFO_1_RD_ADDR:%lx", tmp);
 
 }
 
@@ -503,9 +503,9 @@ void ameba_audio_stream_rx_set_i2s_pin(uint32_t index)
 		}
 
 		if (AUDIO_I2S_IN_MULTIIO_EN) {
-			// HAL_AUDIO_INFO("PB_21:%" PRId32 "\n", Pinmux_ConfigGet(AUDIO_I2S_IN_DATA1_PIN));
-			// HAL_AUDIO_INFO("PB_22:%" PRId32 "\n", Pinmux_ConfigGet(AUDIO_I2S_IN_DATA2_PIN));
-			// HAL_AUDIO_INFO("PB_3:%" PRId32 "\n", Pinmux_ConfigGet(AUDIO_I2S_IN_DATA3_PIN));
+			// HAL_AUDIO_INFO("PB_21:%ld\n", Pinmux_ConfigGet(AUDIO_I2S_IN_DATA1_PIN));
+			// HAL_AUDIO_INFO("PB_22:%ld\n", Pinmux_ConfigGet(AUDIO_I2S_IN_DATA2_PIN));
+			// HAL_AUDIO_INFO("PB_3:%ld\n", Pinmux_ConfigGet(AUDIO_I2S_IN_DATA3_PIN));
 			if (AUDIO_I2S_IN_DATA1_PIN != -1) {
 				Pinmux_Config(AUDIO_I2S_IN_DATA1_PIN, PINMUX_FUNCTION_I2S1_DIO1);
 			}
@@ -571,9 +571,9 @@ void ameba_audio_stream_rx_set_i2s_extra_pin(uint32_t index)
 			Pinmux_Config(AUDIO_I2S_IN_EXTRA_DATA0_PIN, PINMUX_FUNCTION_I2S1_DIO0);
 		}
 		if (AUDIO_I2S_IN_EXTRA_MULTIIO_EN) {
-			// HAL_AUDIO_INFO("PB_21:%" PRId32 "\n", Pinmux_ConfigGet(AUDIO_I2S_IN_DATA1_PIN));
-			// HAL_AUDIO_INFO("PB_22:%" PRId32 "\n", Pinmux_ConfigGet(AUDIO_I2S_IN_DATA2_PIN));
-			// HAL_AUDIO_INFO("PB_3:%" PRId32 "\n", Pinmux_ConfigGet(AUDIO_I2S_IN_DATA3_PIN));
+			// HAL_AUDIO_INFO("PB_21:%ld\n", Pinmux_ConfigGet(AUDIO_I2S_IN_DATA1_PIN));
+			// HAL_AUDIO_INFO("PB_22:%ld\n", Pinmux_ConfigGet(AUDIO_I2S_IN_DATA2_PIN));
+			// HAL_AUDIO_INFO("PB_3:%ld\n", Pinmux_ConfigGet(AUDIO_I2S_IN_DATA3_PIN));
 			if (AUDIO_I2S_IN_EXTRA_DATA1_PIN != -1) {
 				Pinmux_Config(AUDIO_I2S_IN_EXTRA_DATA1_PIN, PINMUX_FUNCTION_I2S1_DIO1);
 			}
