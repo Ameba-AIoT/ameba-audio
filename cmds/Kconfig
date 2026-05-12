@@ -17,6 +17,13 @@ menu "CONFIG AUDIO CMD"
                 select CMD_APLAY if WHC_HOST || WHC_NONE
         endif
 
+        if SUPPORT_AUDIO_CMD_EQUALIZER
+            config CMD_EQUALIZER_MENU
+                bool "equalizer"
+                select AUDIO_FWK_MENU
+                select CMD_EQUALIZER if WHC_HOST || WHC_NONE
+        endif
+
         if SUPPORT_AUDIO_CMD_PLAYER
             config CMD_PLAYER_MENU
                 bool "player"
@@ -49,6 +56,7 @@ menu "CONFIG AUDIO CMD"
                 select MEDIA_CODEC_MP3_MENU
                 select CMD_PCRECORD if WHC_HOST || WHC_NONE
         endif
+
     endif
 endmenu
 
@@ -56,6 +64,9 @@ config CMD_ARECORD
 bool
 
 config CMD_APLAY
+bool
+
+config CMD_EQUALIZER
 bool
 
 config CMD_PLAYER

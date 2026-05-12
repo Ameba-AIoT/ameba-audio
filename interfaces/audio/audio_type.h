@@ -147,6 +147,29 @@ enum {
 };
 
 /**
+ * @brief Defines all the audio equalizer filter types.
+ *
+ * @since 1.0
+ * @version 1.0
+ */
+enum {
+    /** audio equalizer type: low pass */
+    AUDIO_EQUALIZER_TYPE_LOWPASS      = 0x0u,
+    /** audio equalizer type: high pass */
+    AUDIO_EQUALIZER_TYPE_HIGHPASS     = 0x1u,
+    /** audio equalizer type: band pass */
+    AUDIO_EQUALIZER_TYPE_BANDPASS     = 0x2u,
+    /** audio equalizer type: peaking */
+    AUDIO_EQUALIZER_TYPE_PEAKING      = 0x3u,
+    /** audio equalizer type: notch */
+    AUDIO_EQUALIZER_TYPE_NOTCH        = 0x4u,
+    /** audio equalizer type: low shelf */
+    AUDIO_EQUALIZER_TYPE_LOW_SHELF    = 0x5u,
+    /** audio equalizer type: high pass */
+    AUDIO_EQUALIZER_TYPE_HIGH_SHELF   = 0x6u,
+};
+
+/**
  * @brief Defines all the audio effect param types.
  *
  * @since 1.0
@@ -167,6 +190,8 @@ enum {
     AUDIO_EFFECT_PARAM_GET_BAND        = 0x5u,
     /** audio effect qfactor */
     AUDIO_EFFECT_PARAM_QFACTOR         = 0x6u,
+    /** audio effect filter type */
+    AUDIO_EFFECT_PARAM_FILTER_TYPE     = 0x7u,
 };
 
 /**

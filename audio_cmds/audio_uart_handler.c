@@ -149,7 +149,7 @@ static int32_t audio_uart_eq_query(struct AudioEqualizer *audio_equalizer)
         gain[i] = AudioEqualizer_GetBandLevel(audio_equalizer, i);
         frequency[i] = AudioEqualizer_GetCenterFreq(audio_equalizer, i);
         qfactor[i] = AudioEqualizer_GetQfactor(audio_equalizer, i);
-        type[i] = 0;
+        type[i] = AudioEqualizer_GetBandFilterType(audio_equalizer, i);
     }
 
     if ((root = cJSON_CreateObject()) == NULL) {
@@ -289,9 +289,7 @@ static void audio_uart_process_receive_data(msg_attrib_t *pattrib, struct AudioE
         uint32_t band_id = cj_band_id->valueint;
         uint32_t filter_type = cj_filter_type->valueint;
 
-        //set type here.do nothing.
-        (void) band_id;
-        (void) filter_type;
+        AudioEqualizer_SetBandFilterType(audio_equalizer, band_id, filter_type);
     }
     audio_uart_ack_reply(0);
     break;
@@ -370,6 +368,9 @@ static void audio_uart_create_eq(struct AudioEqualizer **audio_equalizer)
     free(range);
     range = NULL;
 
+    bands = 10;
+    AudioEqualizer_SetNumberOfBands(*audio_equalizer, bands);
+
     AudioEqualizer_SetEnabled(*audio_equalizer, true);
 
     for (; band_index < bands; band_index++) {
@@ -394,7 +395,7 @@ static void audio_uart_destroy_eq(struct AudioEqualizer **audio_equalizer)
 
 static void audio_uart_task(void *param)
 {
-    rtos_time_delay_ms(3000);
+    rtos_time_delay_ms(500);
     EXAMPLE_AUDIO_DEBUG("Audio uart demo begin");
     (void) param;
 

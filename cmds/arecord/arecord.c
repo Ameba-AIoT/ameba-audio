@@ -25,8 +25,6 @@
 #include "platform_stdlib.h"
 #include "basic_types.h"
 
-#include "arecord.h"
-
 #include "audio_cmd_common.h"
 
 #define DUMP_FRAME            96000
