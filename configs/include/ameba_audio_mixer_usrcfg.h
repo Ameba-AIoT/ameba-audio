@@ -51,6 +51,17 @@ extern int64_t kStandbyDurationNs;
  */
 extern int32_t kMultipleCopiedBuffer;
 
+enum {
+	SW_EQ_VERSION_0_0,
+	SW_EQ_VERSION_1_0,
+};
+
+/*
+ * SW_EQ_VERSION_0_0 only support peak filter.
+ * SW_EQ_VERSION_1_0 supports peaker, high pass, low pass, notch, low shelf, high shelf filters.
+ */
+extern int32_t kEqVersion;
+
 #ifdef __cplusplus
 }
 #endif

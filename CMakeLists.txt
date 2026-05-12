@@ -21,6 +21,11 @@ if(CONFIG_AUDIO_FWK)
     include(configs/audio_configs.cmake)
     include(audio_mixer.cmake)
     include(audio_passthrough.cmake)
+
+    if (CONFIG_AMEBASMART OR CONFIG_AMEBALITE OR CONFIG_AMEBADPLUS)
+        ameba_add_subdirectory_if_exist(audio_prebuilts)
+    endif ()
+
 endif()
 
 #ameba_add_subdirectory_if(CONFIG_MEDIA_PLAYER media_test)
@@ -34,6 +39,7 @@ if(CONFIG_AUDIO_FWK)
     ameba_add_subdirectory_if_exist(foundation)
     ameba_add_subdirectory_if_exist(base)
     include(base.cmake)
+    include(foundation.cmake)
 endif()
 
 if(CONFIG_AUDIO_DEVICE_USB)
