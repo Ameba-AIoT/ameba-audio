@@ -2,12 +2,12 @@
  * Copyright (c) 2021 Realtek, LLC.
  * All rights reserved.
  *
- * Licensed under the Realtek License, Version 1.0 (the "License");
+ * Licensed under the Realtek License, Version 1.0 (the License);
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License from Realtek
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
+ * distributed under the License is distributed on an AS IS BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
@@ -15,137 +15,301 @@
 
 #define TAG "Aplay"
 
+#include <fcntl.h>
 #include <math.h>
+#include <stdlib.h>
+#include <strings.h>
+#include <string.h>
+#include <ctype.h>
 
-#include "ameba_soc.h"
+#include "ameba.h"
+#include "os_wrapper.h"
+
+#include "ameba_audio_mixer_usrcfg.h"
 #include "audio/audio_control.h"
-#include "audio/audio_equalizer.h"
 #include "audio/audio_track.h"
 #include "audio/audio_service.h"
+#include "audio/audio_equalizer.h"
 #include "common/audio_errnos.h"
-#include "os_wrapper.h"
-#include "platform_stdlib.h"
-#include "basic_types.h"
 
-#include "aplay.h"
 #include "audio_cmd_common.h"
 
-#define PLAY_SECONDS           200
-#define TWO_CHANNEL_FRAMES     96
-//For some bad performance system, please set it 0.because this may take some CPU.
-#define SINE_GEN_EVERY_TIME    1
-#define TEST_EQ                0
-#define DUMP_ENABLE            0
-#define NEED_CACHE_INVALIDATE  0
-#define DUMP_FRAME             192000
-#define TEST_DELAY             0
-#define TEST_DELAY_GPIO        _PB_8
-#define M_PI                   3.14159265358979323846
-#define LITTLEFS_RAW           0
-//to test ppm between system clock and audio clock, please remember
-//to use pll for audio playback in ameba_audio_hw_usrcfg.h.
-#define TEST_TIMESTAMP         0
+#define ID_RIFF                  0x46464952
+#define ID_WAVE                  0x45564157
+#define ID_FMT                   0x20746d66
+#define ID_DATA                  0x61746164
 
-#define EXAMPLE_AUDIO_DEBUG(fmt, args...)    RTK_LOGD(TAG, "[%s]: " fmt "", __func__, ## args)
-#define EXAMPLE_AUDIO_ERROR(fmt, args...)    RTK_LOGE(TAG, "[%s]: " fmt "", __func__, ## args)
+#define APLAY_FILE_TYPE_DEFAULT -1
+#define APLAY_FILE_TYPE_RAW      0
+#define APLAY_FILE_TYPE_WAV      1
+#define APLAY_FILE_TYPE_SINE     2
 
-#define  APLAY_DEBUG_HEAP_BEGIN() \
-    unsigned int heap_start;\
-    unsigned int heap_end;\
-    unsigned int heap_min_ever_free;\
-    RTK_LOGI(TAG, "[Mem] mem debug info init");\
-    heap_start = rtos_mem_get_free_heap_size()
-
-#define  APLAY_DEBUG_HEAP_END() \
-    heap_end = rtos_mem_get_free_heap_size();\
-    heap_min_ever_free = rtos_mem_get_minimum_ever_free_heap_size();\
-    RTK_LOGI(TAG, "[Mem] start (0x%x), end (0x%x)", heap_start, heap_end);\
-    RTK_LOGI(TAG, "diff (%d), peak (%d)", heap_start - heap_end, heap_start - heap_min_ever_free)
+#define M_PI                     3.14159265358979323846
+#define MAX_TRACKS               8
 
 typedef struct {
-    int   track_channel;
-    int   track_rate;
-    int   write_frames_one_time;
-    int   track_format;
+    int   channels;
+    int   rate;
+    int   frames;
+    int   bits;
     int   freq;
     int   gain;
     float vol;
     int   mute;
+    int   speed;
+    int   buf_multi;
+    int   gen_cnt;
+    int   device;
+    int   file_type;
+    int   quiet;
+    int   verbose;
+    int   duration;
+    int   loop;
+    int   eq;
+    char  filename[64];
+    int   wav_header_size;
 } aplay_params_t;
 
 static const aplay_params_t APLAY_DEFAULT_PARAMS = {
-    .track_channel        = 2,
-    .track_rate           = 16000,
-    .write_frames_one_time= 8192,
-    .track_format         = 16,
+    .channels             = 2,
+    .rate                 = 16000,
+    .frames               = 480,
+    .bits                 = 16,
     .freq                 = 1000,
     .gain                 = 0,
     .vol                  = 1.0f,
     .mute                 = 0,
+    .speed                = 0,
+    .buf_multi            = 4,
+    .gen_cnt              = 0,
+    .file_type            = APLAY_FILE_TYPE_DEFAULT,
+    .quiet                = 0,
+    .verbose              = 0,
+    .duration             = 86400,
+    .loop                 = 1,
+    .eq                   = 0,
+    .wav_header_size      = 0,
 };
+static aplay_params_t s_params[MAX_TRACKS];
+static uint32_t s_cfg_cnt = 0;
 
 typedef struct {
-    float volume;  // 0.0 ~ 1.0
-    int   mute;    // 0/1
-} amixer_params_t;
+    uint32_t riff_id;
+    uint32_t riff_sz;
+    uint32_t wave_id;
+} aplay_wav_riff_t;
 
-static const amixer_params_t AMIXER_DEFAULT_PARAMS = {
-    .volume = 1.0f,
-    .mute   = 0,
-};
+typedef struct {
+    uint32_t id;
+    uint32_t sz;
+} aplay_wav_chunk_t;
 
-static void aplay_help(void);
-static void amixer_help(void);
+typedef struct {
+    uint16_t audio_format;
+    uint16_t num_channels;
+    uint32_t sample_rate;
+    uint32_t byte_rate;
+    uint16_t block_align;
+    uint16_t bits_per_sample;
+} aplay_wav_fmt_t;
 
-static uint32_t  g_track_rate = 16000;
-static uint32_t  g_track_channel = 2;
-static uint32_t  g_track_format = 16;
-static uint32_t  g_write_frames_one_time = 1024;
+typedef struct {
+    int32_t fd;
+    int     file_type;
+    int     wav_header_size;
+    int     wav_channels;
+    int     wav_rate;
+    int     wav_bits;
+} aplay_file_context_t;
+static aplay_file_context_t s_file_ctx;
 
-/* pcm frequency in Hz */
-static double    g_freq = 1000;
-static uint32_t  g_generate_cnt = 0;
-static float     g_vol = 0.6;
-static uint32_t  g_mute = 0;
-
-static struct AudioTrack *g_aplay = NULL;
-
-int32_t g_gain = -800;
-#if LITTLEFS_RAW
-#include <fcntl.h>
-static int s_lfs_fd = 0;
-static char *s_lfs_name = "lfs://0-20khz-48kfs.raw";
-#endif
-
-#if TEST_DELAY
-static void set_gpio_state(uint32_t pin, bool state)
+static inline const char *aplay_get_file_type_name(int file_type)
 {
-    GPIO_InitTypeDef gpio_initstruct_temp;
-    gpio_initstruct_temp.GPIO_Pin = pin;
-    gpio_initstruct_temp.GPIO_Mode = GPIO_Mode_OUT;
-    GPIO_Init(&gpio_initstruct_temp);
-
-    if (state == true) {
-        EXAMPLE_AUDIO_DEBUG("gpio enable");
-        GPIO_WriteBit(pin, 1);
-    } else {
-        EXAMPLE_AUDIO_DEBUG("gpio disable");
-        GPIO_WriteBit(pin, 0);
+    switch (file_type) {
+    case APLAY_FILE_TYPE_RAW: return "raw";
+    case APLAY_FILE_TYPE_WAV: return "wav";
+    case APLAY_FILE_TYPE_SINE: return "sine";
+    default:                   return "unknown";
     }
 }
-#endif
 
-static void generate_sine(int8_t *buffer, uint32_t count, uint32_t rate, uint32_t channels, uint32_t bits, double *_phase)
+static inline int aplay_parse_file_type(const char *name)
+{
+    if (strcasecmp(name, "raw") == 0)  return APLAY_FILE_TYPE_RAW;
+    if (strcasecmp(name, "wav") == 0)  return APLAY_FILE_TYPE_WAV;
+    if (strcasecmp(name, "sine") == 0) return APLAY_FILE_TYPE_SINE;
+    return APLAY_FILE_TYPE_DEFAULT;
+}
+
+static int aplay_file_parse_wav_header(const uint8_t *header, int header_size,
+                                  int *channels, int *rate, int *bits, int *data_offset)
+{
+    if (header_size < 44) {
+        RTK_LOGS(TAG, RTK_LOG_ALWAYS, "WAV header too small: %d\n", header_size);
+        return -1;
+    }
+
+    aplay_wav_riff_t *riff = (aplay_wav_riff_t *)header;
+    if (riff->riff_id != ID_RIFF || riff->wave_id != ID_WAVE) {
+        RTK_LOGS(TAG, RTK_LOG_ALWAYS, "Not a valid WAV file\n");
+        return -1;
+    }
+
+    int offset = 12;
+    aplay_wav_chunk_t chunk;
+    *data_offset = 0;
+
+    while (offset + 8 <= header_size) {
+        memcpy(&chunk, header + offset, sizeof(chunk));
+        offset += 8;
+
+        if (chunk.id == ID_FMT) {
+            if ((size_t)offset + sizeof(aplay_wav_fmt_t) <= (size_t)header_size) {
+                aplay_wav_fmt_t *fmt = (aplay_wav_fmt_t *)(header + offset);
+                *channels = fmt->num_channels;
+                *rate = fmt->sample_rate;
+                *bits = fmt->bits_per_sample;
+                RTK_LOGS(TAG, RTK_LOG_ALWAYS, "WAV: channels=%d, rate=%d, bits=%d\n",
+                         *channels, *rate, *bits);
+            }
+        } else if (chunk.id == ID_DATA) {
+            *data_offset = offset;
+            break;
+        }
+
+        offset += chunk.sz;
+    }
+
+    if (*data_offset == 0) {
+        RTK_LOGS(TAG, RTK_LOG_ALWAYS, "WAV data chunk not found\n");
+        return -1;
+    }
+
+    return 0;
+}
+
+static void aplay_file_open(aplay_file_context_t *ctx, const char *filename, int file_type, int quiet)
+{
+    ctx->fd = 0;
+    ctx->file_type = file_type;
+    ctx->wav_header_size = 0;
+    ctx->wav_channels = 2;
+    ctx->wav_rate = 16000;
+    ctx->wav_bits = 16;
+
+    if (file_type == APLAY_FILE_TYPE_WAV) {
+        if (!filename || filename[0] == 0) {
+            if (!quiet) {
+                RTK_LOGS(TAG, RTK_LOG_ALWAYS, "error: -t wav requires a filename\n");
+            }
+            return;
+        }
+
+        ctx->fd = (int32_t)fopen(filename, "r");
+        if (ctx->fd <= 0) {
+            if (!quiet) {
+                RTK_LOGS(TAG, RTK_LOG_ALWAYS, "error: cannot open file: %s\n", filename);
+            }
+            ctx->fd = 0;
+            return;
+        }
+
+        uint8_t header[256];
+        int header_read = fread(header, 1, sizeof(header), (FILE *)ctx->fd);
+        if (header_read > 44) {
+            int channels = 0, rate = 0, bits = 0, data_offset = 0;
+            if (aplay_file_parse_wav_header(header, header_read,
+                                        &channels, &rate, &bits, &data_offset) == 0) {
+                ctx->wav_header_size = data_offset;
+                ctx->wav_channels = channels;
+                ctx->wav_rate = rate;
+                ctx->wav_bits = bits;
+                if (!quiet) {
+                    RTK_LOGS(TAG, RTK_LOG_ALWAYS, "WAV parsed: header_size=%d, ch=%d, rate=%d, bits=%d\n",
+                             ctx->wav_header_size, ctx->wav_channels, ctx->wav_rate, ctx->wav_bits);
+                }
+                fseek((FILE *)ctx->fd, ctx->wav_header_size, SEEK_SET);
+            } else {
+                if (!quiet) {
+                    RTK_LOGS(TAG, RTK_LOG_ALWAYS, "error: invalid WAV file: %s\n", filename);
+                }
+                fclose((FILE *)ctx->fd);
+                ctx->fd = 0;
+                return;
+            }
+        }
+    } else if (file_type == APLAY_FILE_TYPE_SINE || file_type == APLAY_FILE_TYPE_DEFAULT) {
+        // sine wave - no file to open
+    } else if (file_type == APLAY_FILE_TYPE_RAW) {
+        if (!filename || filename[0] == 0) {
+            if (!quiet) {
+                RTK_LOGS(TAG, RTK_LOG_ALWAYS, "error: -t raw requires a filename\n");
+            }
+            return;
+        }
+
+        ctx->fd = (int32_t)fopen(filename, "r");
+        if (ctx->fd <= 0) {
+            if (!quiet) {
+                RTK_LOGS(TAG, RTK_LOG_ALWAYS, "error: cannot open file: %s\n", filename);
+            }
+            ctx->fd = 0;
+            return;
+        }
+
+        fseek((FILE *)ctx->fd, 0L, SEEK_END);
+        int length = ftell((FILE *)ctx->fd);
+        if (!quiet) {
+            RTK_LOGS(TAG, RTK_LOG_ALWAYS, "RAW file length: %d \n", length);
+        }
+        fseek((FILE *)ctx->fd, 0, SEEK_SET);
+    } else if (filename && filename[0] != 0) {
+        ctx->fd = (int32_t)fopen(filename, "r");
+        if (ctx->fd <= 0) {
+            if (!quiet) {
+                RTK_LOGS(TAG, RTK_LOG_ALWAYS, "error: cannot open file: %s\n", filename);
+            }
+            ctx->fd = 0;
+            return;
+        }
+
+        fseek((FILE *)ctx->fd, 0L, SEEK_END);
+        int length = ftell((FILE *)ctx->fd);
+        if (!quiet) {
+            RTK_LOGS(TAG, RTK_LOG_ALWAYS, "file length:%d \n", length);
+        }
+        fseek((FILE *)ctx->fd, 0, SEEK_SET);
+    }
+}
+
+static void aplay_file_close(aplay_file_context_t *ctx)
+{
+    if (ctx->fd > 0) {
+        RTK_LOGS(TAG, RTK_LOG_ALWAYS, "close file. \n");
+        fclose((FILE *)ctx->fd);
+        ctx->fd = 0;
+    }
+}
+
+static int32_t aplay_file_read(aplay_file_context_t *ctx, void *buffer, int32_t size)
+{
+    int32_t bytes_read = 0;
+    if (ctx->fd > 0) {
+        bytes_read = fread(buffer, 1, size, (FILE *)ctx->fd);
+    }
+    return bytes_read;
+}
+
+static void aplay_sine_gen(int8_t *buffer, uint32_t freq, uint32_t count, uint32_t rate, uint32_t channels, uint32_t bits, double *_phase)
 {
     static double max_phase = 2. * M_PI;
     double phase = *_phase;
-    double step = max_phase * g_freq / (double)rate;
+    double step = max_phase * freq / (double)rate;
     uint8_t *samples[channels];
     int32_t steps[channels];
     uint32_t chn;
     int32_t format_bits = bits;
     uint32_t maxval = (1 << (format_bits - 1)) - 1;
-    /* bytes per sample */
     int32_t bps = format_bits / 8;
     int32_t to_unsigned = 0;
 
@@ -176,242 +340,207 @@ static void generate_sine(int8_t *buffer, uint32_t count, uint32_t rate, uint32_
     *_phase = phase;
 }
 
-void test_eq(struct AudioEqualizer **audio_equalizer)
+static int32_t aplay_cook_buffer(int8_t *sine_buf, aplay_params_t *param, double *phase, aplay_file_context_t *file_ctx)
 {
+    int32_t size = param->frames * param->channels  * param->bits / 8;
+    int32_t cooked_size = size;
 
+    if (param->file_type == APLAY_FILE_TYPE_SINE || param->file_type == APLAY_FILE_TYPE_DEFAULT) {
+        aplay_sine_gen(sine_buf, param->freq, param->frames,
+                        param->rate, param->channels, param->bits, phase);
+        param->gen_cnt ++;
+    } else if ((param->file_type == APLAY_FILE_TYPE_WAV || param->file_type == APLAY_FILE_TYPE_RAW) && file_ctx && file_ctx->fd > 0) {
+        cooked_size = aplay_file_read(file_ctx, sine_buf, size);
+    }
+
+    return cooked_size;
+}
+
+static bool aplay_refine_buffer_bytes(aplay_params_t *param) {
+    (void)param;
+    bool refine = false;
+#if defined(CONFIG_AUDIO_PASSTHROUGH)
+    if (kEqVersion == SW_EQ_VERSION_1_0 && param->eq) {
+        refine = true;
+    }
+#endif
+    return refine;
+}
+
+static struct AudioEqualizer *audio_equalizer = NULL;
+
+static void aplay_eq_create(void)
+{
+    if (audio_equalizer) {
+        RTK_LOGS(TAG, RTK_LOG_ALWAYS, "eq already started \n");
+        return;
+    }
+
+    int16_t band_filter_type = 0;
     int16_t band_level = 0;
     int32_t center_freq = 0;
     int32_t qfactor = 0;
     int16_t band_index = 0;
-    int32_t *freq_range = NULL;
 
-    *audio_equalizer = AudioEqualizer_Create();
-    AudioEqualizer_Init(*audio_equalizer, 0, 0);
-    int16_t bands = AudioEqualizer_GetNumberOfBands(*audio_equalizer);
-    EXAMPLE_AUDIO_DEBUG("total bands:%d", bands);
+    RTK_LOGS(TAG, RTK_LOG_ALWAYS, "eq version:%d \n", kEqVersion);
 
-    int16_t *range = AudioEqualizer_GetBandLevelRange(*audio_equalizer);
-    EXAMPLE_AUDIO_DEBUG("band range:(%d, %d)", *range, *(range + 1));
+    audio_equalizer = AudioEqualizer_Create();
+    AudioEqualizer_Init(audio_equalizer, 0, 0);
+    int16_t bands = AudioEqualizer_GetNumberOfBands(audio_equalizer);
+    RTK_LOGS(TAG, RTK_LOG_ALWAYS, "total bands:%d \n", bands);
+
+    int16_t *range = AudioEqualizer_GetBandLevelRange(audio_equalizer);
+    RTK_LOGS(TAG, RTK_LOG_ALWAYS, "band range:(%d, %d) \n", *range, *(range + 1));
     free(range);
     range = NULL;
 
-    AudioEqualizer_SetCenterFreq(*audio_equalizer, 0, 40);
-    AudioEqualizer_SetCenterFreq(*audio_equalizer, 1, 90);
-    AudioEqualizer_SetCenterFreq(*audio_equalizer, 2, 180);
-    AudioEqualizer_SetCenterFreq(*audio_equalizer, 3, 380);
-    AudioEqualizer_SetCenterFreq(*audio_equalizer, 4, 760);
-    AudioEqualizer_SetCenterFreq(*audio_equalizer, 5, 1000);
-    AudioEqualizer_SetCenterFreq(*audio_equalizer, 6, 3020);
-    AudioEqualizer_SetCenterFreq(*audio_equalizer, 7, 6010);
-    AudioEqualizer_SetCenterFreq(*audio_equalizer, 8, 12010);
-    AudioEqualizer_SetCenterFreq(*audio_equalizer, 9, 18010);
+    bands = 10;
+    AudioEqualizer_SetNumberOfBands(audio_equalizer, bands);
 
-    /*band level range from -1500->1500(-15db->15db)*/
-    AudioEqualizer_SetBandLevel(*audio_equalizer, 0, g_gain);
-    AudioEqualizer_SetBandLevel(*audio_equalizer, 1, g_gain);
-    AudioEqualizer_SetBandLevel(*audio_equalizer, 2, g_gain);
-    AudioEqualizer_SetBandLevel(*audio_equalizer, 3, g_gain);
-    AudioEqualizer_SetBandLevel(*audio_equalizer, 4, g_gain);
-    AudioEqualizer_SetBandLevel(*audio_equalizer, 5, g_gain);
-    AudioEqualizer_SetBandLevel(*audio_equalizer, 6, g_gain);
-    AudioEqualizer_SetBandLevel(*audio_equalizer, 7, g_gain);
-    AudioEqualizer_SetBandLevel(*audio_equalizer, 8, g_gain);
-    AudioEqualizer_SetBandLevel(*audio_equalizer, 9, g_gain);
+    // fc: 40hz, 90hz, 180hz...
+    int32_t fc[10] = {40, 90, 180, 380, 760, 1000, 3020, 6010, 12010, 18010};
+    // db: -2db, +4db, -1db...
+    int32_t gain[10] = {-200, 400, -100, 300, -800, 800, -200, 300, -100, 200};
+    // q: 0.7, 0.96, 0.6...
+    int32_t qfactor_arr[10] = {70, 96, 60, 70, 60, 50, 50, 66, 40, 70};
+    int32_t type[10] = {[0 ... 9] = AUDIO_EQUALIZER_TYPE_PEAKING};
+    type[0] = AUDIO_EQUALIZER_TYPE_HIGHPASS;
+    type[9] = AUDIO_EQUALIZER_TYPE_LOWPASS;
 
-    AudioEqualizer_SetQfactor(*audio_equalizer, 0, 80);
-    AudioEqualizer_SetQfactor(*audio_equalizer, 1, 96);
-    AudioEqualizer_SetQfactor(*audio_equalizer, 2, 96);
-    AudioEqualizer_SetQfactor(*audio_equalizer, 3, 70);
-    AudioEqualizer_SetQfactor(*audio_equalizer, 4, 96);
-    AudioEqualizer_SetQfactor(*audio_equalizer, 5, 90);
-    AudioEqualizer_SetQfactor(*audio_equalizer, 6, 97);
-    AudioEqualizer_SetQfactor(*audio_equalizer, 7, 66);
-    AudioEqualizer_SetQfactor(*audio_equalizer, 8, 280);
-    AudioEqualizer_SetQfactor(*audio_equalizer, 9, 99);
-
-    AudioEqualizer_SetEnabled(*audio_equalizer, true);
-
-    for (; band_index < bands; band_index++) {
-        band_level = AudioEqualizer_GetBandLevel(*audio_equalizer, band_index);
-        EXAMPLE_AUDIO_DEBUG("band %d level:%d", band_index, band_level);
-
-        center_freq = AudioEqualizer_GetCenterFreq(*audio_equalizer, band_index);
-        EXAMPLE_AUDIO_DEBUG("band:%d, center freq:%ld", band_index, center_freq);
-
-        qfactor = AudioEqualizer_GetQfactor(*audio_equalizer, band_index);
-        EXAMPLE_AUDIO_DEBUG("band:%d, qfactor:%ld", band_index, qfactor);
-        free(freq_range);
-        freq_range = NULL;
+    for (int i = 0; i < bands; i++) {
+        AudioEqualizer_SetCenterFreq(audio_equalizer, i, fc[i]);
+        AudioEqualizer_SetBandLevel(audio_equalizer, i, gain[i]);
+        AudioEqualizer_SetQfactor(audio_equalizer, i, qfactor_arr[i]);
+        AudioEqualizer_SetBandFilterType(audio_equalizer, i, type[i]);
     }
 
+    AudioEqualizer_SetEnabled(audio_equalizer, true);
+
+    for (; band_index < bands; band_index++) {
+        band_filter_type = AudioEqualizer_GetBandFilterType(audio_equalizer, band_index);
+        band_level = AudioEqualizer_GetBandLevel(audio_equalizer, band_index);
+        center_freq = AudioEqualizer_GetCenterFreq(audio_equalizer, band_index);
+        qfactor = AudioEqualizer_GetQfactor(audio_equalizer, band_index);
+        RTK_LOGA(TAG, "band:%d, filter:%d, center_freq:%d, qfactor:%d, level:%d\n",
+                    band_index, band_filter_type, center_freq, qfactor, band_level);
+    }
 }
 
-void end_test_eq(struct AudioEqualizer **audio_equalizer)
+static void aplay_eq_destroy(void)
 {
-    AudioEqualizer_SetEnabled(*audio_equalizer, false);
-    AudioEqualizer_Destroy(*audio_equalizer);
+    AudioEqualizer_SetEnabled(audio_equalizer, false);
+    AudioEqualizer_Destroy(audio_equalizer);
+    audio_equalizer = NULL;
 }
 
-void play_sample(uint32_t channels, uint32_t rate, uint32_t bits, uint32_t period_size)
+static uint32_t aplay_get_format_for_bits(uint32_t bits)
+{
+    switch (bits) {
+    case 16: return AUDIO_FORMAT_PCM_16_BIT;
+    case 24: return AUDIO_FORMAT_PCM_24_BIT;
+    case 32: return AUDIO_FORMAT_PCM_32_BIT;
+    default: return AUDIO_FORMAT_INVALID;
+    }
+}
+
+static void play_sample(aplay_params_t *param, aplay_file_context_t *file_ctx)
 {
     struct AudioTrack *aplay;
 
     uint64_t frames_written = 0;
-    uint32_t frame_size = channels * bits / 8;
+    uint32_t frame_size = param->channels * param->bits / 8;
     int32_t track_buf_size = 4096;
-    uint32_t format;
-    uint32_t track_start_threshold = 0;
-    uint64_t play_frame_size = (uint64_t)rate * (uint64_t)PLAY_SECONDS;
+    uint64_t play_frame_size = (uint64_t)param->rate * (uint64_t)param->duration;
 
     AudioTimestamp tstamp;
     uint32_t frames_played = 0;
     uint64_t frames_played_at_us = 0;
     int64_t now_us = 0;
 
-    uint32_t sine_frames_count = period_size;
-    int8_t sine_buf[sine_frames_count * frame_size];
+    uint32_t sine_frames_count = param->frames;
+
+    int8_t *sine_buf = malloc(sine_frames_count * frame_size);
+
+    int32_t size = sine_frames_count * frame_size;
     double phase = 0;
 
-#if DUMP_ENABLE
-    int8_t *dump_buffer;
-#endif
-
-#if TEST_DELAY
-    bool water_level_us_print = true;
-    uint32_t start_us = 0;
-#endif
-
-    EXAMPLE_AUDIO_DEBUG("play sample channels:%lu, rate:%lu,bits=%lu,period_size=%lu", channels, rate, bits, period_size);
-
-    switch (bits) {
-    case 16:
-        format = AUDIO_FORMAT_PCM_16_BIT;
-        break;
-    case 24:
-        format = AUDIO_FORMAT_PCM_24_BIT;
-        break;
-    case 32:
-        format = AUDIO_FORMAT_PCM_32_BIT;
-        break;
-    default:
-        break;
-    }
-
-#if DUMP_ENABLE
-    dump_buffer = (int8_t *) malloc(DUMP_FRAME * frame_size);
-    if (!dump_buffer) {
-        free(dump_buffer);
-        EXAMPLE_AUDIO_DEBUG("failed to malloc dump_buffer \n");
-        return;
-    }
-    EXAMPLE_AUDIO_DEBUG("aplay dump_buffer:%p", dump_buffer);
-#endif
+    RTK_LOGS(TAG, RTK_LOG_ALWAYS, "play sample channels:%u, rate:%u,param->bits=%u,period_size=%u \n",
+                                   param->channels, param->rate, param->bits, param->frames);
 
     aplay = AudioTrack_Create();
     if (!aplay) {
-        EXAMPLE_AUDIO_ERROR("error: new AudioTrack failed");
+        RTK_LOGS(TAG, RTK_LOG_ALWAYS, "error: new AudioTrack failed \n");
         return;
     }
 
-    track_buf_size = AudioTrack_GetMinBufferBytes(aplay, AUDIO_CATEGORY_MEDIA, rate, format, channels) * 16;
+    track_buf_size = AudioTrack_GetMinBufferBytes(aplay, AUDIO_CATEGORY_MEDIA,
+                     param->rate, aplay_get_format_for_bits(param->bits), param->channels) * param->buf_multi;
+
+    if (aplay_refine_buffer_bytes(param)) {
+        track_buf_size = size;
+    }
+
     AudioTrackConfig  track_config;
     track_config.category_type = AUDIO_CATEGORY_MEDIA;
-    track_config.sample_rate = rate;
-    track_config.format = format;
-    track_config.channel_count = channels;
+    track_config.sample_rate = param->rate;
+    track_config.format = aplay_get_format_for_bits(param->bits);
+    track_config.channel_count = param->channels;
     track_config.buffer_bytes = track_buf_size;
+
     AudioTrack_Init(aplay, &track_config, AUDIO_OUTPUT_FLAG_NONE);
 
-    EXAMPLE_AUDIO_DEBUG("track buf size:%ld", track_buf_size);
-
-#if TEST_EQ
-    struct AudioEqualizer *audio_equalizer;
-    test_eq(&audio_equalizer);
-#endif
-
-    /*for mixer version, this mean sw volume, for passthrough version, sw volume is not supported*/
     AudioTrack_SetVolume(aplay, 1.0, 1.0);
-    AudioControl_SetHardwareVolume(g_vol, g_vol);
-
     AudioTrack_SetStartThresholdBytes(aplay, track_buf_size);
-    track_start_threshold = AudioTrack_GetStartThresholdBytes(aplay);
-    EXAMPLE_AUDIO_DEBUG("get start threshold:%lu", track_start_threshold);
+    AudioControl_SetHardwareVolume(param->vol, param->vol);
 
-    ssize_t size = sine_frames_count * channels  * bits / 8;
+    AudioPlaybackRate speed;
+    speed.speed = 2.0;
+    speed.pitch = 1.0;
 
     if (AudioTrack_Start(aplay) != AUDIO_OK) {
-        EXAMPLE_AUDIO_ERROR("error: aplay start fail");
+        RTK_LOGS(TAG, RTK_LOG_ALWAYS, "error: aplay start fail \n");
         return;
     }
 
-    g_aplay = aplay;
+    if (param->eq) {
+        //for passthrough, must create after track start.
+        //for mixer, no limit.
+        aplay_eq_create();
+    }
+
+    if (param->speed) {
+        AudioTrack_SetPlaybackRate(aplay, speed);
+    }
 
     while (1) {
-
-#if TEST_DELAY
-        if (frames_written == 0) {
-            set_gpio_state(TEST_DELAY_GPIO, 0);
-            set_gpio_state(TEST_DELAY_GPIO, 1);
-            start_us = DTimestamp_Get();
+        int32_t cooked_size = aplay_cook_buffer(sine_buf, param, &phase, file_ctx);
+        if (cooked_size < size) {
+            break;
         }
-#endif
 
-
-#if SINE_GEN_EVERY_TIME
-        generate_sine(sine_buf, sine_frames_count, rate, channels, bits, &phase);
-#else
-        if (g_generate_cnt < 1) {
-            generate_sine(sine_buf, sine_frames_count, rate, channels, bits, &phase);
-        }
-#endif
-        g_generate_cnt ++;
-
-#if TEST_DELAY
-        if (frames_written + sine_frames_count >= track_start_threshold / frame_size && water_level_us_print) {
-            EXAMPLE_AUDIO_DEBUG("water level achieved, takes %lu us", DTimestamp_Get() - start_us);
-            water_level_us_print = false;
-        }
-#endif
-
-#if LITTLEFS_RAW
-        if (s_lfs_fd > 0) {
-            int32_t bytes_read = fread(sine_buf, 1, size, (FILE *)s_lfs_fd);
-            EXAMPLE_AUDIO_DEBUG("fread from file(0x%x). size:%d, bytes_read:%ld", s_lfs_fd, size, bytes_read);
-        }
-#endif
         AudioTrack_Write(aplay, (u8 *)sine_buf, size, true);
-
-#if DUMP_ENABLE
-        if (frames_written  * frame_size + size <= DUMP_FRAME * frame_size) {
-            memcpy(dump_buffer + frames_written  * frame_size, sine_buf, size);
-#if NEED_CACHE_INVALIDATE
-            DCache_Invalidate((u32)(dump_buffer + frames_written  * frame_size), size);
-#endif
-        }
-#endif
 
         now_us = rtos_time_get_current_system_time_ms() * 1000;
         if (AudioTrack_GetTimestamp(aplay, &tstamp) == AUDIO_OK) {
-            EXAMPLE_AUDIO_DEBUG("timestamp position:%lld, sec:%lld, nsec:%ld", tstamp.position, tstamp.time.tv_sec, tstamp.time.tv_nsec);
+            if (param->verbose) {
+                RTK_LOGA(TAG, "timestamp position:%lld, sec:%lld, nsec:%ld \n",
+                           tstamp.position, tstamp.time.tv_sec, tstamp.time.tv_nsec);
+            }
             frames_played = tstamp.position;
             frames_played_at_us = tstamp.time.tv_sec * 1000000LL + tstamp.time.tv_nsec / 1000;
         }
 
         frames_written += (uint64_t)(size / frame_size);
         if (frames_written >= play_frame_size) {
-            EXAMPLE_AUDIO_DEBUG("frames_written:%llu, play_frame_size:%llu", frames_written, play_frame_size);
+            RTK_LOGA(TAG, "frames_written:%llu, play_frame_size:%llu \n",
+                           frames_written, play_frame_size);
             break;
         }
     }
 
-    int64_t duration_us = frames_played * 1000000LL / rate + now_us - frames_played_at_us;
-    int64_t frames_written_us = frames_written * 1000000LL / rate;
+    int64_t duration_us = frames_played * 1000000LL / param->rate + now_us - frames_played_at_us;
+    int64_t frames_written_us = frames_written * 1000000LL / param->rate;
     uint32_t wait_ms = (frames_written_us - duration_us) / 1000;
-
-    if (wait_ms > 100) {
-        //ignore too big latency.
-        wait_ms = 100;
-    }
 
     rtos_time_delay_ms(wait_ms);
 
@@ -420,208 +549,168 @@ void play_sample(uint32_t channels, uint32_t rate, uint32_t bits, uint32_t perio
     AudioTrack_Stop(aplay);
     AudioTrack_Destroy(aplay);
 
-    bool muted = AudioControl_GetAmplifierMute();
-    EXAMPLE_AUDIO_DEBUG("amp muted:%d", muted);
-
-#if DUMP_ENABLE
-    if (dump_buffer) {
-        free(dump_buffer);
+    if (sine_buf) {
+        free(sine_buf);
     }
-#endif
 
-#if TEST_EQ
-    end_test_eq(&audio_equalizer);
-    audio_equalizer = NULL;
-#endif
+    if (param->eq) {
+        aplay_eq_destroy();
+    }
 
     aplay = NULL;
 }
 
-void example_aplay_thread(void *param)
+static void example_aplay_thread(void *param)
 {
-    EXAMPLE_AUDIO_DEBUG("Aplay demo begin");
-    (void) param;
+    RTK_LOGS(TAG, RTK_LOG_ALWAYS, "Aplay demo begin, free heap:%d\n",
+                  rtos_mem_get_free_heap_size());
+    aplay_params_t *params = (aplay_params_t *)param;
 
-    APLAY_DEBUG_HEAP_BEGIN();
-    g_generate_cnt = 0;
-#if LITTLEFS_RAW
-    s_lfs_fd = (int)fopen(s_lfs_name, "r");
-    if (s_lfs_fd <= 0) {
-        EXAMPLE_AUDIO_ERROR("fopen lfs fail.");
+    memset(&s_file_ctx, 0, sizeof(s_file_ctx));
+
+    if (params->filename[0] != '\0') {
+        aplay_file_open(&s_file_ctx, params->filename, params->file_type, params->quiet);
+
+        if (params->file_type == APLAY_FILE_TYPE_WAV && s_file_ctx.fd <= 0 && !params->quiet) {
+            RTK_LOGS(TAG, RTK_LOG_ALWAYS, "warning: WAV file open failed, using sine wave instead\n");
+        }
+        if (params->file_type == APLAY_FILE_TYPE_WAV && s_file_ctx.fd > 0) {
+            params->channels = s_file_ctx.wav_channels;
+            params->rate = s_file_ctx.wav_rate;
+            params->bits = s_file_ctx.wav_bits;
+            params->wav_header_size = s_file_ctx.wav_header_size;
+            RTK_LOGS(TAG, RTK_LOG_ALWAYS, "Using WAV params: ch=%d, rate=%d, bits=%d\n",
+                     params->channels, params->rate, params->bits);
+        }
     }
-    EXAMPLE_AUDIO_ERROR("fopen lfs 0x%x.", s_lfs_fd);
 
-    fseek((FILE *)s_lfs_fd, 0L, SEEK_END);
-    int64_t length = ftell((FILE *)s_lfs_fd);
-    EXAMPLE_AUDIO_DEBUG("file length:%lld", length);
-    fseek((FILE *)s_lfs_fd, 0, SEEK_SET);
-
-#endif
-
-    //user should set sdk/component/soc/**/usrcfg/include/ameba_audio_hw_usrcfg.h's AUDIO_HW_AMPLIFIER_PIN to make sure amp is enabled.
     AudioService_Init();
 
-#if TEST_DELAY
-    rtos_time_delay_ms(5 * RTOS_TICK_RATE_HZ);
-#endif
+    play_sample(params, &s_file_ctx);
+    rtos_time_delay_ms(2000);
 
-    while(1) {
+    aplay_file_close(&s_file_ctx);
 
-        play_sample(g_track_channel, g_track_rate, g_track_format, g_write_frames_one_time);
-
-        rtos_time_delay_ms(2000);
-
-    }
-
-#if LITTLEFS_RAW
-    if (s_lfs_fd > 0) {
-        EXAMPLE_AUDIO_DEBUG("close file.");
-        fclose((FILE *)s_lfs_fd);
-        s_lfs_fd = NULL;
-    }
-#endif
-    APLAY_DEBUG_HEAP_END();
+    RTK_LOGS(TAG, RTK_LOG_ALWAYS, "Aplay demo end, free heap:%d\n",
+                  rtos_mem_get_free_heap_size());
 
     rtos_task_delete(NULL);
-}
-
-#if TEST_TIMESTAMP
-int64_t last_frames_played_ns = 0;
-int64_t last_frames_played_at_ns = 0;
-int64_t last_phase_played_ns = 0;
-int64_t last_phase_played_at_ns = 0;
-int32_t ppm_test_cnt = 0;
-
-void example_audio_counter_time(void *param)
-{
-    rtos_time_delay_ms(2 * RTOS_TICK_RATE_HZ);
-    EXAMPLE_AUDIO_DEBUG("Aplay time begin");
-    (void) param;
-
-    AudioTimestamp tstamp;
-    int32_t frames_played = 0;
-    int64_t frames_played_ns = 0;
-    int64_t frames_played_at_ns = 0;
-
-    int64_t phase_played_ns = 0;
-    int64_t phase_played_at_ns = 0;
-
-    while (1) {
-        if (!ppm_test_cnt) {
-            rtos_time_delay_ms(1 * RTOS_TICK_RATE_HZ);
-        } else {
-            rtos_time_delay_ms(10 * RTOS_TICK_RATE_HZ);
-        }
-
-        if (AudioTrack_GetTimestamp(g_aplay, &tstamp) == AUDIO_OK) {
-            frames_played = tstamp.position;
-            frames_played_at_ns = tstamp.time.tv_sec * 1000000000LL + tstamp.time.tv_nsec;
-            frames_played_ns = (int64_t)((double)frames_played / (double)g_track_rate * (double)1000000000);
-        }
-
-        if (AudioTrack_GetPresentTime(g_aplay, &phase_played_at_ns, &phase_played_ns) != AUDIO_OK) {
-            EXAMPLE_AUDIO_ERROR("get present time fail");
-        }
-
-        if (ppm_test_cnt) {
-            EXAMPLE_AUDIO_DEBUG("ppm:%.16f frames_played:%ld, frames_played_ns:%lld, frames_played_at_ns:%lld, last_frames_played_ns:%lld, last_frames_played_at_ns:%lld",
-                                (double)(frames_played_ns - last_frames_played_ns  - (frames_played_at_ns - last_frames_played_at_ns)) / (double)(
-                                    frames_played_at_ns - last_frames_played_at_ns) * (double)1000000,
-                                frames_played, frames_played_ns, frames_played_at_ns, last_frames_played_ns, last_frames_played_at_ns);
-
-            EXAMPLE_AUDIO_DEBUG("phase ppm:%.16f phase_played_ns:%lld, phase_played_at_ns:%lld, last_phase_played_ns:%lld, last_phase_played_at_ns:%lld",
-                                (double)(phase_played_ns - last_phase_played_ns  - (phase_played_at_ns - last_phase_played_at_ns)) / (double)(phase_played_at_ns - last_phase_played_at_ns) *
-                                (double)1000000,
-                                phase_played_ns, phase_played_at_ns, last_phase_played_ns, last_phase_played_at_ns);
-        }
-
-        last_frames_played_ns = frames_played_ns;
-        last_frames_played_at_ns = frames_played_at_ns;
-
-        last_phase_played_ns = phase_played_ns;
-        last_phase_played_at_ns = phase_played_at_ns;
-
-        ppm_test_cnt ++;
-    }
-
-    rtos_task_delete(NULL);
-}
-#endif
-
-void example_track_control_thread(void *param)
-{
-    (void) param;
-    AudioControl_SetHardwareVolume(g_vol, g_vol);
-    AudioControl_SetAmplifierMute(g_mute);
-
-    float left, right;
-    bool muted;
-
-    AudioControl_GetHardwareVolume(&left, &right);
-    muted = AudioControl_GetAmplifierMute();
-    EXAMPLE_AUDIO_DEBUG("amp vol:%f %f, muted:%d", left, right, muted);
-
-    rtos_task_delete(NULL);
-}
-
-static void parse_amixer_params(cmd_params_t *params, amixer_params_t *p)
-{
-    *p = AMIXER_DEFAULT_PARAMS;
-    CMD_PARSE_FLOAT(p->volume, "-v", AMIXER_DEFAULT_PARAMS.volume);
-    CMD_PARSE_INT(p->mute,   "-m", AMIXER_DEFAULT_PARAMS.mute);
-}
-
-static uint32_t amixer_handler(cmd_params_t *params)
-{
-    if (params->argc <= 1) {
-        amixer_help();
-        return TRUE;
-    }
-
-    amixer_params_t p;
-    parse_amixer_params(params, &p);
-
-    g_vol  = p.volume;
-    g_mute = p.mute;
-
-    if (rtos_task_create(NULL, "example_track_control_thread",
-                        example_track_control_thread,
-                        NULL, 1024, 1) != RTK_SUCCESS) {
-        EXAMPLE_AUDIO_ERROR("error: rtos_task_create(example_track_control_thread) failed");
-        return FALSE;
-    }
-
-    return TRUE;
 }
 
 static void aplay_help(void)
 {
-    RTK_LOGI(TAG, "aplay [OPTION...]\n"
-        "\t\t test cmd: aplay [-r] rate [-b] write_frames_one_time [-c] track_channels [-f] format  \n"
-        "\t\t default params: [-r] 16000 [-p] 1024 [-c] 2 [-f] format 16 \n"
-        "\t\t test demo: aplay -r 48000 -c 1 \n"
-        "\t\t careful: if you set SINE_GEN_EVERY_TIME as 0, please remember to set -b as [integer * rate * 1 / g_freq]\n");
+    RTK_LOGS(TAG, RTK_LOG_ALWAYS, "aplay [OPTION...] [file]\n"
+        "\t-h, --help              show this help message\n"
+        "\t--version               show version\n"
+        /* Lowercase short + long */
+        "\t-c, --channels          number of channels (default: 2)\n"
+        "\t-r, --rate              sample rate (default: 16000)\n"
+        "\t-b, --buffer-frames     buffer frames (default: 480)\n"
+        "\t-d, --duration          playback duration in seconds\n"
+        "\t-e, --eq                enable eq\n"
+        "\t-f, --format            sample format (bits, default: 16)\n"
+        "\t-g, --gain              audio gain (default: 0)\n"
+        "\t-l, --loop              loop playback count\n"
+        "\t-m, --mute              mute audio output\n"
+        "\t-q, --quiet             quiet mode\n"
+        "\t-s, --speed             playback speed (default: 1.0)\n"
+        "\t-t, --file-type         file type (raw, wav)\n"
+        /* Uppercase short + long */
+        "\t-F, --freq              sine wave frequency (default: 1000)\n"
+        "\t-M, --buf-multi         buffer multiple\n"
+        "\t-N, --gen-cnt           generated sample count\n"
+        "\t-V, --verbose           verbose output\n"
+        "\t-X, --eq_gain           eq gain\n"
+        /* Float */
+        "\t-v, --volume            volume (0.0-1.0, default: 1.0)\n"
+        /* Long only */
+        "\t--period-size           audio period size (default: 1024)\n"
+        "\t--min-stage             audio minimum stage (default: 1)\n"
+        "\nFile types:\n"
+        "\twav    - WAV file\n"
+        "\nExamples:\n"
+        "\taplay -t wav vfs://dance.wav\n"
+        "\taplay -r 48000 -t raw vfs://dance_48000_2ch_16bit.raw\n"
+        "\taplay -r 48000 -c 2 -f 16 -d 20 -v 0.8\n");
 }
-
-static void amixer_help(void)
-{
-    RTK_LOGI(TAG, "amixer [OPTION...]\n"
-        "\t\t test cmd: amixer [-v] volume [-m] mute\n");
-}
-
 
 static void parse_aplay_params(cmd_params_t *params, aplay_params_t *p)
 {
     *p = APLAY_DEFAULT_PARAMS;
 
-    CMD_PARSE_INT(p->track_channel,        "-c",  APLAY_DEFAULT_PARAMS.track_channel);
-    CMD_PARSE_INT(p->track_rate,           "-r",  APLAY_DEFAULT_PARAMS.track_rate);
-    CMD_PARSE_INT(p->write_frames_one_time,"-b",  APLAY_DEFAULT_PARAMS.write_frames_one_time);
-    CMD_PARSE_INT(p->track_format,         "-f",  APLAY_DEFAULT_PARAMS.track_format);
-    CMD_PARSE_INT(p->freq,                 "-s",  APLAY_DEFAULT_PARAMS.freq);
-    CMD_PARSE_INT(p->gain,                 "-g",  APLAY_DEFAULT_PARAMS.gain);
-    CMD_PARSE_FLOAT(p->vol,                  "-v",  APLAY_DEFAULT_PARAMS.vol);   // float
-    CMD_PARSE_INT(p->mute,                 "-m",  APLAY_DEFAULT_PARAMS.mute);
+    cmd_parse_entry_t int_entries[] = {
+        /* Lowercase short + long */
+        {"-c",        &p->channels,        APLAY_DEFAULT_PARAMS.channels},
+        {"--channels",&p->channels,        APLAY_DEFAULT_PARAMS.channels},
+        {"-r",        &p->rate,            APLAY_DEFAULT_PARAMS.rate},
+        {"--rate",    &p->rate,            APLAY_DEFAULT_PARAMS.rate},
+        {"-b",        &p->frames,          APLAY_DEFAULT_PARAMS.frames},
+        {"--buffer-frames", &p->frames,    APLAY_DEFAULT_PARAMS.frames},
+        {"-d",        &p->duration,        APLAY_DEFAULT_PARAMS.duration},
+        {"--duration",&p->duration,        APLAY_DEFAULT_PARAMS.duration},
+        {"-e",        &p->eq,              APLAY_DEFAULT_PARAMS.eq},
+        {"--eq",      &p->eq,              APLAY_DEFAULT_PARAMS.eq},
+        {"-f",        &p->bits,            APLAY_DEFAULT_PARAMS.bits},
+        {"--format",  &p->bits,            APLAY_DEFAULT_PARAMS.bits},
+        {"-g",        &p->gain,            APLAY_DEFAULT_PARAMS.gain},
+        {"--gain",    &p->gain,            APLAY_DEFAULT_PARAMS.gain},
+        {"-l",        &p->loop,            APLAY_DEFAULT_PARAMS.loop},
+        {"--loop",    &p->loop,            APLAY_DEFAULT_PARAMS.loop},
+        {"-m",        &p->mute,            APLAY_DEFAULT_PARAMS.mute},
+        {"--mute",    &p->mute,            APLAY_DEFAULT_PARAMS.mute},
+        {"-q",        &p->quiet,           APLAY_DEFAULT_PARAMS.quiet},
+        {"--quiet",   &p->quiet,           APLAY_DEFAULT_PARAMS.quiet},
+        {"-s",        &p->speed,           APLAY_DEFAULT_PARAMS.speed},
+        {"--speed",   &p->speed,           APLAY_DEFAULT_PARAMS.speed},
+        {"-t",        &p->file_type,       APLAY_DEFAULT_PARAMS.file_type},
+        {"--file-type", &p->file_type,     APLAY_DEFAULT_PARAMS.file_type},
+        /* Uppercase short + long */
+        {"-F",        &p->freq,            APLAY_DEFAULT_PARAMS.freq},
+        {"--freq",    &p->freq,            APLAY_DEFAULT_PARAMS.freq},
+        {"-M",        &p->buf_multi,       APLAY_DEFAULT_PARAMS.buf_multi},
+        {"--buf-multi", &p->buf_multi,     APLAY_DEFAULT_PARAMS.buf_multi},
+        {"-N",        &p->gen_cnt,         0},
+        {"--gen-cnt", &p->gen_cnt,         0},
+        {"-V",        &p->verbose,         APLAY_DEFAULT_PARAMS.verbose},
+        {"--verbose", &p->verbose,         APLAY_DEFAULT_PARAMS.verbose},
+    };
+
+    cmd_parse_float_entry_t float_entries[] = {
+        {"-v",        &p->vol,             APLAY_DEFAULT_PARAMS.vol},
+        {"--volume",  &p->vol,             APLAY_DEFAULT_PARAMS.vol},
+    };
+
+    cmd_parse_all_int(params, int_entries, sizeof(int_entries) / sizeof(int_entries[0]));
+    cmd_parse_all_float(params, float_entries, sizeof(float_entries) / sizeof(float_entries[0]));
+
+    for (int i = 0; i < params->argc - 1; i++) {
+        if (params->argv[i] && (strcmp(params->argv[i], "-t") == 0 || strcmp(params->argv[i], "--file-type") == 0)) {
+            p->file_type = aplay_parse_file_type(params->argv[i + 1]);
+        }
+    }
+
+    if ((p->file_type == APLAY_FILE_TYPE_WAV || p->file_type == APLAY_FILE_TYPE_RAW) && params->argc > 0) {
+        const char *last_arg = params->argv[params->argc - 1];
+        if (last_arg && last_arg[0] != '-') {
+            strncpy(p->filename, last_arg, sizeof(p->filename) - 1);
+            p->filename[sizeof(p->filename) - 1] = '\0';
+
+            if (strstr(last_arg, ".wav") != NULL || strstr(last_arg, ".WAV") != NULL) {
+                p->file_type = APLAY_FILE_TYPE_WAV;
+            } else {
+                p->file_type = APLAY_FILE_TYPE_RAW;
+            }
+        }
+    }
+
+    if (!p->quiet) {
+        RTK_LOGS(TAG, RTK_LOG_ALWAYS, "file_type: %s (%d), filename: %s\n",
+                  aplay_get_file_type_name(p->file_type), p->file_type, p->filename);
+    }
+
+    CMD_PARSE_INT(kEqVersion,                               "--version",        1);
+    CMD_PARSE_INT(kPrimaryAudioConfig.out_period_frames,    "--period-size",    1024);
+    CMD_PARSE_INT(kPrimaryAudioConfig.out_min_frames_stage, "--min-stage",      1);
 }
 
 static uint32_t aplay_handler(cmd_params_t *params)
@@ -631,46 +720,33 @@ static uint32_t aplay_handler(cmd_params_t *params)
         return TRUE;
     }
 
-    aplay_params_t p;
-    parse_aplay_params(params, &p);
-
-    g_track_channel        = p.track_channel;
-    g_track_rate           = p.track_rate;
-    g_write_frames_one_time= p.write_frames_one_time;
-    g_track_format         = p.track_format;
-    g_freq                 = p.freq;
-    g_gain                 = p.gain;
-    g_vol                  = p.vol;
-    g_mute                 = p.mute;
-
-    if (rtos_task_create(NULL, "example_aplay_thread",
-                        example_aplay_thread, NULL,
-                        5632, 1) != RTK_SUCCESS) {
-        EXAMPLE_AUDIO_ERROR("error: rtos_task_create(example_aplay_thread) failed");
+    if (s_cfg_cnt >= MAX_TRACKS) {
+        RTK_LOGS(TAG, RTK_LOG_ALWAYS, "support less than %d tracks \n", MAX_TRACKS);
         return FALSE;
     }
 
-#if TEST_TIMESTAMP
-    if (rtos_task_create(NULL, "example_audio_counter_time",
-                        example_audio_counter_time, NULL,
-                        8192 * 4, 1) != RTK_SUCCESS) {
-        EXAMPLE_AUDIO_ERROR("error: rtos_task_create(example_audio_counter_time) failed");
+    parse_aplay_params(params, &s_params[s_cfg_cnt]);
+
+    RTK_LOGS(TAG, RTK_LOG_ALWAYS, "create aplay example \n");
+
+    rtos_task_t track_task;
+    if (rtos_task_create(&track_task, "example_aplay_thread",
+                        example_aplay_thread, &s_params[s_cfg_cnt],
+                        1024 * 2, 1) != RTK_SUCCESS) {
+        RTK_LOGS(TAG, RTK_LOG_ALWAYS, "error: rtos_task_create(example_aplay_thread) failed \n");
         return FALSE;
     }
-#endif
+
+    s_cfg_cnt++;
 
     return TRUE;
 }
 
 DEFINE_CMD_WRAPPER(aplay, aplay_handler, 5);
-DEFINE_CMD_WRAPPER(amixer, amixer_handler, 5);
 
 CMD_TABLE_DATA_SECTION
 const COMMAND_TABLE aplay_cmd_table[] = {
     {
         "aplay", aplay_cmd_thread
-    },
-    {
-        "amixer", amixer_cmd_thread
     },
 };

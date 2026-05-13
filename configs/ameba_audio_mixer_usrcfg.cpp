@@ -21,3 +21,5 @@ PrimaryAudioConfig kPrimaryAudioConfig = {1024, 4, AUDIO_OUT_MIN_FRAMES_STAGE1};
 int64_t kStandbyDurationNs = -1;
 
 int32_t kMultipleCopiedBuffer = 128;
+
+int32_t kEqVersion = SW_EQ_VERSION_0_0;

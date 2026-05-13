@@ -47,6 +47,11 @@ ameba_list_append_if(CONFIG_CMD_ARECORD private_sources
 
 ameba_list_append_if(CONFIG_CMD_APLAY private_sources
     aplay/aplay.c
+    aplay/amixer.c
+)
+
+ameba_list_append_if(CONFIG_CMD_EQUALIZER private_sources
+    equalizer/equalizer.c
 )
 
 ameba_list_append_if(CONFIG_CMD_PLAYER private_sources
@@ -60,6 +65,7 @@ ameba_list_append_if(CONFIG_CMD_PCRECORD private_sources
 
 ameba_list_append(private_includes
     ${c_CMPT_AUDIO_DIR}/interfaces
+    ${c_CMPT_AUDIO_DIR}/configs/include
     ${c_CMPT_AUDIO_DIR}/base/log/include
     ${c_CMPT_AUDIO_DIR}/cmds
 )

@@ -66,20 +66,6 @@ struct AudioEqualizer *AudioEqualizer_Create(void);
 void AudioEqualizer_Destroy(struct AudioEqualizer *equalizer);
 
 /**
- * @brief Set AudioEffect to equalizer.Only works in passthrough mode.
- * @param module is the pointer of struct AudioEffect.
- * @return Returns a value listed below: \n
- * int32_t | Description
- * ----------------------| -----------------------
- * AUDIO_OK | the operation is successful.
- * AUDIO_ERR_INVALID_OPERATION | the operation is invalid.
- * AUDIO_ERR_INVALID_PARAM | the params are invalid.
- * @since 1.0
- * @version 1.0
- */
-int32_t AudioEqualizer_SetModule(struct AudioEqualizer *equalizer, struct AudioEffect *module);
-
-/**
  * @brief Init AudioEqualizer.
  * @param equalizer is the pointer of struct AudioEqualizer.
  * @param priority designed for future use, now please set 0.
@@ -134,6 +120,7 @@ int16_t AudioEqualizer_GetNumberOfBands(struct AudioEqualizer *equalizer);
 
 /**
  * @brief Get band level range AudioEqualizer supports.
+ *        This api only supports SW_EQ_VERSION_0_0 now.
  * @param equalizer is the pointer of struct AudioEqualizer.
  * @return Returns band level range supported by the AudioEqualizer framework.The return value
  * contains two int16_t integer, which is decibel * 100, for example (-1500, 1500), means (-15db, 15db).
@@ -143,9 +130,42 @@ int16_t AudioEqualizer_GetNumberOfBands(struct AudioEqualizer *equalizer);
 int16_t *AudioEqualizer_GetBandLevelRange(struct AudioEqualizer *equalizer);
 
 /**
+ * @brief Set AudioEqualizer band filter type.
+ * This interface is only supported when kEqVersion = SW_EQ_VERSION_1_0, which is set in:
+ * component/audio/configs/ameba_audio_mixer_usrcfg.c
+ *
+ * @param equalizer is the pointer of struct AudioEqualizer.
+ * @param band is the band number, for example, which band level to set?
+ * The band value range is [0, BAND_TATAL_NUM).BAND_TATAL_NUM is got from AudioEqualizer_GetNumberOfBands.
+ * @param filter_type is the filter type of band to set, such as: AUDIO_EQUALIZER_TYPE_LOWPASS and so on,
+ * which are defined in audio_type.h
+ * @return Returns a value listed below: \n
+ * int32_t | Description
+ * ----------------------| -----------------------
+ * AUDIO_OK | the operation is successful.
+ * AUDIO_ERR_INVALID_OPERATION | the operation is invalid.
+ * AUDIO_ERR_INVALID_PARAM | the params are invalid.
+ * @since 1.0
+ * @version 1.0
+ */
+int32_t AudioEqualizer_SetBandFilterType(struct AudioEqualizer *equalizer, uint32_t band, uint32_t filter_type);
+
+/**
+ * @brief Get AudioEqualizer band filter type.
+ * @param equalizer is the pointer of struct AudioEqualizer.
+ * @param band is the band number, which band level to get?
+ * The band value range is [0, BAND_TATAL_NUM).BAND_TATAL_NUM is got from AudioEqualizer_GetNumberOfBands.
+ * @return Returns filter type, such as AUDIO_EQUALIZER_TYPE_LOWPASS and so on,
+ * which are defined in audio_type.h
+ * @since 1.0
+ * @version 1.0
+ */
+int16_t AudioEqualizer_GetBandFilterType(struct AudioEqualizer *equalizer, uint32_t band);
+
+/**
  * @brief Set AudioEqualizer band level.
  * @param equalizer is the pointer of struct AudioEqualizer.
- * @param band is the band number, for example, AudioEqualizer total supports 5 bands, which band level to set?
+ * @param band is the band number, which band level to set?
  * The band value range is [0, BAND_TATAL_NUM).BAND_TATAL_NUM is got from AudioEqualizer_GetNumberOfBands.
  * @param level is the level of band to set. The level value should be delta decibel * 100, and in the range framework
  * supports.See the {@link AudioEqualizer_GetBandLevelRange} for information
@@ -163,7 +183,7 @@ int32_t AudioEqualizer_SetBandLevel(struct AudioEqualizer *equalizer, uint32_t b
 /**
  * @brief Get AudioEqualizer band level.
  * @param equalizer is the pointer of struct AudioEqualizer.
- * @param band is the band number, for example, AudioEqualizer total supports 5 bands, which band level to get?
+ * @param band is the band number, which band level to get?
  * The band value range is [0, BAND_TATAL_NUM).BAND_TATAL_NUM is got from AudioEqualizer_GetNumberOfBands.
  * @return Returns a value of delta decibel * 100, and in the range framework supports.See the {@link
  * AudioEqualizer_GetBandLevelRange} for information
@@ -191,7 +211,7 @@ int32_t AudioEqualizer_SetCenterFreq(struct AudioEqualizer *equalizer, uint32_t 
 /**
  * @brief Get AudioEqualizer center frequency.
  * @param equalizer is the pointer of struct AudioEqualizer.
- * @param band is the band number, for example, AudioEqualizer total supports 5 bands, which band frequency to get?
+ * @param band is the band number, which band frequency to get?
  * The band value range is [0, BAND_TATAL_NUM).BAND_TATAL_NUM is got from AudioEqualizer_GetNumberOfBands.
  * @return Returns a value of center frequency in hz.
  * @since 1.0
@@ -213,7 +233,7 @@ int16_t AudioEqualizer_GetBand(struct AudioEqualizer *equalizer, uint32_t freque
  * @brief Set AudioEqualizer Q factor.
  * @param equalizer is the pointer of struct AudioEqualizer.
  * @param band is the band number.
- * @param qfactor is the qfactor set to band.
+ * @param qfactor is the qfactor set to band, which equals to real qfactor * 100.
  * @return Returns a value listed below: \n
  * int32_t | Description
  * ----------------------| -----------------------
@@ -229,7 +249,7 @@ int32_t AudioEqualizer_SetQfactor(struct AudioEqualizer *equalizer, uint32_t ban
  * @brief Get AudioEqualizer Q factor.
  * @param equalizer is the pointer of struct AudioEqualizer.
  * @param band is the band number.
- * @return Returns qfactor of the band.
+ * @return Returns qfactor of the band, which equals to real qfactor * 100.
  * @since 1.0
  * @version 1.0
  */
