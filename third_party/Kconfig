@@ -1,0 +1,61 @@
+menu "Third Party Libraries"
+
+config THIRD_PARTY_HAAC_MENU
+    bool "HAAC"
+    select THIRD_PARTY_HAAC if WHC_HOST || WHC_NONE
+    help
+        FDK-AAC library for AAC decoding
+
+config THIRD_PARTY_FLAC_MENU
+    bool "FLAC"
+    select THIRD_PARTY_FLAC if WHC_HOST || WHC_NONE
+    help
+        FLAC library for FLAC decoding
+
+config THIRD_PARTY_OPUS_MENU
+    bool "libopus"
+    select THIRD_PARTY_OPUS if WHC_HOST || WHC_NONE
+    help
+        Opus library for OPUS decoding
+
+config THIRD_PARTY_TREMOLO_MENU
+    bool "Tremolo"
+    select THIRD_PARTY_TREMOLO if WHC_HOST || WHC_NONE
+    help
+        Vorbis library for Vorbis decoding
+
+config THIRD_PARTY_GSM_MENU
+    bool "libgsm"
+    select THIRD_PARTY_GSM if WHC_HOST || WHC_NONE
+    help
+        GSM library for AMR decoding
+
+config THIRD_PARTY_SPEEXDSP_MENU
+    bool "speexdsp"
+    select THIRD_PARTY_SPEEXDSP if WHC_HOST || WHC_NONE
+    help
+        Speex DSP library
+
+endmenu
+
+# -------------------------------------------------------------
+# Hidden config symbols (used by CMakeLists.txt)
+# -------------------------------------------------------------
+
+config THIRD_PARTY_HAAC
+    bool
+
+config THIRD_PARTY_FLAC
+    bool
+
+config THIRD_PARTY_OPUS
+    bool
+
+config THIRD_PARTY_TREMOLO
+    bool
+
+config THIRD_PARTY_GSM
+    bool
+
+config THIRD_PARTY_SPEEXDSP
+    bool
