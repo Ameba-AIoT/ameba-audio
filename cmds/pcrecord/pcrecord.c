@@ -135,14 +135,14 @@ void OnStateChangedPC(const struct MediaPlayerCallback *listener, const struct M
         break;
     }
 
-    case MEDIA_PLAYER_PAUSED: { //pause received when do pause or start rewinding
+    case MEDIA_PLAYER_PAUSED: { //pause received when do pause or start seeking
         RTK_LOGI(TAG, "paused");
         g_pc_playing_status = PAUSED;
         break;
     }
 
-    case MEDIA_PLAYER_REWIND_COMPLETE: { //rewind done received, then start
-        RTK_LOGI(TAG, "rewind complete");
+    case MEDIA_PLAYER_REWIND_COMPLETE: { //seek done received, then start
+        RTK_LOGI(TAG, "seek complete");
         g_pc_playing_status = REWIND_COMPLETE;
         break;
     }
@@ -197,7 +197,7 @@ void pc_StartPlay(struct MediaPlayer *player, const char *url)
     g_pc_playing_status = PLAYING;
 
     RTK_LOGI(TAG, "SetSource");
-    ret = MediaPlayer_SetSource(player, url);
+    ret = MediaPlayer_SetDataSource(player, url);
     if (ret) {
         RTK_LOGE(TAG, "SetDataSource fail:error=%d", (int)ret);
         return ;
@@ -251,9 +251,9 @@ int pc_player_test(const char *url)
         return -1;
     }
 
-    callback->OnMediaPlayerStateChanged = OnStateChangedPC;
-    callback->OnMediaPlayerInfo = OnInfoPC;
-    callback->OnMediaPlayerError = OnErrorPC;
+    callback->OnStateChanged = OnStateChangedPC;
+    callback->OnInfo = OnInfoPC;
+    callback->OnError = OnErrorPC;
 
     g_pc_player = MediaPlayer_Create();
 
