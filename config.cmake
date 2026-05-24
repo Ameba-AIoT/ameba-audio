@@ -46,8 +46,6 @@ ameba_list_append(private_includes
     ${c_CMPT_AUDIO_DIR}/base/audio_utils/include
     ${c_CMPT_AUDIO_DIR}/interfaces
     ${c_POSIX_DIR}/include
-    ${c_POSIX_DIR}/FreeRTOS-Plus-POSIX/include
-    ${c_POSIX_DIR}/FreeRTOS-Plus-POSIX/include/portable/realtek
 )
 
 ameba_list_append(private_compile_options
@@ -57,6 +55,5 @@ ameba_list_append(private_compile_options
 )
 
 ameba_list_append(private_definitions
-    _POSIX_C_SOURCE=199309
     __RTOS__
 )
