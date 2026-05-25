@@ -44,13 +44,39 @@
 extern "C" {
 #endif
 
+/**
+ * @defgroup AudioTime_Types AudioTime Types
+ * @{
+ */
+
+/**
+ * @brief Audio stream timestamp: a frame position paired with the
+ *        time at which that position was rendered (playback) or captured
+ *        (record).
+ *
+ * Filled in by AudioTrack_GetTimestamp() / AudioRecord_GetTimestamp().
+ * Use it for Audio sync, latency measurement. The pair (position, time) is
+ * read atomically by the implementation;
+ *
+ * @since 1.0
+ * @version 1.0
+ */
 typedef struct AudioTimestamp {
+	/** Frame position on the stream timeline. For an output track, this is
+	 *  the number of frames the device has rendered through the speaker
+	 *  (presentation position). For an input record, this is the number of
+	 *  frames captured at the device. Counts in stream frames, not bytes. */
 	uint64_t            position;
+	/** time at which @c position was reached. */
 	struct timespec     time;
 } AudioTimestamp;
+
+/** @} End of AudioTime_Types group */
 
 #ifdef __cplusplus
 }
 #endif
+
+/** @} */
 
 #endif
