@@ -1,194 +1,176 @@
 menu "Audio Config"
-    config AUDIO_FWK_MENU
-        bool "Enable Audio Framework"
-        select AUDIO_FWK if WHC_HOST || WHC_NONE
-    if AUDIO_FWK_MENU
-        choice
-            prompt "Select Audio Interfaces"
-            config AUDIO_MIXER_MENU
-                bool "Mixer"
-                select AUDIO_MIXER if WHC_HOST || WHC_NONE
-            config AUDIO_PASSTHROUGH_MENU
-                bool "PassThrough"
-                select AUDIO_PASSTHROUGH if WHC_HOST || WHC_NONE
-        endchoice
 
-        if SUPPORT_AUDIO_DEVICE
-            menu "Audio Devices"
-                    comment "    Audio Devices"
+# ------------------------------------------------------------------------------
+# Audio Framework (AUDIO_FWK)
+# ------------------------------------------------------------------------------
+config AUDIO_FWK_MENU
+    bool "Enable Audio Framework"
+    select AUDIO_FWK if WHC_HOST || WHC_NONE
 
-                    config AUDIO_DEVICE_A2DP_MENU
-                        bool "Bluetooth A2DP Device"
-                        select AUDIO_DEVICE_A2DP if WHC_HOST || WHC_NONE
+if AUDIO_FWK_MENU
+    choice
+        prompt "Select Audio Interfaces"
+        config AUDIO_MIXER_MENU
+            bool "Mixer"
+            select AUDIO_MIXER if WHC_HOST || WHC_NONE
+        config AUDIO_PASSTHROUGH_MENU
+            bool "PassThrough"
+            select AUDIO_PASSTHROUGH if WHC_HOST || WHC_NONE
+    endchoice
 
-                    config AUDIO_DEVICE_USB_MENU
-                        bool "Usb Device"
-                        select AUDIO_DEVICE_USB if WHC_HOST || WHC_NONE
-            endmenu
-        endif
+    if SUPPORT_AUDIO_DEVICE
+        menu "Audio Devices"
+            comment "Audio Devices"
+            config AUDIO_DEVICE_A2DP_MENU
+                bool "Bluetooth A2DP Device"
+                select AUDIO_DEVICE_A2DP if WHC_HOST || WHC_NONE
+
+            config AUDIO_DEVICE_USB_MENU
+                bool "USB Device"
+                select AUDIO_DEVICE_USB if WHC_HOST || WHC_NONE
+        endmenu
     endif
+endif
 
+# ------------------------------------------------------------------------------
+# Media Player
+# ------------------------------------------------------------------------------
+config MEDIA_PLAYER_MENU
+    bool "Enable Media Player"
+    select AUDIO_FWK_MENU
+    select MEDIA_PLAYER if WHC_HOST || WHC_NONE
 
-        config MEDIA_PLAYER_MENU
-            bool "Enable Media Framework"
-            select AUDIO_FWK_MENU
-            select MEDIA_PLAYER if WHC_HOST || WHC_NONE
+if MEDIA_PLAYER_MENU
+    menu "Media Formats"
+        comment "Select supported media formats"
 
-        if MEDIA_PLAYER_MENU
-            menu "Demux"
-                comment "    Demux"
+        config MEDIA_FORMAT_WAV_MENU
+            bool "WAV"
+            select MEDIA_DEMUX_WAV if WHC_HOST || WHC_NONE
+            select MEDIA_CODEC_PCM if WHC_HOST || WHC_NONE
 
-                config MEDIA_DEMUX_WAV_MENU
-                    bool "Demux WAV"
-                    select MEDIA_DEMUX_WAV if WHC_HOST || WHC_NONE
+        config MEDIA_FORMAT_MP3_MENU
+            bool "MP3"
+            select MEDIA_DEMUX_MP3 if WHC_HOST || WHC_NONE
+            select MEDIA_CODEC_MP3 if WHC_HOST || WHC_NONE
 
-                config MEDIA_DEMUX_MP3_MENU
-                    bool "Demux MP3"
-                    select MEDIA_DEMUX_MP3 if WHC_HOST || WHC_NONE
+        config MEDIA_FORMAT_AAC_MENU
+            bool "AAC"
+            select MEDIA_DEMUX_AAC if WHC_HOST || WHC_NONE
+            select MEDIA_CODEC_HAAC if WHC_HOST || WHC_NONE
+            select THIRD_PARTY_HAAC_MENU
 
-                config MEDIA_DEMUX_AAC_MENU
-                    bool "Demux AAC"
-                    select MEDIA_DEMUX_AAC if WHC_HOST || WHC_NONE
+        config MEDIA_FORMAT_M4A_MENU
+            bool "M4A"
+            select MEDIA_DEMUX_MP4 if WHC_HOST || WHC_NONE
+            select MEDIA_CODEC_HAAC if WHC_HOST || WHC_NONE
+            select THIRD_PARTY_HAAC_MENU
 
-                config MEDIA_DEMUX_MP4_MENU
-                    bool "Demux M4A"
-                    select MEDIA_DEMUX_MP4 if WHC_HOST || WHC_NONE
+        config MEDIA_FORMAT_FLAC_MENU
+            bool "FLAC"
+            select MEDIA_DEMUX_FLAC if WHC_HOST || WHC_NONE
+            select THIRD_PARTY_FLAC_MENU
 
-                config MEDIA_DEMUX_FLAC_MENU
-                    bool "Demux FLAC"
-                    select MEDIA_DEMUX_FLAC if WHC_HOST || WHC_NONE
+        config MEDIA_FORMAT_AMR_MENU
+            bool "AMR"
+            select MEDIA_DEMUX_AMR if WHC_HOST || WHC_NONE
+            select MEDIA_CODEC_AMR if WHC_HOST || WHC_NONE
 
-                config MEDIA_DEMUX_OGG_MENU
-                    bool "Demux OGG"
-                    select MEDIA_DEMUX_OGG if WHC_HOST || WHC_NONE
+        config MEDIA_FORMAT_OGG_MENU
+            bool "OGG"
+            select MEDIA_DEMUX_OGG if WHC_HOST || WHC_NONE
+            if MEDIA_FORMAT_OGG_MENU
+                menu "OGG Codec"
+                    config MEDIA_OGG_VORBIS_MENU
+                        bool "Vorbis"
+                        select MEDIA_CODEC_VORBIS if WHC_HOST || WHC_NONE
+                        select THIRD_PARTY_TREMOLO_MENU
 
-                config MEDIA_DEMUX_AMR_MENU
-                    bool "Demux AMR"
-                    select MEDIA_DEMUX_AMR if WHC_HOST || WHC_NONE
-
-            endmenu
-
-            menu "Codec"
-                comment "    Codec"
-                config MEDIA_CODEC_PCM_MENU
-                    bool "Codec PCM"
-                    select MEDIA_CODEC_PCM if WHC_HOST || WHC_NONE
-
-                config MEDIA_CODEC_MP3_MENU
-                    bool "Codec MP3"
-                    select MEDIA_CODEC_MP3 if WHC_HOST || WHC_NONE
-
-                config MEDIA_CODEC_HAAC_MENU
-                    bool "Codec AAC"
-                    select MEDIA_CODEC_HAAC if WHC_HOST || WHC_NONE
-
-                config MEDIA_CODEC_VORBIS_MENU
-                    bool "Codec VORBIS"
-                    select MEDIA_CODEC_VORBIS if WHC_HOST || WHC_NONE
-
-                config MEDIA_CODEC_OPUS_MENU
-                    bool "Codec OPUS"
-                    select MEDIA_CODEC_OPUS if WHC_HOST || WHC_NONE
-
-                config MEDIA_CODEC_AMR_MENU
-                    bool "Codec AMR"
-                    select MEDIA_CODEC_AMR if WHC_HOST || WHC_NONE
-
-                config MEDIA_CODEC_G711_MENU
-                    bool "Codec G711"
-                    select MEDIA_CODEC_G711 if WHC_HOST || WHC_NONE
-
-                config MEDIA_CODEC_GSM_MENU
-                    bool "Codec GSM"
-                    select MEDIA_CODEC_GSM if WHC_HOST || WHC_NONE
-
-            endmenu
-        endif
-
-
-    menu "Third Party Lib"
-        config SPEEX_LIB_MENU
-            bool "Speex"
-            default n
-            select SPEEX_LIB if WHC_HOST || WHC_NONE
-        config OPUS_LIB_MENU
-            bool "OPUS"
-            default n
-            select OPUS_LIB if WHC_HOST || WHC_NONE
+                    config MEDIA_OGG_OPUS_MENU
+                        bool "Opus"
+                        select MEDIA_CODEC_OPUS if WHC_HOST || WHC_NONE
+                        select THIRD_PARTY_OPUS_MENU
+                endmenu
+            endif
     endmenu
+endif
 
+# ------------------------------------------------------------------------------
+# Third Party Libraries
+# ------------------------------------------------------------------------------
+rsource "third_party/Kconfig"
+
+# ------------------------------------------------------------------------------
+# Audio Commands
+# ------------------------------------------------------------------------------
 if SUPPORT_AUDIO_CMD_ARECORD || SUPPORT_AUDIO_CMD_APLAY || SUPPORT_AUDIO_CMD_EQUALIZER || SUPPORT_AUDIO_CMD_PLAYER || SUPPORT_AUDIO_CMD_PCRECORD
     rsource "cmds/Kconfig"
 endif
 
 endmenu
 
-
+# ------------------------------------------------------------------------------
+# Hidden config symbols (used by CMakeLists.txt)
+# ------------------------------------------------------------------------------
 config AUDIO_FWK
-bool
+    bool
 
 config AUDIO_MIXER
-bool
+    bool
 
 config AUDIO_PASSTHROUGH
-bool
+    bool
 
 config AUDIO_DEVICE_A2DP
-bool
+    bool
 
 config AUDIO_DEVICE_USB
-bool
+    bool
 
 config MEDIA_PLAYER
-bool
+    bool
 
 config MEDIA_DEMUX_WAV
-bool
+    bool
 
 config MEDIA_DEMUX_MP3
-bool
+    bool
 
 config MEDIA_DEMUX_AAC
-bool
+    bool
 
 config MEDIA_DEMUX_MP4
-bool
+    bool
 
 config MEDIA_DEMUX_FLAC
-bool
+    bool
 
 config MEDIA_DEMUX_OGG
-bool
+    bool
 
 config MEDIA_DEMUX_AMR
-bool
+    bool
 
 config MEDIA_CODEC_PCM
-bool
+    bool
 
 config MEDIA_CODEC_MP3
-bool
+    bool
 
 config MEDIA_CODEC_HAAC
-bool
+    bool
 
 config MEDIA_CODEC_VORBIS
-bool
+    bool
 
 config MEDIA_CODEC_OPUS
-bool
+    bool
 
 config MEDIA_CODEC_AMR
-bool
+    bool
 
 config MEDIA_CODEC_G711
-bool
+    bool
 
 config MEDIA_CODEC_GSM
-bool
-
-config SPEEX_LIB
-bool
-
-config OPUS_LIB
-bool
+    bool

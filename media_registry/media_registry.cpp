@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Realtek, LLC.
+ * Copyright (c) 2026 Realtek Corp.
  * All rights reserved.
  *
  * Licensed under the Realtek License, Version 1.0 (the "License");
@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "include/ameba_media_usrcfg.h"
+#include "media/registry/media_registry.h"
 
 // ----------------------------------------------------------------------
 //MediaSourceConfig
@@ -21,8 +21,7 @@ extern void *CreateBufferSource(const char *url);
 extern void *CreateFileSource(const char *url);
 extern void *CreateHTTPSource(const char *url);
 
-#ifdef MEDIA_PLAYER
-MediaSourceConfig kMediaSourceConfigs[] = {
+MediaSourceConfig gMediaSourceConfigs[] = {
     { "buffer://", 9, CreateBufferSource },
     { "lfs://", 6, CreateFileSource },
     { "vfs://", 6, CreateFileSource },
@@ -33,9 +32,8 @@ MediaSourceConfig kMediaSourceConfigs[] = {
 #endif
 };
 
-size_t kNumMediaSourceConfigs =
-    sizeof(kMediaSourceConfigs) / sizeof(kMediaSourceConfigs[0]);
-#endif
+size_t gNumMediaSourceConfigs =
+    sizeof(gMediaSourceConfigs) / sizeof(gMediaSourceConfigs[0]);
 
 
 // ----------------------------------------------------------------------
@@ -48,8 +46,7 @@ extern void* GetFLACExtractor();
 extern void* GetOGGExtractor();
 extern void* GetAMRExtractor();
 
-#ifdef MEDIA_PLAYER
-MediaExtractorConfig kMediaExtractorConfigs[] = {
+MediaExtractorConfig gMediaExtractorConfigs[] = {
 #if defined(MEDIA_DEMUX_WAV)
     { "wav", GetWAVExtractor() },
 #endif
@@ -76,9 +73,8 @@ MediaExtractorConfig kMediaExtractorConfigs[] = {
 #endif
 };
 
-size_t kNumMediaExtractorConfigs =
-    sizeof(kMediaExtractorConfigs) / sizeof(kMediaExtractorConfigs[0]);
-#endif
+size_t gNumMediaExtractorConfigs =
+    sizeof(gMediaExtractorConfigs) / sizeof(gMediaExtractorConfigs[0]);
 
 
 // ----------------------------------------------------------------------
@@ -123,8 +119,7 @@ void *CreateSwG711Dec(
         const char *name, const void *callbacks,
         void *app_data, void **component);
 
-#ifdef MEDIA_PLAYER
-MediaDecoderConfig kMediaDecoderConfigs[] = {
+MediaDecoderConfig gMediaDecoderConfigs[] = {
 #if defined(MEDIA_CODEC_PCM)
     { "wav", CreatePCMDec },
 #endif
@@ -169,25 +164,5 @@ MediaDecoderConfig kMediaDecoderConfigs[] = {
 #endif
 };
 
-size_t kNumMediaDecoderConfigs =
-    sizeof(kMediaDecoderConfigs) / sizeof(kMediaDecoderConfigs[0]);
-#endif
-
-// ----------------------------------------------------------------------
-//MediaAudioOutputConfig
-extern void *CreateBTOutput();
-extern void *CreateUACOutput();
-
-#ifdef MEDIA_PLAYER
-MediaAudioOutputConfig kMediaAudioOutputConfigs[] = {
-#if defined(MEDIA_SINK_BT)
-    { "a2dp", CreateBTOutput },
-#endif
-#if defined(MEDIA_SINK_UAC)
-    { "uac", CreateUACOutput },
-#endif
-};
-
-size_t kNumMediaAudioOutputConfigs =
-    sizeof(kMediaAudioOutputConfigs) / sizeof(kMediaAudioOutputConfigs[0]);
-#endif
+size_t gNumMediaDecoderConfigs =
+    sizeof(gMediaDecoderConfigs) / sizeof(gMediaDecoderConfigs[0]);

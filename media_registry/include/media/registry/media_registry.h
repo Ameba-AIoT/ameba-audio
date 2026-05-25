@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Realtek, LLC.
+ * Copyright (c) 2026 Realtek Corp.
  * All rights reserved.
  *
  * Licensed under the Realtek License, Version 1.0 (the "License");
@@ -13,11 +13,11 @@
  * limitations under the License.
  */
 
-#ifndef AMEBA_COMPONENT_USRCFG_COMMON_MEDIA_USRCFG_H
-#define AMEBA_COMPONENT_USRCFG_COMMON_MEDIA_USRCFG_H
+#ifndef AMEBA_COMPONENT_AUDIO_MEDIA_REGISTRY_INCLUDE_MEDIA_REGISTRY_MEDIA_REGISTRY_H
+#define AMEBA_COMPONENT_AUDIO_MEDIA_REGISTRY_INCLUDE_MEDIA_REGISTRY_MEDIA_REGISTRY_H
 
 #include <stdint.h>
-#include <cstddef>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,8 +33,8 @@ typedef struct MediaSourceConfig {
     CreateAudioSourceFunc audio_source_func;
 } MediaSourceConfig;
 
-extern MediaSourceConfig kMediaSourceConfigs[];
-extern size_t kNumMediaSourceConfigs;
+extern MediaSourceConfig gMediaSourceConfigs[];
+extern size_t gNumMediaSourceConfigs;
 
 
 // ----------------------------------------------------------------------
@@ -44,8 +44,8 @@ typedef struct MediaExtractorConfig {
 	void *extractor_type;
 } MediaExtractorConfig;
 
-extern MediaExtractorConfig kMediaExtractorConfigs[];
-extern size_t kNumMediaExtractorConfigs;
+extern MediaExtractorConfig gMediaExtractorConfigs[];
+extern size_t gNumMediaExtractorConfigs;
 
 
 // ----------------------------------------------------------------------
@@ -59,32 +59,19 @@ typedef struct MediaDecoderConfig {
 	CreateComponentFunc codec_func;
 } MediaDecoderConfig;
 
-extern MediaDecoderConfig kMediaDecoderConfigs[];
-extern size_t kNumMediaDecoderConfigs;
-
-
-// ----------------------------------------------------------------------
-//MediaAudioOutputConfig
-typedef void *(*CreateAudioOutputFunc)();
-
-typedef struct MediaAudioOutputConfig {
-    const char *name;
-    CreateAudioOutputFunc audio_output_func;
-} MediaAudioOutputConfig;
-
-extern MediaAudioOutputConfig kMediaAudioOutputConfigs[];
-extern size_t kNumMediaAudioOutputConfigs;
+extern MediaDecoderConfig gMediaDecoderConfigs[];
+extern size_t gNumMediaDecoderConfigs;
 
 
 // ----------------------------------------------------------------------
 //MediaCache
-extern int64_t kMediaCacheSizeSingleMax;
-extern int64_t kMediaCacheSizeTotalMax;
-extern int8_t kMediaCacheable;
-extern char *kMediaCacheRegionsStart;
+extern int64_t gMediaCacheSizeSingleMax;
+extern int64_t gMediaCacheSizeTotalMax;
+extern int8_t gMediaCacheable;
+extern char *gMediaCacheRegionsStart;
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // AMEBA_COMPONENT_USRCFG_COMMON_MEDIA_USRCFG_H
+#endif  // AMEBA_COMPONENT_AUDIO_MEDIA_REGISTRY_INCLUDE_MEDIA_REGISTRY_MEDIA_REGISTRY_H
