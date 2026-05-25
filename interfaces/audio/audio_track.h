@@ -47,6 +47,24 @@
 extern "C" {
 #endif
 
+/** @defgroup AudioTrack_Types AudioTrack Types
+ *  @{
+ */
+
+/**
+ * @brief stucture for audio playback.
+ *
+ * @section threading Threading and concurrency
+ *
+ * Every public AudioTrack_* API is thread safe. Do not call any
+ * AudioTrack_* API from interrupt context. There are currently no user
+ * callbacks delivered by AudioTrack — all interaction is synchronous.
+ *
+ * @section error_codes Error codes
+ *
+ * Negative return values are the @c AUDIO_ERR_* codes defined
+ * in <tt>interfaces/common/audio_errnos.h</tt>.
+ */
 
 struct AudioTrack;
 
@@ -74,20 +92,52 @@ typedef struct {
 	uint32_t buffer_bytes;
 } AudioTrackConfig;
 
+/**
+ * @brief Playback rate parameters for AudioTrack_SetPlaybackRate().
+ *
+ * Only available in the mixer build; the passthrough build returns
+ * @c AUDIO_ERR_INVALID_OPERATION.
+ *
+ * @since 1.0
+ * @version 1.0
+ */
 typedef struct {
-	/** speed of track, support 0.5 ~ 6.0 */
+	/** Playback speed multiplier in the range [0.5, 6.0]. 1.0 = normal speed. */
 	float speed;
-	/** pitch of track, only support 1.0 now */
+	/** Pitch multiplier; only 1.0 is supported, other values are ignored. */
 	float pitch;
 } AudioPlaybackRate;
 
+/** @} End of AudioTrack_Types group */
+
+/** @defgroup AudioTrack_Functions AudioTrack Functions
+ *  @{
+ */
+
 /**
- * @brief Create AudioTrack.
+ * @brief Allocate and zero-initialize a new AudioTrack handle.
+ *
+ * Must be paired with AudioTrack_Destroy(). Call AudioTrack_Init() before any
+ * streaming API.
+ *
+ * @return Pointer to a new AudioTrack on success; NULL on allocation failure.
+ * @see AudioTrack_Init, AudioTrack_Destroy
+ *
+ * @since 1.0
+ * @version 1.0
  */
 struct AudioTrack *AudioTrack_Create(void);
 
 /**
- * @brief Release AudioTrack.
+ * @brief Tear down an AudioTrack and free all associated resources.
+ *
+ * After this call the @c track pointer becomes invalid.
+ *
+ * @param[in] track AudioTrack handle returned by AudioTrack_Create(); a NULL
+ *                  pointer is silently ignored.
+ *
+ * @since 1.0
+ * @version 1.0
  */
 void AudioTrack_Destroy(struct AudioTrack *track);
 
@@ -112,30 +162,40 @@ void AudioTrack_Destroy(struct AudioTrack *track);
 int32_t AudioTrack_Init(struct AudioTrack *track, const AudioTrackConfig *config, uint32_t flags);
 
 /**
- * @brief Set audio track play water level.
+ * @brief Set the start-playing water level (in bytes).
  *
- * @param track is the pointer of struct AudioTrack.
- * @param bytes is the start playing water level bytes.
- * @return Returns the water level bytes sets to audio framework.
+ * After Start the track will hold output silence until at least @p bytes of
+ * PCM has been written; this lets the application pre-buffer to avoid early
+ * underrun. Mixer build only — passthrough returns 0 without effect.
+ *
+ * @param[in] track AudioTrack handle.
+ * @param[in] bytes Threshold in bytes; must be ≤ the track buffer size.
+ * @return The threshold actually applied (which may be clamped). Negative on
+ *         invalid input.
  * @since 1.0
  * @version 1.0
  */
 int32_t AudioTrack_SetStartThresholdBytes(struct AudioTrack *track, int32_t bytes);
 
 /**
- * @brief Get audio track play water level.
+ * @brief Query the current start-playing water level.
  *
- * @param track is the pointer of struct AudioTrack.
- * @return Returns the playing water level bytes of current audio track.
+ * @param[in] track AudioTrack handle.
+ * @return Threshold bytes currently in effect; 0 if not configured / on
+ *         passthrough build.
  * @since 1.0
  * @version 1.0
  */
 int32_t AudioTrack_GetStartThresholdBytes(struct AudioTrack *track);
 
 /**
- * @brief Start audio track.
+ * @brief Start streaming on this track. Begins consuming data written via
+ *        AudioTrack_Write() and rendering it to the output device.
  *
- * @param track is the pointer of struct AudioTrack.
+ * Legal initial states: STOPPED and FLUSHED.
+ * Calling Start while already ACTIVE returns @c AUDIO_ERR_INVALID_OPERATION.
+ *
+ * @param[in] track AudioTrack handle, already Init-ed.
  * @return Returns a value listed below: \n
  * int32_t | Description
  * ----------------------| -----------------------
@@ -148,22 +208,43 @@ int32_t AudioTrack_GetStartThresholdBytes(struct AudioTrack *track);
 int32_t AudioTrack_Start(struct AudioTrack *track);
 
 /**
- * @brief Stop audio track.
+ * @brief Stop streaming on this track.
  *
- * @param track is the pointer of struct AudioTrack.
+ * Stop track streaming. In mixer mode, wait until remained buffer rendered.
+ * In passthrough, stop immediately.
+ *
+ * @param[in] track AudioTrack handle.
+ *
  * @since 1.0
  * @version 1.0
  */
 void AudioTrack_Stop(struct AudioTrack *track);
 
 /**
- * @brief Write audio data.
+ * @brief Push PCM samples from the application into the track for playback.
  *
- * @param track is the pointer of struct AudioTrack.
- * @param buffer is the src buffer of application.
- * @param size is the src buffer data bytes.
- * @param should_block choice whether to block when write stuck, suggest:true.
- * @return size of data written
+ * Data must match the format / channel_count / sample_rate set in
+ * AudioTrack_Init().
+ *
+ * - @c should_block = true : the call waits until all @p size bytes have been
+ *   queued; suitable for typical pull-from-file pipelines. If the track is
+ *   stopped/flushed mid-call, the wait is interrupted and the partial byte
+ *   count (or a negative error) is returned.
+ * - @c should_block = false : the call writes only what fits without
+ *   blocking and returns immediately; may return 0 if no buffer space is
+ *   currently available.
+ *
+ * Calling Write before AudioTrack_Start() (passthrough) returns
+ * @c AUDIO_ERR_INVALID_OPERATION; in mixer build, data may queue but is not
+ * rendered until Start.
+ *
+ * @param[in] track        AudioTrack handle, Init-ed.
+ * @param[in] buffer       Source PCM buffer; must not be NULL.
+ * @param[in] size         Number of bytes to write from @p buffer.
+ * @param[in] should_block True to block until done (recommended), false for
+ *                         non-blocking semantics.
+ * @return Bytes actually written on success (0 ≤ ret ≤ @p size); a negative
+ *         @c AUDIO_ERR_* on failure.
  * @since 1.0
  * @version 1.0
  */
@@ -287,18 +368,29 @@ int32_t AudioTrack_SetChannelCount(struct AudioTrack *track, uint32_t channel);
 uint32_t AudioTrack_GetChannelCount(struct AudioTrack *track);
 
 /**
- * @brief Pause audio track streaming.
+ * @brief Pause playback while keeping queued data and the current position.
  *
- * @param track is the pointer of struct AudioTrack.
+ * Mixer build only: ACTIVE → PAUSED. Resume with AudioTrack_Start(). Calling
+ * Pause from any other state is a no-op. The passthrough build does not
+ * implement Pause and the call is silently ignored.
+ *
+ * @param[in] track AudioTrack handle.
+ *
  * @since 1.0
  * @version 1.0
  */
 void AudioTrack_Pause(struct AudioTrack *track);
 
 /**
- * @brief Flush audio track streaming.
+ * @brief Drop all queued samples without stopping the track.
  *
- * @param track is the pointer of struct AudioTrack.
+ * Mixer build only: must be called from PAUSED (typical sequence is
+ * Pause → Flush → Start to seek). Resets the playback position to 0.
+ * Calling Flush from ACTIVE or FLUSHED is a no-op. The passthrough build
+ * does not implement Flush and the call is silently ignored.
+ *
+ * @param[in] track AudioTrack handle.
+ *
  * @since 1.0
  * @version 1.0
  */
@@ -352,14 +444,20 @@ int32_t AudioTrack_SetPlaybackRate(struct AudioTrack *track, AudioPlaybackRate r
 int32_t AudioTrack_GetPlaybackRate(struct AudioTrack *track, AudioPlaybackRate *rate);
 
 /**
- * @brief Get timestamp of track.
+ * @brief Read the current playback timestamp.
  *
- * @param track is the pointer of struct AudioTrack.
- * @param stamp the timestamp get from audio framework.
+ * Use for audio sync and latency calculation. Only valid while the track is
+ * actively rendering — in mixer build, calling in STOPPED / FLUSHED returns
+ * @c AUDIO_ERR_WOULD_BLOCK.
+ *
+ * @param[in]  track  AudioTrack handle.
+ * @param[out] tstamp Out parameter; on success holds presented frame count
+ *                    and the time at which it was reached.
  * @return Returns a value listed below: \n
  * int32_t | Description
  * ----------------------| -----------------------
  * AUDIO_OK | the operation is successful.
+ * AUDIO_ERR_WOULD_BLOCK | track is not active (mixer build).
  * AUDIO_ERR_INVALID_OPERATION | param not supported.
  * @since 1.0
  * @version 1.0
@@ -367,70 +465,91 @@ int32_t AudioTrack_GetPlaybackRate(struct AudioTrack *track, AudioPlaybackRate *
 int32_t AudioTrack_GetTimestamp(struct AudioTrack *track, AudioTimestamp *tstamp);
 
 /**
- * @brief Get present playing PTS of track.
+ * @brief Read the system time and the audio presentation time as a pair.
  *
- * @param track is the pointer of struct AudioTrack.
- * @param now_ns the system time, or tsf time.
- * @param audio_ns the audio playing time.
+ * Returns a pair (system clock now, audio PTS now).
+ * Passthrough build only — mixer build returns @c AUDIO_ERR_INVALID_OPERATION.
+ * Must be called after AudioTrack_Start().
+ *
+ * @param[in]  track    AudioTrack handle.
+ * @param[out] now_ns   System time in nanoseconds.
+ * @param[out] audio_ns Audio presentation time in nanoseconds at the same
+ *                      instant as @p now_ns.
  * @return Returns a value listed below: \n
  * int32_t | Description
  * ----------------------| -----------------------
  * AUDIO_OK | the operation is successful.
- * AUDIO_ERR_INVALID_OPERATION | param not supported.
+ * AUDIO_ERR_INVALID_OPERATION | not supported in this build / state.
  * @since 1.0
  * @version 1.0
  */
 int32_t AudioTrack_GetPresentTime(struct AudioTrack *track, int64_t *now_ns, int64_t *audio_ns);
 
 /**
- * @brief Get trigger timestamp of track.
+ * @brief Read the system time at which the most recent Start/Stop took
+ *        effect on the rendering hardware.
  *
- * @param audio_track is the pointer of struct AudioTrack.
- * @param trigger_ns the time render is triggered(start or stop).
+ * Passthrough build only — mixer build returns @c AUDIO_ERR_INVALID_OPERATION.
+ *
+ * @param[in]  audio_track AudioTrack handle.
+ * @param[out] trigger_ns  Trigger time in nanoseconds.
  * @return Returns a value listed below: \n
- * status_t | Description
+ * int32_t | Description
  * ----------------------| -----------------------
  * AUDIO_OK | the operation is successful.
- * AUDIO_ERR_INVALID_OPERATION | param not supported.
+ * AUDIO_ERR_INVALID_OPERATION | not supported in this build / state.
  * @since 1.0
  * @version 1.0
  */
 int32_t AudioTrack_GetTriggerTimestamp(struct AudioTrack *audio_track, int64_t *trigger_ns);
 
 /**
- * @brief Set params of track.
+ * @brief Set per-track private parameters via a "key=value;..." string.
  *
- * @param track is the pointer of struct AudioTrack.
- * @param strs can be used to set the private data of track, for example, the amplifier pin.
- * to set the amplier pin, for example _PB_7, you can get your pin value from:
- * fwlib/include/ameba_pinmux.h, it's value is "#define _PB_7 (0x27)"
- * which is 39 of uint32_t.So the amp_pin here should set 39.The strs should be "amp_pin=39".
- * The amplifier pin setting with this method should be only used in "passthrough" mode(no audio mixer version).
+ * Passthrough build only — the mixer build returns
+ * @c AUDIO_ERR_INVALID_OPERATION. Must be called after AudioTrack_Start()
+ * (the underlying HAL stream has to exist).
+ *
+ * Recognised keys include:
+ * - <tt>amp_pin=&lt;N&gt;</tt> — GPIO pin number (numeric form of e.g. _PB_7
+ *   from fwlib/include/ameba_pinmux.h; _PB_7 = 0x27 = 39) used to drive the
+ *   amplifier mute / power-on signal.
+ *
+ * @param[in] track AudioTrack handle.
+ * @param[in] strs  Semicolon-separated key=value parameters; must not be NULL.
  * @return Returns a value listed below: \n
  * int32_t | Description
  * ----------------------| -----------------------
  * AUDIO_OK | the operation is successful.
- * AUDIO_ERR_INVALID_OPERATION | param not supported.
+ * AUDIO_ERR_INVALID_OPERATION | param not supported, or wrong build / state.
  * @since 1.0
  * @version 1.0
  */
 int32_t AudioTrack_SetParameters(struct AudioTrack *track, const char *strs);
 
 /**
- * @brief Get DMA buffer status of audio track.
+ * @brief Query free space in the underlying DMA / streaming buffer.
  *
- * @param track is the pointer of struct AudioTrack.
- * @return DMA buffer available size to play.
+ * Use to size the next AudioTrack_Write() in non-blocking applications.
+ * Passthrough build only — mixer build is unimplemented and returns 0.
+ * Returns 0 if the underlying stream has not yet been opened (i.e. before
+ * AudioTrack_Start()).
+ *
+ * @param[in] track AudioTrack handle.
+ * @return Number of bytes that can be written without blocking.
  * @since 1.0
  * @version 1.0
  */
 uint32_t AudioTrack_GetBufferStatus(struct AudioTrack *track);
 
 /**
- * @brief Get buffer size of audio track.
+ * @brief Query the total size (capacity) of the track buffer.
  *
- * @param track is the pointer of struct AudioTrack.
- * @return total buffer size of track.
+ * Passthrough build only — mixer build is unimplemented and returns 0.
+ * Returns 0 before AudioTrack_Start() opens the stream.
+ *
+ * @param[in] track AudioTrack handle.
+ * @return Total buffer capacity in bytes.
  * @since 1.0
  * @version 1.0
  */
@@ -452,21 +571,25 @@ uint32_t AudioTrack_GetBufferSize(struct AudioTrack *track);
 int32_t AudioTrack_GetLatency(struct AudioTrack *track, uint32_t *latency);
 
 /**
- * @brief Get position of audio track.
+ * @brief Read the cumulative number of frames played since the last Start.
  *
- * @param track is the pointer of struct AudioTrack.
- * @param position is the pointer of the total number of frames played since track start.
- *      This value will overflow periodically according to track's rate.
- *      This value is reset to zero by AudioTrack_Stop() and AudioTrack_Flush().
+ * Reset to zero by AudioTrack_Stop() and AudioTrack_Flush(). The counter
+ * is 64-bit so practical overflow is not a concern. In mixer build this
+ * returns 0 (success) when the track is not active.
+ *
+ * @param[in]  track    AudioTrack handle.
+ * @param[out] position Out parameter; total frames presented to the device.
  * @return  Returns a value listed below: \n
  * int32_t | Description
  * ----------------------| -----------------------
  * AUDIO_OK | the operation is successful.
- * AUDIO_ERR_NO_INIT | track error.
+ * AUDIO_ERR_NO_INIT | track not initialised / underlying stream not open.
  * @since 1.0
  * @version 1.0
  */
 int32_t AudioTrack_GetPosition(struct AudioTrack *track, uint64_t *position);
+
+/** @} End of AudioTrack_Functions group */
 
 #ifdef __cplusplus
 }
@@ -474,3 +597,4 @@ int32_t AudioTrack_GetPosition(struct AudioTrack *track, uint64_t *position);
 
 
 #endif  // AMEBA_AUDIO_INTERFACES_AUDIO_AUDIO_TRACK_H
+/** @} */
