@@ -45,6 +45,11 @@ extern "C" {
 #endif
 
 /**
+ * @defgroup AudioControl_Constants AudioControl Constants
+ * @{
+ */
+
+/**
  * @brief Defines all the audio playback devices.
  *
  * @since 1.0
@@ -115,6 +120,13 @@ enum {
 	AUDIO_PLL_SLOWER  = 2,
 };
 
+/** @} End of AudioControl_Constants group */
+
+/**
+ * @defgroup AudioControl_Types AudioControl Types
+ * @{
+ */
+
 typedef struct {
 	uint32_t H0_Q;
 	uint32_t B1_Q;
@@ -122,6 +134,13 @@ typedef struct {
 	uint32_t A1_Q;
 	uint32_t A2_Q;
 } EqFilterCoef;
+
+/** @} End of AudioControl_Types group */
+
+/**
+ * @defgroup AudioControl_Functions AudioControl Functions
+ * @{
+ */
 
 /**
  * @brief Set Hardware Volume of audio dac.
@@ -518,9 +537,12 @@ int32_t AudioControl_SetRecordMute(uint32_t channel, bool mute);
  */
 bool AudioControl_GetRecordMute(uint32_t channel);
 
+/** @} End of AudioControl_Functions group */
+
 #ifdef __cplusplus
 }
 #endif
 
+/** @} */
 
 #endif
