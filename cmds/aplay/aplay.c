@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "Aplay"
+#define TAG "Aplay"
 
 #include <math.h>
 
@@ -27,8 +27,8 @@
 #include "platform_stdlib.h"
 #include "basic_types.h"
 
-#include "log/log.h"
 #include "aplay.h"
+#include "audio_cmd_common.h"
 
 #define PLAY_SECONDS           200
 #define TWO_CHANNEL_FRAMES     96
@@ -46,21 +46,53 @@
 //to use pll for audio playback in ameba_audio_hw_usrcfg.h.
 #define TEST_TIMESTAMP         0
 
-#define EXAMPLE_AUDIO_DEBUG(fmt, args...)    MEDIA_LOGD("[%s]: " fmt "", __func__, ## args)
-#define EXAMPLE_AUDIO_ERROR(fmt, args...)    MEDIA_LOGE("[%s]: " fmt "", __func__, ## args)
+#define EXAMPLE_AUDIO_DEBUG(fmt, args...)    RTK_LOGD(TAG, "[%s]: " fmt "", __func__, ## args)
+#define EXAMPLE_AUDIO_ERROR(fmt, args...)    RTK_LOGE(TAG, "[%s]: " fmt "", __func__, ## args)
 
 #define  APLAY_DEBUG_HEAP_BEGIN() \
     unsigned int heap_start;\
     unsigned int heap_end;\
     unsigned int heap_min_ever_free;\
-    MEDIA_LOGD("[Mem] mem debug info init");\
+    RTK_LOGI(TAG, "[Mem] mem debug info init");\
     heap_start = rtos_mem_get_free_heap_size()
 
 #define  APLAY_DEBUG_HEAP_END() \
     heap_end = rtos_mem_get_free_heap_size();\
     heap_min_ever_free = rtos_mem_get_minimum_ever_free_heap_size();\
-    MEDIA_LOGD("[Mem] start (0x%x), end (0x%x)", heap_start, heap_end);\
-    MEDIA_LOGD("diff (%d), peak (%d)", heap_start - heap_end, heap_start - heap_min_ever_free)
+    RTK_LOGI(TAG, "[Mem] start (0x%x), end (0x%x)", heap_start, heap_end);\
+    RTK_LOGI(TAG, "diff (%d), peak (%d)", heap_start - heap_end, heap_start - heap_min_ever_free)
+
+typedef struct {
+    int   track_channel;
+    int   track_rate;
+    int   write_frames_one_time;
+    int   track_format;
+    int   freq;
+    int   gain;
+    float vol;
+    int   mute;
+} aplay_params_t;
+
+static const aplay_params_t APLAY_DEFAULT_PARAMS = {
+    .track_channel        = 2,
+    .track_rate           = 16000,
+    .write_frames_one_time= 8192,
+    .track_format         = 16,
+    .freq                 = 1000,
+    .gain                 = 0,
+    .vol                  = 1.0f,
+    .mute                 = 0,
+};
+
+typedef struct {
+    float volume;  // 0.0 ~ 1.0
+    int   mute;    // 0/1
+} amixer_params_t;
+
+static const amixer_params_t AMIXER_DEFAULT_PARAMS = {
+    .volume = 1.0f,
+    .mute   = 0,
+};
 
 static void aplay_help(void);
 static void amixer_help(void);
@@ -516,77 +548,6 @@ void example_audio_counter_time(void *param)
 }
 #endif
 
-void example_aplay(char **argv)
-{
-    /* parse command line arguments */
-    while (*argv) {
-        if (strcmp(*argv, "-c") == 0) {
-            argv++;
-            if (*argv) {
-                g_track_channel = atoi(*argv);
-            }
-        } else if (strcmp(*argv, "-r") == 0) {
-            argv++;
-            if (*argv) {
-                g_track_rate = atoi(*argv);
-            }
-        } else if (strcmp(*argv, "-b") == 0) {
-            argv++;
-            if (*argv) {
-                g_write_frames_one_time = atoi(*argv);
-            }
-        } else if (strcmp(*argv, "-f") == 0) {
-            argv++;
-            if (*argv) {
-                g_track_format = atoi(*argv);
-            }
-        } else if (strcmp(*argv, "-s") == 0) {
-            argv++;
-            if (*argv) {
-                g_freq = atoi(*argv);
-            }
-        } else if (strcmp(*argv, "-g") == 0) {
-            argv++;
-            if (*argv) {
-                g_gain = atoi(*argv);
-            }
-        } else if (strcmp(*argv, "-v") == 0) {
-            argv++;
-            if (*argv) {
-                g_vol = atof(*argv);
-            }
-        } else if (strcmp(*argv, "-m") == 0) {
-            argv++;
-            if (*argv) {
-                g_mute = atoi(*argv);
-            }
-        }
-        if (*argv) {
-            argv++;
-        }
-    }
-
-    if (rtos_task_create(NULL, ((const char *)"example_aplay_thread"), example_aplay_thread, NULL, 8192 * 6, 1) != RTK_SUCCESS) {
-        EXAMPLE_AUDIO_ERROR("error: rtos_task_create(example_aplay_thread) failed");
-    }
-
-#if TEST_TIMESTAMP
-    if (rtos_task_create(NULL, ((const char *)"example_audio_counter_time"), example_audio_counter_time, NULL, 8192 * 4, 1) != RTK_SUCCESS) {
-        EXAMPLE_AUDIO_ERROR("error: rtos_task_create(example_audio_counter_time) failed");
-    }
-#endif
-}
-
-uint32_t aplay_cmd_handle(int argc, char *argv[])
-{
-    if (argc <= 0) {
-        aplay_help();
-    }
-
-    example_aplay((char **)argv);
-    return TRUE;
-}
-
 void example_track_control_thread(void *param)
 {
     (void) param;
@@ -603,44 +564,39 @@ void example_track_control_thread(void *param)
     rtos_task_delete(NULL);
 }
 
-void example_track_control(char **argv)
+static void parse_amixer_params(cmd_params_t *params, amixer_params_t *p)
 {
-    /* parse command line arguments */
-    while (*argv) {
-        if (strcmp(*argv, "-v") == 0) {
-            argv++;
-            if (*argv) {
-                g_vol = atof(*argv);
-            }
-        } else if (strcmp(*argv, "-m") == 0) {
-            argv++;
-            if (*argv) {
-                g_mute = atoi(*argv);
-            }
-        }
-        if (*argv) {
-            argv++;
-        }
-    }
-
-    if (rtos_task_create(NULL, ((const char *)"example_track_control_thread"), example_track_control_thread, NULL, 8192 * 6, 1) != RTK_SUCCESS) {
-        EXAMPLE_AUDIO_ERROR("error: rtos_task_create(example_track_control_thread) failed");
-    }
+    *p = AMIXER_DEFAULT_PARAMS;
+    CMD_PARSE_FLOAT(p->volume, "-v", AMIXER_DEFAULT_PARAMS.volume);
+    CMD_PARSE_INT(p->mute,   "-m", AMIXER_DEFAULT_PARAMS.mute);
 }
 
-uint32_t amixer_cmd_handle(int argc, char *argv[])
+static uint32_t amixer_handler(cmd_params_t *params)
 {
-    if (argc <= 0) {
+    if (params->argc <= 1) {
         amixer_help();
+        return TRUE;
     }
 
-    example_track_control((char **)argv);
+    amixer_params_t p;
+    parse_amixer_params(params, &p);
+
+    g_vol  = p.volume;
+    g_mute = p.mute;
+
+    if (rtos_task_create(NULL, "example_track_control_thread",
+                        example_track_control_thread,
+                        NULL, 1024, 1) != RTK_SUCCESS) {
+        EXAMPLE_AUDIO_ERROR("error: rtos_task_create(example_track_control_thread) failed");
+        return FALSE;
+    }
+
     return TRUE;
 }
 
 static void aplay_help(void)
 {
-    MEDIA_LOGD("aplay [OPTION...]\n"
+    RTK_LOGI(TAG, "aplay [OPTION...]\n"
         "\t\t test cmd: aplay [-r] rate [-b] write_frames_one_time [-c] track_channels [-f] format  \n"
         "\t\t default params: [-r] 16000 [-p] 1024 [-c] 2 [-f] format 16 \n"
         "\t\t test demo: aplay -r 48000 -c 1 \n"
@@ -649,6 +605,72 @@ static void aplay_help(void)
 
 static void amixer_help(void)
 {
-    MEDIA_LOGD("amixer [OPTION...]\n"
+    RTK_LOGI(TAG, "amixer [OPTION...]\n"
         "\t\t test cmd: amixer [-v] volume [-m] mute\n");
 }
+
+
+static void parse_aplay_params(cmd_params_t *params, aplay_params_t *p)
+{
+    *p = APLAY_DEFAULT_PARAMS;
+
+    CMD_PARSE_INT(p->track_channel,        "-c",  APLAY_DEFAULT_PARAMS.track_channel);
+    CMD_PARSE_INT(p->track_rate,           "-r",  APLAY_DEFAULT_PARAMS.track_rate);
+    CMD_PARSE_INT(p->write_frames_one_time,"-b",  APLAY_DEFAULT_PARAMS.write_frames_one_time);
+    CMD_PARSE_INT(p->track_format,         "-f",  APLAY_DEFAULT_PARAMS.track_format);
+    CMD_PARSE_INT(p->freq,                 "-s",  APLAY_DEFAULT_PARAMS.freq);
+    CMD_PARSE_INT(p->gain,                 "-g",  APLAY_DEFAULT_PARAMS.gain);
+    CMD_PARSE_FLOAT(p->vol,                  "-v",  APLAY_DEFAULT_PARAMS.vol);   // float
+    CMD_PARSE_INT(p->mute,                 "-m",  APLAY_DEFAULT_PARAMS.mute);
+}
+
+static uint32_t aplay_handler(cmd_params_t *params)
+{
+    if (params->argc <= 1) {
+        aplay_help();
+        return TRUE;
+    }
+
+    aplay_params_t p;
+    parse_aplay_params(params, &p);
+
+    g_track_channel        = p.track_channel;
+    g_track_rate           = p.track_rate;
+    g_write_frames_one_time= p.write_frames_one_time;
+    g_track_format         = p.track_format;
+    g_freq                 = p.freq;
+    g_gain                 = p.gain;
+    g_vol                  = p.vol;
+    g_mute                 = p.mute;
+
+    if (rtos_task_create(NULL, "example_aplay_thread",
+                        example_aplay_thread, NULL,
+                        5632, 1) != RTK_SUCCESS) {
+        EXAMPLE_AUDIO_ERROR("error: rtos_task_create(example_aplay_thread) failed");
+        return FALSE;
+    }
+
+#if TEST_TIMESTAMP
+    if (rtos_task_create(NULL, "example_audio_counter_time",
+                        example_audio_counter_time, NULL,
+                        8192 * 4, 1) != RTK_SUCCESS) {
+        EXAMPLE_AUDIO_ERROR("error: rtos_task_create(example_audio_counter_time) failed");
+        return FALSE;
+    }
+#endif
+
+    return TRUE;
+}
+
+DEFINE_CMD_WRAPPER(aplay, aplay_handler, 5);
+DEFINE_CMD_WRAPPER(amixer, amixer_handler, 5);
+
+CMD_TABLE_DATA_SECTION
+const COMMAND_TABLE aplay_cmd_table[] = {
+    {
+        "aplay", aplay_cmd_thread
+    },
+    {
+        "amixer", amixer_cmd_thread
+    },
+};

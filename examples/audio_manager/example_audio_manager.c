@@ -65,7 +65,7 @@ void example_audio_manager_thread(void *param)
 		sources[0].channel_count = g_channels;
 		sources[0].format = format;
 		sources[0].type = AUDIO_PATCH_NODE_DEVICE;
-		sources[0].node.device = DEVICE_IN_I2S;
+		sources[0].node.device = DEVICE_IN_MIC;
 
 		struct AudioPatchConfig sinks[1];
 		sinks[0].sample_rate = g_rate;
