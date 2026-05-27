@@ -48,6 +48,11 @@
 extern "C" {
 #endif
 
+/**
+ * @defgroup AudioRecord_Types AudioRecord Types
+ * @{
+ */
+
 struct AudioRecord;
 
 /**
@@ -73,6 +78,13 @@ typedef struct {
 	/** buffer bytes per one period of record*/
 	uint32_t buffer_bytes;
 } AudioRecordConfig;
+
+/** @} End of AudioRecord_Types group */
+
+/**
+ * @defgroup AudioRecord_Functions AudioRecord Functions
+ * @{
+ */
 
 /**
 * @brief Create AudioRecord.
@@ -298,7 +310,7 @@ int32_t    AudioRecord_GetTimestamp(struct AudioRecord *audio_record, AudioTimes
  * @brief Get present recording PTS of record.
  *
  * @param audio_record is the pointer of struct AudioRecord.
- * @param now_ns the system time, or tsf time.
+ * @param now_ns the system time.
  * @param audio_ns the audio recording time.
  * @return Returns a value listed below: \n
  * int32_t | Description
@@ -325,8 +337,12 @@ int32_t AudioRecord_GetPresentTime(struct AudioRecord *audio_record, int64_t *no
  */
 int32_t AudioRecord_GetTriggerTimestamp(struct AudioRecord *audio_record, int64_t *trigger_ns);
 
+/** @} End of AudioRecord_Functions group */
+
 #ifdef __cplusplus
 }
 #endif
+
+/** @} */
 
 #endif // AMEBA_AUDIO_AUDIO_RECORD

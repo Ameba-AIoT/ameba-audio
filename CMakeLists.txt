@@ -17,7 +17,6 @@ if(CONFIG_AUDIO_FWK)
     ameba_add_subdirectory_if_exist(audio_stream)
     ameba_add_subdirectory_if_exist(audio_policy)
     ameba_add_subdirectory_if_exist(audio_algorithm)
-    ameba_add_subdirectory_if_exist(audio_cmds)
 
     include(configs/audio_configs.cmake)
     include(audio_mixer.cmake)

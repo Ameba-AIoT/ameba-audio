@@ -41,6 +41,10 @@ ameba_list_append(private_sources
     audio_cmd_common.c
 )
 
+ameba_list_append_if(CONFIG_CMD_EQUALIZER_TUNE private_sources
+    equalizer_tune/equalizer_tune.c
+)
+
 ameba_list_append_if(CONFIG_CMD_ARECORD private_sources
     arecord/arecord.c
 )
@@ -61,6 +65,10 @@ ameba_list_append_if(CONFIG_CMD_PLAYER private_sources
 
 ameba_list_append_if(CONFIG_CMD_PCRECORD private_sources
     pcrecord/pcrecord.c
+)
+
+ameba_list_append_if(CONFIG_CMD_EQUALIZER_TUNE private_includes
+    ${c_CMPT_NETWORK_DIR}
 )
 
 ameba_list_append(private_includes

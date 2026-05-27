@@ -9,7 +9,6 @@
 CMD_TABLE_DATA_SECTION
 const COMMAND_TABLE  audio_render_test_cmd_table[] = {
 	{
-		(const u8 *)"AudioHalRender",  1, CmdAudioHalRenderTest, (const u8 *)"\tAudioHalRender \n"
-		"\t\t AudioHalRender [-b] format bits\n"
+		"AudioHalRender", CmdAudioHalRenderTest
 	},
 };

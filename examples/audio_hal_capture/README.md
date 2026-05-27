@@ -40,7 +40,6 @@ Build and Download:
 
 ### Note
 
-1. Use CMD `./build.py -a audio_hal_capture -p` to compile this example.
-2. Compile and run. For capture run command and parameters, please refer to app_example.c.
-3. To run the example, the default command in serial log UART is: AudioHalCapture.
+1. Compile and run. For capture run command and parameters, please refer to app_example.c.
+2. To run the example, the default command in serial log UART is: AudioHalCapture.
 
