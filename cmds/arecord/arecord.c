@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "Arecod"
+#define TAG "Arecod"
 
 #include "ameba_soc.h"
 #include "audio/audio_control.h"
@@ -25,8 +25,9 @@
 #include "platform_stdlib.h"
 #include "basic_types.h"
 
-#include "log/log.h"
 #include "arecord.h"
+
+#include "audio_cmd_common.h"
 
 #define DUMP_FRAME            96000
 #define RECORD_TIME_SECONDS   10
@@ -52,8 +53,8 @@ enum {
     EQPF = 7,
 };
 
-#define EXAMPLE_AUDIO_DEBUG(fmt, args...)    MEDIA_LOGD("[%s]: " fmt "", __func__, ## args)
-#define EXAMPLE_AUDIO_ERROR(fmt, args...)    MEDIA_LOGE("[%s]: " fmt "", __func__, ## args)
+#define EXAMPLE_AUDIO_DEBUG(fmt, args...)    RTK_LOGI(TAG, "[%s]: " fmt "", __func__, ## args)
+#define EXAMPLE_AUDIO_ERROR(fmt, args...)    RTK_LOGE(TAG, "[%s]: " fmt "", __func__, ## args)
 
 #define  ARECORD_DEBUG_HEAP_BEGIN() \
     unsigned int heap_start;\
@@ -67,6 +68,38 @@ enum {
     heap_min_ever_free = rtos_mem_get_minimum_ever_free_heap_size();\
     EXAMPLE_AUDIO_DEBUG("[Mem] start (0x%x), end (0x%x), \n", heap_start, heap_end);\
     EXAMPLE_AUDIO_DEBUG(" diff (%d), peak (%d) \n", heap_start - heap_end, heap_start - heap_min_ever_free)
+
+typedef struct {
+    unsigned int rate;
+    unsigned int channels;
+    unsigned int format;
+    unsigned int bytes_one_time;
+    unsigned int mode;
+    unsigned int only_record;
+    unsigned int noirq_test;
+    unsigned int test_ref;
+    unsigned int pressure_test;
+    unsigned int mic_category;
+    unsigned int channel_src[MAX_CHANNEL_COUNT];
+    unsigned int hpf_fc;
+    unsigned int eq_filter_type;
+} arecord_params_t;
+
+static const arecord_params_t ARECORD_DEFAULT_PARAMS = {
+    .rate = 16000,
+    .channels = 2,
+    .format = 16,
+    .bytes_one_time = 8192,
+    .mode = 0,
+    .only_record = 0,
+    .noirq_test = 0,
+    .test_ref = 0,
+    .pressure_test = 0,
+    .mic_category = DEVICE_IN_MIC,
+    .channel_src = {AUDIO_AMIC1, AUDIO_AMIC2, AUDIO_AMIC3, 0, 0, 0, 0, 0},
+    .hpf_fc = 3,
+    .eq_filter_type = 0,
+};
 
 static void arecord_help(void);
 
@@ -411,18 +444,19 @@ static void RecordTask(void *param)
     rtos_time_delay_ms(2 * RTOS_TICK_RATE_HZ);
     ARECORD_DEBUG_HEAP_END();
 
-    MEDIA_LOGD("Recorded %u frames", frames);
+    RTK_LOGI(TAG, "Recorded %u frames", frames);
+    free(param);
     rtos_task_delete(NULL);
 }
 
 static void PlayTask(void *Data)
 {
-    (void) Data;
     unsigned int channels = 2;
     unsigned int rate = 48000;
 
     Play_Sample(channels, rate);
 
+    free(Data);
     rtos_task_delete(NULL);
 }
 
@@ -485,117 +519,81 @@ void example_audio_counter_time(void *param)
         ppm_test_cnt ++;
     }
 
+    free(param);
     rtos_task_delete(NULL);
 }
 #endif
 
-void AudioRecordTestApp(char **argv)
-{
-    g_record_channel_src[0] = AUDIO_AMIC1;
-    g_record_channel_src[1] = AUDIO_AMIC2;
-    g_record_channel_src[2] = AUDIO_AMIC3;
 
-    /* parse command line arguments */
-    while (*argv) {
-        if (strcmp(*argv, "-c") == 0) {
-            argv++;
-            if (*argv) {
-                g_record_channel = atoi(*argv);
-            }
-        } else if (strcmp(*argv, "-r") == 0) {
-            argv++;
-            if (*argv) {
-                g_record_rate = atoi(*argv);
-            }
-        } else if (strcmp(*argv, "-b") == 0) {
-            argv++;
-            if (*argv) {
-                g_record_bytes_one_time = atoi(*argv);
-            }
-        } else if (strcmp(*argv, "-m") == 0) {
-            argv++;
-            if (*argv) {
-                g_record_mode = atoi(*argv);
-            }
-        } else if (strcmp(*argv, "-f") == 0) {
-            argv++;
-            if (*argv) {
-                g_record_format = atoi(*argv);
-            }
-        } else if (strcmp(*argv, "-or") == 0) {
-            argv++;
-            if (*argv) {
-                g_only_record = atoi(*argv);
-            }
-        } else if (strcmp(*argv, "-noirq") == 0) {
-            argv++;
-            if (*argv) {
-                g_noirq_test = atoi(*argv);
-            }
-        } else if (strcmp(*argv, "-ref") == 0) {
-            argv++;
-            if (*argv) {
-                g_test_ref = atoi(*argv);
-            }
-        } else if (strcmp(*argv, "-pres") == 0) {
-            argv++;
-            if (*argv) {
-                g_pressure_test = atoi(*argv);
-            }
-        } else if (strcmp(*argv, "-c0s") == 0) {
-            argv++;
-            if (*argv) {
-                g_record_channel_src[0] = atoi(*argv);
-            }
-        } else if (strcmp(*argv, "-c1s") == 0) {
-            argv++;
-            if (*argv) {
-                g_record_channel_src[1] = atoi(*argv);
-            }
-        } else if (strcmp(*argv, "-c2s") == 0) {
-            argv++;
-            if (*argv) {
-                g_record_channel_src[2] = atoi(*argv);
-            }
-        } else if (strcmp(*argv, "-c3s") == 0) {
-            argv++;
-            if (*argv) {
-                g_record_channel_src[3] = atoi(*argv);
-            }
-        } else if (strcmp(*argv, "-d") == 0) {
-            argv++;
-            if (*argv) {
-                if (atoi(*argv) == 1) {
-                    g_record_mic_category = DEVICE_IN_DMIC_REF_AMIC;
-                } else if (atoi(*argv) == 2) {
-                    g_record_mic_category = DEVICE_IN_I2S;
-                } else {
-                    g_record_mic_category = DEVICE_IN_MIC;
-                }
-            }
-        } else if (strcmp(*argv, "-hpf") == 0) {
-            argv++;
-            if (*argv) {
-                g_hpf_fc = atoi(*argv);
-            }
-        } else if (strcmp(*argv, "-filter") == 0) {
-            argv++;
-            if (*argv) {
-                g_eq_filter_type = atoi(*argv);
-            }
-        }
-        if (*argv) {
-            argv++;
-        }
+static void arecord_help(void)
+{
+    RTK_LOGI(TAG, "arecord [OPTION...]\n"
+        "\t\t test cmd: arecord [-r] rate [-b] record_bytes_one_time [-c] record_channels [-m] record_mode [-f] format  \n"
+        "\t\t           [-or] 1:only do record, 0:record then play [-noirq] 1:irq mode, 0:no irq mode [-ref] 1:test ref 0: not test ref\n"
+        "\t\t           [-pres] 1: pressure test, 0: record fixed time [-cxs] mic source for channelx, exp, -c0s: mic src for channel0 \n"
+        "\t\t default params: [-r] 16000 [-b] 8192 [-c] 2 [-m] 0 [-f] format 16 [-or] 0 [-noirq] 0 [-ref] 0\n"
+        "\t\t record_mode: 0:no_afe_pure_data; 1:no_afe_all_data \n"
+        "\t\t test demo: arecord -r 16000 -b 8192 \n"
+        "\t\t test noirq, -b should be 8ms bytes: arecord -c 1 -b 256 -noirq 1 -r 16000;\n");
+}
+
+static void parse_arecord_params(cmd_params_t *params, arecord_params_t *p)
+{
+    *p = ARECORD_DEFAULT_PARAMS;
+
+    CMD_PARSE_INT(p->rate, "-r", ARECORD_DEFAULT_PARAMS.rate);
+    CMD_PARSE_INT(p->channels, "-c", ARECORD_DEFAULT_PARAMS.channels);
+    CMD_PARSE_INT(p->format, "-f", ARECORD_DEFAULT_PARAMS.format);
+    CMD_PARSE_INT(p->bytes_one_time, "-b", ARECORD_DEFAULT_PARAMS.bytes_one_time);
+    CMD_PARSE_INT(p->mode, "-m", ARECORD_DEFAULT_PARAMS.mode);
+    CMD_PARSE_INT(p->only_record, "-or", ARECORD_DEFAULT_PARAMS.only_record);
+    CMD_PARSE_INT(p->noirq_test, "-noirq", ARECORD_DEFAULT_PARAMS.noirq_test);
+    CMD_PARSE_INT(p->test_ref, "-ref", ARECORD_DEFAULT_PARAMS.test_ref);
+    CMD_PARSE_INT(p->pressure_test, "-pres", ARECORD_DEFAULT_PARAMS.pressure_test);
+    CMD_PARSE_INT(p->hpf_fc, "-hpf", ARECORD_DEFAULT_PARAMS.hpf_fc);
+    CMD_PARSE_INT(p->eq_filter_type, "-filter", ARECORD_DEFAULT_PARAMS.eq_filter_type);
+
+    int mic_val = 0;
+    CMD_PARSE_INT(mic_val, "-d", 0);
+    if (mic_val == 1) {
+        p->mic_category = DEVICE_IN_DMIC_REF_AMIC;
+    } else if (mic_val == 2) {
+        p->mic_category = DEVICE_IN_I2S;
     }
 
-    if (RTK_SUCCESS != rtos_task_create(NULL, ((const char *)"RecordTask"), RecordTask, NULL, 4096 * 4, 5)) {
+    CMD_PARSE_INT(p->channel_src[0], "-c0s", AUDIO_AMIC1);
+    CMD_PARSE_INT(p->channel_src[1], "-c1s", AUDIO_AMIC2);
+    CMD_PARSE_INT(p->channel_src[2], "-c2s", AUDIO_AMIC3);
+    CMD_PARSE_INT(p->channel_src[3], "-c3s", 0);
+}
+
+static uint32_t arecord_handler(cmd_params_t *params)
+{
+    if (params->argc <= 1) {
+        arecord_help();
+        return TRUE;
+    }
+
+    arecord_params_t p;
+    parse_arecord_params(params, &p);
+
+    RTK_LOGI(TAG, "arecord params: rate=%u, channels=%u, format=%u",
+                p.rate, p.channels, p.format);
+
+    arecord_params_t *task_params = malloc(sizeof(arecord_params_t));
+    if (!task_params) {
+        RTK_LOGE(TAG, "Failed to allocate task params");
+        return FALSE;
+    }
+    *task_params = p;
+
+    if (RTK_SUCCESS != rtos_task_create(NULL, ((const char *)"RecordTask"), RecordTask, NULL, 5376, 5)) {
         EXAMPLE_AUDIO_ERROR("%s rtos_task_create(RecordTask) failed \n", __FUNCTION__);
     }
 
     if (g_test_ref) {
         rtos_time_delay_ms(1000);//for test noise
-        if (RTK_SUCCESS != rtos_task_create(NULL, (const char *const)"PlayTask", PlayTask, NULL, 4096 * 4, 5)) {
+        if (RTK_SUCCESS != rtos_task_create(NULL, (const char *const)"PlayTask", PlayTask, NULL, 4864, 5)) {
             EXAMPLE_AUDIO_ERROR("create PlayTask error \n");
         }
     }
@@ -606,27 +604,14 @@ void AudioRecordTestApp(char **argv)
     }
 #endif
 
-    return;
-}
-
-uint32_t arecord_cmd_handle(int argc, char *argv[])
-{
-    if (argc <= 0) {
-        arecord_help();
-    }
-
-    AudioRecordTestApp((char **)argv);
     return TRUE;
 }
 
-static void arecord_help(void)
-{
-    MEDIA_LOGD("arecord [OPTION...]\n"
-        "\t\t test cmd: arecord [-r] rate [-b] record_bytes_one_time [-c] record_channels [-m] record_mode [-f] format  \n"
-        "\t\t           [-or] 1:only do record, 0:record then play [-noirq] 1:irq mode, 0:no irq mode [-ref] 1:test ref 0: not test ref\n"
-        "\t\t           [-pres] 1: pressure test, 0: record fixed time [-cxs] mic source for channelx, exp, -c0s: mic src for channel0 \n"
-        "\t\t default params: [-r] 16000 [-b] 8192 [-c] 2 [-m] 0 [-f] format 16 [-or] 0 [-noirq] 0 [-ref] 0\n"
-        "\t\t record_mode: 0:no_afe_pure_data; 1:no_afe_all_data \n"
-        "\t\t test demo: arecord -r 16000 -b 8192 \n"
-        "\t\t test noirq, -b should be 8ms bytes: arecord -c 1 -b 256 -noirq 1 -r 16000;\n");
-}
+DEFINE_CMD_WRAPPER(arecord, arecord_handler, 5)
+
+CMD_TABLE_DATA_SECTION
+const COMMAND_TABLE arecord_cmd_table[] = {
+    {
+        "arecord", arecord_cmd_thread
+    },
+};
