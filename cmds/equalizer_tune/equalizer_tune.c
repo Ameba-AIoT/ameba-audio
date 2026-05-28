@@ -32,21 +32,21 @@
 #include "audio/audio_track.h"
 #include "audio/audio_service.h"
 
-#include "audio_uart_handler.h"
+#include "equalizer_tune.h"
 
-#define TAG "AudioUarthandler"
+#define TAG "EqualizerTunehandler"
 #define USING_CMD      1
-#define EXAMPLE_AUDIO_DEBUG(fmt, args...)    RTK_LOGD(TAG, "=> D/AudioUart:[%s]: " fmt "\n", __func__, ## args)
-#define EXAMPLE_AUDIO_ERROR(fmt, args...)    RTK_LOGD(TAG, "=> E/AudioUart:[%s]: " fmt "\n", __func__, ## args)
+#define EXAMPLE_AUDIO_DEBUG(fmt, args...)    RTK_LOGD(TAG, "=> D/EqualizerTune:[%s]: " fmt "\n", __func__, ## args)
+#define EXAMPLE_AUDIO_ERROR(fmt, args...)    RTK_LOGD(TAG, "=> E/EqualizerTune:[%s]: " fmt "\n", __func__, ## args)
 
-#define  AUDIO_UART_DEBUG_HEAP_BEGIN() \
+#define  equalizer_tune_DEBUG_HEAP_BEGIN() \
     unsigned int heap_start;\
     unsigned int heap_end;\
     unsigned int heap_min_ever_free;\
     EXAMPLE_AUDIO_DEBUG("[Mem] mem debug info init");\
     heap_start = rtos_mem_get_free_heap_size()
 
-#define  AUDIO_UART_DEBUG_HEAP_END() \
+#define  equalizer_tune_DEBUG_HEAP_END() \
     heap_end = rtos_mem_get_free_heap_size();\
     heap_min_ever_free = rtos_mem_get_minimum_ever_free_heap_size();\
     EXAMPLE_AUDIO_DEBUG("[Mem] start (0x%x), end (0x%x), ", heap_start, heap_end);\
@@ -64,7 +64,7 @@ static serial_t       g_serial_obj;
 static int32_t        g_receive_cnt = 0;
 static int32_t        g_max_receive_cnt = 0x7fffffff;
 
-struct audio_uart_msg {
+struct equalizer_tune_msg {
     int32_t item;
     char *item_str;
 };
@@ -73,19 +73,19 @@ typedef struct msg_attrib_s {
     int32_t type;
 } msg_attrib_t;
 
-const struct audio_uart_msg eq_msg_type[] = {
-    {AUDIO_UART_MSG_ACK,             "ack"          },
-    {AUDIO_UART_MSG_ERROR,           "error"        },
-    {AUDIO_UART_MSG_SET_FREQUENCY,   "setfrequency" },
-    {AUDIO_UART_MSG_SET_GAIN,        "setgain"      },
-    {AUDIO_UART_MSG_SETQFACTOR,      "setqfactor"   },
-    {AUDIO_UART_MSG_SETFILTERTYPE,   "setfiltertype"},
-    {AUDIO_UART_MSG_QUERY,           "query"        },
+const struct equalizer_tune_msg eq_msg_type[] = {
+    {EQUALIZER_TUNE_MSG_ACK,             "ack"          },
+    {EQUALIZER_TUNE_MSG_ERROR,           "error"        },
+    {EQUALIZER_TUNE_MSG_SET_FREQUENCY,   "setfrequency" },
+    {EQUALIZER_TUNE_MSG_SET_GAIN,        "setgain"      },
+    {EQUALIZER_TUNE_MSG_SETQFACTOR,      "setqfactor"   },
+    {EQUALIZER_TUNE_MSG_SETFILTERTYPE,   "setfiltertype"},
+    {EQUALIZER_TUNE_MSG_QUERY,           "query"        },
 };
 
-static bool audio_uart_check_cjson(unsigned char *inbuf, int32_t len)
+static bool equalizer_tune_check_cjson(unsigned char *inbuf, int32_t len)
 {
-    char p[AUDIO_UART_RECEIVE_DATA_BUFLEN], *p1;
+    char p[EQUALIZER_TUNE_RECEIVE_DATA_BUFLEN], *p1;
     int32_t left = 0, right = 0;
 
     memcpy(p, inbuf, len);
@@ -112,9 +112,9 @@ static bool audio_uart_check_cjson(unsigned char *inbuf, int32_t len)
     return FALSE;
 }
 
-static void audio_uart_send_data(char *pstr, int32_t len)
+static void equalizer_tune_send_data(char *pstr, int32_t len)
 {
-#if AUDIO_UART_USE_DMA_TX
+#if EQUALIZER_TUNE_USE_DMA_TX
     int32_t ret = 0;
     rtos_sema_take(g_send_data_sema, RTOS_MAX_TIMEOUT);
 
@@ -132,7 +132,7 @@ static void audio_uart_send_data(char *pstr, int32_t len)
 #endif
 }
 
-static int32_t audio_uart_eq_query(struct AudioEqualizer *audio_equalizer)
+static int32_t equalizer_tune_eq_query(struct AudioEqualizer *audio_equalizer)
 {
     uint32_t eq_bands = 10;
     cJSON *root;
@@ -174,14 +174,14 @@ static int32_t audio_uart_eq_query(struct AudioEqualizer *audio_equalizer)
 
     EXAMPLE_AUDIO_DEBUG("%s, %s\n", __func__, msg_js);
     rtos_mutex_take(g_send_data_mutex, MUTEX_WAIT_TIMEOUT);
-    audio_uart_send_data(msg_js, strlen(msg_js));
+    equalizer_tune_send_data(msg_js, strlen(msg_js));
     rtos_mutex_give(g_send_data_mutex);
     rtos_mem_free(msg_js);
 
     return 0;
 }
 
-static int32_t audio_uart_ack_reply(int32_t opt)
+static int32_t equalizer_tune_ack_reply(int32_t opt)
 {
     cJSON *msg_obj;
     char *msg_js = NULL;
@@ -201,7 +201,7 @@ static int32_t audio_uart_ack_reply(int32_t opt)
 
     EXAMPLE_AUDIO_DEBUG("%s, %s\n", __func__, msg_js);
     rtos_mutex_take(g_send_data_mutex, MUTEX_WAIT_TIMEOUT);
-    audio_uart_send_data(msg_js, strlen(msg_js));
+    equalizer_tune_send_data(msg_js, strlen(msg_js));
     EXAMPLE_AUDIO_DEBUG("%s, send ack done(%d)\n", __func__, strlen(msg_js));
     rtos_mutex_give(g_send_data_mutex);
 
@@ -209,14 +209,14 @@ static int32_t audio_uart_ack_reply(int32_t opt)
     return 0;
 }
 
-static void audio_uart_process_receive_data(msg_attrib_t *pattrib, struct AudioEqualizer *audio_equalizer)
+static void equalizer_tune_process_receive_data(msg_attrib_t *pattrib, struct AudioEqualizer *audio_equalizer)
 {
-    unsigned char tempbuf[AUDIO_UART_RECEIVE_DATA_BUFLEN];
+    unsigned char tempbuf[EQUALIZER_TUNE_RECEIVE_DATA_BUFLEN];
     cJSON *root, *typeobj;
     int32_t opt = -1;
     int32_t datasize = g_receive_data_size;
 
-    memset(tempbuf, 0x00, AUDIO_UART_RECEIVE_DATA_BUFLEN);
+    memset(tempbuf, 0x00, EQUALIZER_TUNE_RECEIVE_DATA_BUFLEN);
     memcpy(tempbuf, g_receive_msg_data, datasize);
     tempbuf[datasize++] = '\0';
     g_receive_data_size = 0;
@@ -228,7 +228,7 @@ static void audio_uart_process_receive_data(msg_attrib_t *pattrib, struct AudioE
         return;
     }
 
-    if (audio_uart_check_cjson(tempbuf, datasize) == FALSE) {
+    if (equalizer_tune_check_cjson(tempbuf, datasize) == FALSE) {
         EXAMPLE_AUDIO_DEBUG("invaild json %s\n", tempbuf);
         return;
     }
@@ -236,7 +236,7 @@ static void audio_uart_process_receive_data(msg_attrib_t *pattrib, struct AudioE
     if ((root = cJSON_Parse((const char *)tempbuf)) != NULL) {
         if ((typeobj = cJSON_GetObjectItem(root, "type")) != NULL) {
             EXAMPLE_AUDIO_DEBUG("type: %s\n", typeobj->valuestring);
-            for (uint32_t i = 0; i < sizeof(eq_msg_type) / sizeof(struct audio_uart_msg); i++) {
+            for (uint32_t i = 0; i < sizeof(eq_msg_type) / sizeof(struct equalizer_tune_msg); i++) {
                 if (!strcmp(typeobj->valuestring, eq_msg_type[i].item_str)) {
                     pattrib->type = eq_msg_type[i].item;
                     break;
@@ -246,13 +246,13 @@ static void audio_uart_process_receive_data(msg_attrib_t *pattrib, struct AudioE
     }
 
     switch (pattrib->type) {
-    case AUDIO_UART_MSG_QUERY:
-        opt = audio_uart_eq_query(audio_equalizer);
+    case EQUALIZER_TUNE_MSG_QUERY:
+        opt = equalizer_tune_eq_query(audio_equalizer);
         if (opt != 0) {
-            audio_uart_ack_reply(opt);
+            equalizer_tune_ack_reply(opt);
         }
         break;
-    case AUDIO_UART_MSG_SET_FREQUENCY: {
+    case EQUALIZER_TUNE_MSG_SET_FREQUENCY: {
         cJSON *cj_band_id = cJSON_GetObjectItem(root, "id");
         cJSON *cj_frequency = cJSON_GetObjectItem(root, "centerfrequency");
 
@@ -261,9 +261,9 @@ static void audio_uart_process_receive_data(msg_attrib_t *pattrib, struct AudioE
 
         AudioEqualizer_SetCenterFreq(audio_equalizer, band_id, frequency);
     }
-    audio_uart_ack_reply(0);
+    equalizer_tune_ack_reply(0);
     break;
-    case AUDIO_UART_MSG_SET_GAIN: {
+    case EQUALIZER_TUNE_MSG_SET_GAIN: {
         cJSON *cj_band_id = cJSON_GetObjectItem(root, "id");
         cJSON *cj_gain = cJSON_GetObjectItem(root, "gain");
         uint32_t band_id = cj_band_id->valueint;
@@ -271,9 +271,9 @@ static void audio_uart_process_receive_data(msg_attrib_t *pattrib, struct AudioE
 
         AudioEqualizer_SetBandLevel(audio_equalizer, band_id, gain * 100);
     }
-    audio_uart_ack_reply(0);
+    equalizer_tune_ack_reply(0);
     break;
-    case AUDIO_UART_MSG_SETQFACTOR: {
+    case EQUALIZER_TUNE_MSG_SETQFACTOR: {
         cJSON *cj_band_id = cJSON_GetObjectItem(root, "id");
         cJSON *cj_qfactor = cJSON_GetObjectItem(root, "qfactor");
         uint32_t band_id = cj_band_id->valueint;
@@ -281,9 +281,9 @@ static void audio_uart_process_receive_data(msg_attrib_t *pattrib, struct AudioE
 
         AudioEqualizer_SetQfactor(audio_equalizer, band_id, (uint32_t)(q_factor * (double)100));
     }
-    audio_uart_ack_reply(0);
+    equalizer_tune_ack_reply(0);
     break;
-    case AUDIO_UART_MSG_SETFILTERTYPE: {
+    case EQUALIZER_TUNE_MSG_SETFILTERTYPE: {
         cJSON *cj_band_id = cJSON_GetObjectItem(root, "id");
         cJSON *cj_filter_type = cJSON_GetObjectItem(root, "filtertype");
         uint32_t band_id = cj_band_id->valueint;
@@ -291,17 +291,17 @@ static void audio_uart_process_receive_data(msg_attrib_t *pattrib, struct AudioE
 
         AudioEqualizer_SetBandFilterType(audio_equalizer, band_id, filter_type);
     }
-    audio_uart_ack_reply(0);
+    equalizer_tune_ack_reply(0);
     break;
     default:
         EXAMPLE_AUDIO_DEBUG("%s, unsupport type\n", __func__);
-        audio_uart_ack_reply(opt);
+        equalizer_tune_ack_reply(opt);
     }
 
     cJSON_Delete(root);
 }
 
-static void audio_uart_receive_irq(uint32_t id, SerialIrq event)
+static void equalizer_tune_receive_irq(uint32_t id, SerialIrq event)
 {
     serial_t    *sobj = (serial_t *)id;
     unsigned char rc = 0;
@@ -332,23 +332,23 @@ static void uart_dma_tx_done(uint32_t id)
     rtos_sema_give(g_send_data_sema);
 }
 
-static void audio_uart_init_uart(void)
+static void equalizer_tune_init_uart(void)
 {
-    g_serial_obj.uart_idx = AUDIO_UART_INDEX;
-    serial_init(&g_serial_obj, AUDIO_UART_TX_PIN, AUDIO_UART_RX_PIN);
-    serial_baud(&g_serial_obj, AUDIO_UART_BAUDRATE);
+    g_serial_obj.uart_idx = EQUALIZER_TUNE_INDEX;
+    serial_init(&g_serial_obj, EQUALIZER_TUNE_TX_PIN, EQUALIZER_TUNE_RX_PIN);
+    serial_baud(&g_serial_obj, EQUALIZER_TUNE_BAUDRATE);
     serial_format(&g_serial_obj, 8, ParityNone, 1);
 
     serial_rx_fifo_level(&g_serial_obj, FifoLvHalf);
     serial_set_flow_control(&g_serial_obj, FlowControlNone, 0, 0);
-    serial_irq_handler(&g_serial_obj, audio_uart_receive_irq, (uint32_t)&g_serial_obj);
+    serial_irq_handler(&g_serial_obj, equalizer_tune_receive_irq, (uint32_t)&g_serial_obj);
     serial_irq_set(&g_serial_obj, RxIrq, ENABLE);
-#if AUDIO_UART_USE_DMA_TX
+#if EQUALIZER_TUNE_USE_DMA_TX
     serial_send_comp_handler(&g_serial_obj, (void *)uart_dma_tx_done, (uint32_t) &g_serial_obj);
 #endif
 }
 
-static void audio_uart_create_eq(struct AudioEqualizer **audio_equalizer)
+static void equalizer_tune_create_eq(struct AudioEqualizer **audio_equalizer)
 {
 
     int16_t band_level = 0;
@@ -387,34 +387,34 @@ static void audio_uart_create_eq(struct AudioEqualizer **audio_equalizer)
 
 }
 
-static void audio_uart_destroy_eq(struct AudioEqualizer **audio_equalizer)
+static void equalizer_tune_destroy_eq(struct AudioEqualizer **audio_equalizer)
 {
     AudioEqualizer_SetEnabled(*audio_equalizer, false);
     AudioEqualizer_Destroy(*audio_equalizer);
 }
 
-static void audio_uart_task(void *param)
+static void equalizer_tune_task(void *param)
 {
     rtos_time_delay_ms(500);
     EXAMPLE_AUDIO_DEBUG("Audio uart demo begin");
     (void) param;
 
-    AUDIO_UART_DEBUG_HEAP_BEGIN();
+    equalizer_tune_DEBUG_HEAP_BEGIN();
 
-    g_receive_msg_data = (unsigned char *) calloc(AUDIO_UART_RECEIVE_DATA_BUFLEN, sizeof(unsigned char));
+    g_receive_msg_data = (unsigned char *) calloc(EQUALIZER_TUNE_RECEIVE_DATA_BUFLEN, sizeof(unsigned char));
 
     struct AudioEqualizer *audio_equalizer;
-    audio_uart_create_eq(&audio_equalizer);
+    equalizer_tune_create_eq(&audio_equalizer);
 
-#if AUDIO_UART_USE_DMA_TX
+#if EQUALIZER_TUNE_USE_DMA_TX
     rtos_sema_create(&g_send_data_sema, 1, RTOS_SEMA_MAX_COUNT);
 #endif
     rtos_sema_create(&g_receive_data_sema, 0, RTOS_SEMA_MAX_COUNT);
     rtos_mutex_create(&g_send_data_mutex);
 
-    audio_uart_init_uart();
+    equalizer_tune_init_uart();
 
-    memset(g_receive_msg_data, 0, AUDIO_UART_RECEIVE_DATA_BUFLEN);
+    memset(g_receive_msg_data, 0, EQUALIZER_TUNE_RECEIVE_DATA_BUFLEN);
 
     msg_attrib_t pattrib = {0};
     cJSON_Hooks memoryHook;
@@ -430,11 +430,11 @@ static void audio_uart_task(void *param)
     while (1) {
 #endif
         rtos_sema_take(g_receive_data_sema, RTOS_MAX_TIMEOUT);
-        audio_uart_process_receive_data(&pattrib, audio_equalizer);
+        equalizer_tune_process_receive_data(&pattrib, audio_equalizer);
         g_receive_cnt ++;
     }
 
-    audio_uart_destroy_eq(&audio_equalizer);
+    equalizer_tune_destroy_eq(&audio_equalizer);
     g_receive_cnt = 0;
     serial_free(&g_serial_obj);
     rtos_mutex_delete(g_send_data_mutex);
@@ -443,34 +443,34 @@ static void audio_uart_task(void *param)
 
     free(g_receive_msg_data);
     rtos_time_delay_ms(1000);
-    AUDIO_UART_DEBUG_HEAP_END();
+    equalizer_tune_DEBUG_HEAP_END();
 
     rtos_task_delete(NULL);
 }
 
-void audio_uart_task_start(void)
+void equalizer_tune_task_start(void)
 {
-    if (rtos_task_create(NULL, ((const char *)"audio_uart_task"), audio_uart_task, NULL, 7424, 1) != RTK_SUCCESS) {
-        RTK_LOGD(TAG, "error: rtos_task_create(audio_uart_task) failed\n");
+    if (rtos_task_create(NULL, ((const char *)"equalizer_tune_task"), equalizer_tune_task, NULL, 7424, 1) != RTK_SUCCESS) {
+        RTK_LOGD(TAG, "error: rtos_task_create(equalizer_tune_task) failed\n");
     }
 }
 
 #if USING_CMD
-uint32_t audio_uart_cmd(uint16_t argc, unsigned char **argv)
+uint32_t equalizer_tune_cmd(uint16_t argc, unsigned char **argv)
 {
     (void) argc;
     (void) argv;
-    audio_uart_task_start();
+    equalizer_tune_task_start();
     return TRUE;
 }
 
 CMD_TABLE_DATA_SECTION
-const COMMAND_TABLE uart_test_cmd_table[] = {
-    {"audio_uart", audio_uart_cmd},
+const COMMAND_TABLE equalizer_tune_cmd_table[] = {
+    {"equalizer_tune", equalizer_tune_cmd},
 };
 #else
 void app_example(void)
 {
-    audio_uart_task_start();
+    equalizer_tune_task_start();
 }
 #endif

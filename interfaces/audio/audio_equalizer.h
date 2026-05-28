@@ -46,8 +46,20 @@
 extern "C" {
 #endif
 
+/**
+ * @defgroup AudioEqualizer_Types AudioEqualizer Types
+ * @{
+ */
+
 struct AudioEqualizer;
 struct AudioEffect;
+
+/** @} End of AudioEqualizer_Types group */
+
+/**
+ * @defgroup AudioEqualizer_Functions AudioEqualizer Functions
+ * @{
+ */
 
 /**
  * @brief Create AudioEqualizer instance.
@@ -255,8 +267,12 @@ int32_t AudioEqualizer_SetQfactor(struct AudioEqualizer *equalizer, uint32_t ban
  */
 int16_t AudioEqualizer_GetQfactor(struct AudioEqualizer *equalizer, uint32_t band);
 
+/** @} End of AudioEqualizer_Functions group */
+
 #ifdef __cplusplus
 }
 #endif
+
+/** @} */
 
 #endif

@@ -103,9 +103,7 @@ rsource "third_party/Kconfig"
 # ------------------------------------------------------------------------------
 # Audio Commands
 # ------------------------------------------------------------------------------
-if SUPPORT_AUDIO_CMD_ARECORD || SUPPORT_AUDIO_CMD_APLAY || SUPPORT_AUDIO_CMD_EQUALIZER || SUPPORT_AUDIO_CMD_PLAYER || SUPPORT_AUDIO_CMD_PCRECORD
-    rsource "cmds/Kconfig"
-endif
+rsource "cmds/Kconfig"
 
 endmenu
 

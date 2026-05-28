@@ -45,91 +45,121 @@ extern "C" {
 #endif
 
 /**
+ * @defgroup AudioType_Constants AudioType Constants
+ * @{
+ */
+
+/**
  * @brief Defines all the audio playback usages.
+ *
+ * Pass to AudioTrack_SetCategory() before AudioTrack_Start().
  *
  * @since 1.0
  * @version 1.0
  */
 enum {
-    /** category type of track, for media */
+    /** Category for general media playback. */
     AUDIO_CATEGORY_MEDIA         = 0,
-    /** category type of track, for calls*/
+    /** Category for voice calls. */
     AUDIO_CATEGORY_COMMUNICATION = 1,
-    /** category type of track, for tts */
-    AUDIO_CATEGORY_TTS        = 2,
-    /** category type of track, for beep sound, some as key tone */
+    /** Category for text-to-speech / voice prompts. */
+    AUDIO_CATEGORY_TTS           = 2,
+    /** Category for short beep / key tone effects. */
     AUDIO_CATEGORY_BEEP          = 3,
-    /** total category type number of track */
+    /** Total number of categories; do not pass as a real value. */
     AUDIO_CATEGORY_MAX_NUM       = 4,
 };
 
 /**
- * @brief Defines all the audio formats.
+ * @brief Defines all the supported PCM sample formats.
+ *
+ * Each value describes the layout of **one sample on one channel**. A frame
+ * contains channel_count samples laid out interleaved. Use
+ * Audio_GetAudioBytesPerSample() to get the byte width of a sample.
  *
  * @since 1.0
  * @version 1.0
  */
 enum {
-    /** invalid audio track and audio record data bit format*/
+    /** Invalid / unknown format, used as error sentinel. */
     AUDIO_FORMAT_INVALID           = 0xFFFFFFFFu,
-    /** audio track and audio record data bit format, 8bit per channel per frame*/
+    /** Signed 8-bit PCM, 1 byte per sample. */
     AUDIO_FORMAT_PCM_8_BIT         = 0x01u,
-    /** audio track and audio record data bit format, 16bit per channel per frame*/
+    /** Signed 16-bit PCM, 2 bytes per sample. Default format. */
     AUDIO_FORMAT_PCM_16_BIT        = 0x02u,
-    /** audio track and audio record data bit format, 32bit per channel per frame*/
+    /** Signed 32-bit PCM, 4 bytes per sample. */
     AUDIO_FORMAT_PCM_32_BIT        = 0x04u,
-    /** audio track and audio record data bit format, float per channel per frame*/
+    /** 32-bit IEEE float PCM in [-1.0, 1.0], 4 bytes per sample. */
     AUDIO_FORMAT_PCM_FLOAT         = 0x08u,
-    /** audio track and audio record data bit format, 24bit packed per channel per frame*/
+    /** Signed 24-bit PCM packed (3 bytes per sample, no padding). */
     AUDIO_FORMAT_PCM_24_BIT        = 0x10u,
-    /** audio record and audio record data bit format, 24+8bit per channel per frame*/
+    /** 24-bit PCM stored in the high 24 bits of a 32-bit container, 4 bytes per sample. */
     AUDIO_FORMAT_PCM_8_24_BIT      = 0x20u,
 };
 
+/**
+ * @brief Defines audio routing endpoints (devices) for output and input paths.
+ *
+ * Values are bitmask-friendly. Output devices occupy the low bits; input
+ * devices set bit 27 (0x08000000) so a single uint32_t can carry direction
+ * plus device. Use these with the audio control / patch APIs to select
+ * routing.
+ *
+ * @since 1.0
+ * @version 1.0
+ */
 enum {
-    /** invalid device */
+    /** No device / unrouted. */
     DEVICE_NONE               = 0x0u,
-    /** audio device speaker */
+    /** Built-in speaker output. */
     DEVICE_OUT_SPEAKER        = 0x1u,
-    /** audio device i2s out */
+    /** I2S output to an external codec / DSP. */
     DEVICE_OUT_I2S            = 0x2u,
-    /** audio device i2s out */
+    /** Wired headphone output. */
     DEVICE_OUT_HEADPHONE      = 0x4u,
-    /** audio device a2dp out */
+    /** Bluetooth A2DP output. */
     DEVICE_OUT_A2DP           = 0x8u,
-    /** audio device usb out */
+    /** USB audio output. */
     DEVICE_OUT_USB            = 0x10u,
-    /** input device analog microphone */
+    /** Analog microphone input (AMIC). */
     DEVICE_IN_MIC             = 0x8000001u,
-    /** input device digital microphone */
+    /** Digital microphone with analog mic reference (DMIC + AMIC ref). */
     DEVICE_IN_DMIC_REF_AMIC   = 0x8000002u,
-    /** input device i2s */
+    /** I2S capture input. */
     DEVICE_IN_I2S             = 0x8000004u,
 };
 
 /**
  * @brief Defines all the audio output flags.
  *
+ * Bitmask passed at AudioTrack creation/configuration to choose the playback
+ * path. NOIRQ selects a polling/no-DMA-IRQ low-latency path; otherwise the
+ * default IRQ-driven path is used.
+ *
  * @since 1.0
  * @version 1.0
  */
 enum {
-    /** output flag none */
+    /** Default output path (IRQ-driven DMA). */
     AUDIO_OUTPUT_FLAG_NONE         = 0x0u,
-    /** output flag no dma irq */
+    /** Use the no-DMA-IRQ output path (lower latency, more CPU). */
     AUDIO_OUTPUT_FLAG_NOIRQ        = 0x1u,
 };
 
 /**
  * @brief Defines all the audio input flags.
  *
+ * Bitmask passed at AudioRecord creation/configuration to choose the capture
+ * path. NOIRQ selects a polling/no-DMA-IRQ low-latency path; otherwise the
+ * default IRQ-driven path is used.
+ *
  * @since 1.0
  * @version 1.0
  */
 enum {
-    /** output flag none */
+    /** Default input path (IRQ-driven DMA). */
     AUDIO_INPUT_FLAG_NONE         = 0x0u,
-    /** output flag no dma irq */
+    /** Use the no-DMA-IRQ input path (lower latency). */
     AUDIO_INPUT_FLAG_NOIRQ        = 0x1u,
 };
 
@@ -207,35 +237,68 @@ enum {
     AUDIO_OUT_MIN_FRAMES_STAGE2  = 1,
 };
 
+/**
+ * @brief Defines the type of an audio patch endpoint node.
+ *
+ * An audio patch is a hardware-level routing connection between sources and
+ * sinks. Each endpoint is either an internal port or an external
+ * device. Used in AudioPatchConfig::type.
+ *
+ * @since 1.0
+ * @version 1.0
+ */
 enum {
-    /** audio patch node none */
+    /** Unset / invalid endpoint. */
     AUDIO_PATCH_NODE_NONE        = 0x0u,
-    /** audio patch node: PORT */
+    /** Endpoint is an internal port; AudioPatchConfig::node.port_index applies. */
     AUDIO_PATCH_NODE_PORT        = 0x1u,
-    /** audio patch node: DEVICE */
+    /** Endpoint is an external device; AudioPatchConfig::node.device applies. */
     AUDIO_PATCH_NODE_DEVICE      = 0x2u,
 };
 
+/** @} End of AudioType_Constants group */
+
 /**
- * @brief Defines the audio patch config.
+ * @defgroup AudioType_Types AudioType Types
+ * @{
+ */
+
+/**
+ * @brief Configuration of one source or sink endpoint of an audio patch.
+ *
+ * Pass arrays of these to AudioManager_CreateAudioPatch() to set up
+ * source-to-sink hardware routing without going through the streaming path.
+ * @c sample_rate / @c channel_count / @c format describe the PCM running on
+ * that endpoint and must be supported by the underlying hardware. @c type
+ * selects which member of @c node is meaningful.
+ *
+ * @since 1.0
+ * @version 1.0
  */
 struct AudioPatchConfig {
-    /** rate of the sample */
+    /** Sample rate in Hz (e.g. 16000, 44100, 48000). */
     uint32_t sample_rate;
-    /** channel count of the sample */
+    /** Channel count (1 = mono, 2 = stereo, ...). */
     uint32_t channel_count;
-    /** format of the sample */
+    /** PCM format, one of @c AUDIO_FORMAT_PCM_*. */
     uint32_t format;
-    /** audio patch node type, AUDIO_PATCH_NODE_PORT or AUDIO_PATCH_NODE_DEVICE*/
+    /** Endpoint type: @c AUDIO_PATCH_NODE_PORT or @c AUDIO_PATCH_NODE_DEVICE. */
     uint32_t type;
     union {
-        /** audio patch node is port*/
+        /** Port index when @c type == @c AUDIO_PATCH_NODE_PORT. */
         uint32_t  port_index;
-        /** audio patch node is device*/
+        /** Device id (one of @c DEVICE_*) when @c type == @c AUDIO_PATCH_NODE_DEVICE. */
         uint32_t device;
     } node;
 };
 
+/**
+ * @brief Returns the size in bytes of one PCM sample for a given format.
+ *
+ * @param[in] format One of the @c AUDIO_FORMAT_PCM_* values.
+ * @return Sample size in bytes; 0 for @c AUDIO_FORMAT_INVALID or unknown values.
+ * @note Multiply by channel_count to get the size of one frame.
+ */
 static inline size_t Audio_GetAudioBytesPerSample(int32_t format)
 {
     size_t size = 0;
@@ -260,10 +323,12 @@ static inline size_t Audio_GetAudioBytesPerSample(int32_t format)
     return size;
 }
 
+/** @} End of AudioType_Types group */
+
 #ifdef __cplusplus
 }
 #endif
 
+/** @} */
 
 #endif // AMEBA_AUDIO_INTERFACES_AUDIO_AUDIO_TYPE_H
-/** @} */

@@ -629,6 +629,8 @@ static void aplay_help(void)
         "\nFile types:\n"
         "\twav    - WAV file\n"
         "\nExamples:\n"
+        "\tif using vfs file, make sure vfs has such file in it\n"
+        "\tuser can refer to online document to check how to use vfs\n"
         "\taplay -t wav vfs://dance.wav\n"
         "\taplay -r 48000 -t raw vfs://dance_48000_2ch_16bit.raw\n"
         "\taplay -r 48000 -c 2 -f 16 -d 20 -v 0.8\n");

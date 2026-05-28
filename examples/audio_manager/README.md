@@ -18,9 +18,8 @@ Ameba audio project can achieve:
 3. please check the application note to see how to use interfaces.
 
 ## Supported IC <a name = "supported-ic"></a>
-1. AmebaDplus(only support passthrough architecture)
-2. AmebaLite(only support passthrough architecture)
-3. AmebaSmart(only support passthrough architecture)
+1. AmebaLite(only support passthrough architecture)
+2. AmebaSmart(only support passthrough architecture)
 
 ## Configurations <a name = "configurations"></a>
 
@@ -28,6 +27,8 @@ Ameba audio project can achieve:
 ameba_audio_hw_usrcfg.h is for audio Hardware configurations.
 2. Please set component/soc/usrcfg/xxx/ameba_bootcfg.c's Boot_SocClk_Info_Idx to choose right cpu pll.
 take amebadplus for example: 48000 rate, choose PLL_688P128M. 44100 rate choose PLL_677P376M.
+3. Enter directory:amebasmart_gcc_project
+./menuconfig.py--->CONFIG APPLICATION--->AUDIO CONFIG--->Select Audio Interface(PassThrough)
 
 ### Hardware configurations
 
@@ -42,5 +43,5 @@ Build and Download:
 
 ### Note
 
-1. Use CMD `./build.py -a audio_manager -p` to compile this example.
-2. For playing run command and parameters, please refer to app_example.c.
+1. Example will run directly after system starts.
+2. Microphone's voice will directly output to speaker.
