@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef _MYDATA_SOURCE_H_
-#define _MYDATA_SOURCE_H_
+#ifndef AMEBA_AUDIO_CMDS_PLALER_MYDATA_SOURCE_H_
+#define AMEBA_AUDIO_CMDS_PLALER_MYDATA_SOURCE_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,4 +47,4 @@ int32_t MyStreamSource_GetLength(const StreamSource *source, off_t *size);
 }
 #endif
 
-#endif  // _MYDATA_SOURCE_H_
+#endif  // AMEBA_AUDIO_CMDS_PLALER_MYDATA_SOURCE_H_
