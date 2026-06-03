@@ -28,7 +28,7 @@
 #include "audio_cmd_common.h"
 
 #define DUMP_FRAME            96000
-#define RECORD_TIME_SECONDS   10
+#define RECORD_TIME_SECONDS   600
 #define REF_PLAY_SECONDS      3
 #define MAX_CHANNEL_COUNT     8
 /*when dump, d2 needs invalidate, lite doesn't need invalidate*/
@@ -39,7 +39,7 @@
 #define TEST_TIMESTAMP        0
 //if running in mixer architecture, please set 1 here.
 //if running in passthrough architecture, please set 0 here.
-#define TEST_MIXER_ARCH       1
+#define TEST_MIXER_ARCH       0
 
 enum {
     EQLPF = 1,
@@ -93,7 +93,7 @@ static const arecord_params_t ARECORD_DEFAULT_PARAMS = {
     .noirq_test = 0,
     .test_ref = 0,
     .pressure_test = 0,
-    .mic_category = DEVICE_IN_MIC,
+    .mic_category = DEVICE_IN_I2S,
     .channel_src = {AUDIO_AMIC1, AUDIO_AMIC2, AUDIO_AMIC3, 0, 0, 0, 0, 0},
     .hpf_fc = 3,
     .eq_filter_type = 0,
@@ -110,7 +110,7 @@ static unsigned int  g_record_channel = 2;
 static unsigned int  g_record_mode = 0;
 static unsigned int  g_record_format = 16;
 static unsigned int  g_record_bytes_one_time = 8192;
-static unsigned int  g_record_mic_category = DEVICE_IN_MIC;
+static unsigned int  g_record_mic_category = DEVICE_IN_I2S;
 static unsigned int  g_record_channel_src[MAX_CHANNEL_COUNT] = {AUDIO_AMIC1};
 static unsigned int  g_hpf_fc = 3;
 static unsigned int  g_eq_filter_type = 0;
@@ -229,7 +229,7 @@ static unsigned int Record_Sample()
     record_config.format = format;
     record_config.channel_count = g_record_channel;
     record_config.device = g_record_mic_category;
-    record_config.buffer_bytes = 0; //0 means using default period bytes
+    record_config.buffer_bytes = g_record_bytes_one_time; //0 means using default period bytes
     if (g_noirq_test) {
         record_config.buffer_bytes = g_record_bytes_one_time;
     }
@@ -320,7 +320,9 @@ static unsigned int Record_Sample()
     EXAMPLE_AUDIO_DEBUG("Capturing sample: %u ch, %u hz, record bytes one time:%d, dump_buffer:%p \n", g_record_channel, g_record_rate,
                         g_record_bytes_one_time, dump_buffer);
     do {
+        printf("read enter\n");
         size_read = AudioRecord_Read(arecord, buffer, size, true);
+        printf("read done\n");
         if ((unsigned int)size_read != size) {
             EXAMPLE_AUDIO_DEBUG("opps size wanted:%d, size actually read:%d \n", size, size_read);
         }
@@ -509,15 +511,23 @@ static uint32_t arecord_handler(cmd_params_t *params)
     arecord_params_t p;
     parse_arecord_params(params, &p);
 
-    RTK_LOGI(TAG, "arecord params: rate=%u, channels=%u, format=%u",
-                p.rate, p.channels, p.format);
-
-    arecord_params_t *task_params = malloc(sizeof(arecord_params_t));
-    if (!task_params) {
-        RTK_LOGE(TAG, "Failed to allocate task params");
-        return FALSE;
+    g_record_rate           = p.rate;
+    g_record_channel        = p.channels;
+    g_record_format         = p.format;
+    g_record_bytes_one_time = p.bytes_one_time;
+    g_record_mode           = p.mode;
+    g_only_record           = p.only_record;
+    g_noirq_test            = p.noirq_test;
+    g_pressure_test         = p.pressure_test;
+    g_record_mic_category   = p.mic_category;
+    for (unsigned int i = 0; i < MAX_CHANNEL_COUNT; i++) {
+        g_record_channel_src[i] = p.channel_src[i];
     }
-    *task_params = p;
+    g_hpf_fc         = p.hpf_fc;
+    g_eq_filter_type = p.eq_filter_type;
+
+    RTK_LOGI(TAG, "arecord params: rate=%u, channels=%u, format=%u, bytes=%u, or=%u, mic_cat=%u \n",
+                p.rate, p.channels, p.format, p.bytes_one_time, p.only_record, p.mic_category);
 
     if (RTK_SUCCESS != rtos_task_create(NULL, ((const char *)"RecordTask"), RecordTask, NULL, 5376, 5)) {
         EXAMPLE_AUDIO_ERROR("%s rtos_task_create(RecordTask) failed \n", __FUNCTION__);

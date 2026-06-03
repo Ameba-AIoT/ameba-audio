@@ -284,7 +284,10 @@ static void ameba_audio_stream_tx_sport_init(RenderStream **stream, StreamConfig
 	rstream->stream.sp_initstruct.SP_SelClk = clock_mode;
 	AUDIO_SP_Init(rstream->stream.sport_dev_num, SP_DIR_TX, &rstream->stream.sp_initstruct);
 	if (rstream->stream.device == AMEBA_AUDIO_DEVICE_I2S) {
-		AUDIO_SP_SetMasterSlave(rstream->stream.sport_dev_num, MASTER);
+		if (AUDIO_I2S_OUT_ROLE == AUDIO_I2S_SLAVE)
+			AUDIO_SP_SetMasterSlave(rstream->stream.sport_dev_num, SLAVE);
+		else
+			AUDIO_SP_SetMasterSlave(rstream->stream.sport_dev_num, MASTER);
 	}
 
 }
