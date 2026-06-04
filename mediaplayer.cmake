@@ -26,7 +26,7 @@ set(private_compile_options)
 # --------------------------------------------------------------
 ameba_add_merge_module_library(playback ${c_CMPT_AUDIO_DIR}/libs/${c_SOC_TYPE}/${c_MCU_TYPE}
     audio_media_common
-    audio_media_codec_omx
+    audio_media_codec
     audio_media_codec_common_amrnb
     audio_media_codec_common_amrwb
     audio_media_codec_common_pvmp3
