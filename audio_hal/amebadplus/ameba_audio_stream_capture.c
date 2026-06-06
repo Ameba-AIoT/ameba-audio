@@ -149,8 +149,11 @@ static void ameba_audio_stream_rx_sport_init(CaptureStream **stream, StreamConfi
 
 	AUDIO_SP_Init(cstream->stream.sport_dev_num, SP_DIR_RX, &cstream->stream.sp_initstruct);
 
-	if (device == AMEBA_AUDIO_IN_I2S && AUDIO_I2S_IN_ROLE == AUDIO_I2S_SLAVE) {
-		AUDIO_SP_SetMasterSlave(cstream->stream.sport_dev_num, SLAVE);
+	if (device == AMEBA_AUDIO_IN_I2S) {
+		if (AUDIO_I2S_IN_ROLE == AUDIO_I2S_SLAVE)
+			AUDIO_SP_SetMasterSlave(cstream->stream.sport_dev_num, SLAVE);
+		else
+			AUDIO_SP_SetMasterSlave(cstream->stream.sport_dev_num, MASTER);
 	}
 
 }

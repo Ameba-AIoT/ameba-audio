@@ -29,13 +29,16 @@
 #include "mystream_source.h"
 #include "player.h"
 
-/* source data */
-#include "48k_2c_30s_mp3.h"
-
 #include "audio_cmd_common.h"
 
 //#define USE_CACHE
 #define USE_PREPARE_ASYNC
+//#define USE_STREAM_SOURCE
+
+#ifdef USE_STREAM_SOURCE
+/* source data */
+//#include "48k_2c_30s_mp3.h"
+#endif
 
 #define MAX_URL_SIZE 1024
 static char g_url[MAX_URL_SIZE];
@@ -152,8 +155,12 @@ void StartPlay(struct MediaPlayer *player, const char *url)
     RTK_LOGI(TAG, "SetSource\n");
 
     if (g_streaming) {
+#ifdef USE_STREAM_SOURCE
         stream_source = MyStreamSource_Create((char *)ready_to_convert0, sizeof(ready_to_convert0));
         ret = MediaPlayer_SetStreamSource(player, stream_source);
+#else
+        RTK_LOGE(TAG, "Please enable USE_STREAM_SOURCE in player.c.\n");
+#endif
     } else {
         ret = MediaPlayer_SetDataSource(player, url);
     }
@@ -164,13 +171,12 @@ void StartPlay(struct MediaPlayer *player, const char *url)
     }
 
 #ifdef USE_PREPARE_ASYNC
+    g_playing_status = PREPARING;
     ret = MediaPlayer_PrepareAsync(player);
     if (ret) {
         RTK_LOGE(TAG, "prepare async fail:error=%ld\n", ret);
         goto exit;
     }
-
-    g_playing_status = PREPARING;
 
     while (g_playing_status != PREPARED) {
         rtos_time_delay_ms(20);
