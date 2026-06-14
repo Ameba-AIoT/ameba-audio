@@ -1,10 +1,10 @@
 # --------------------------------------------------------------
 # Base Utilities
 # --------------------------------------------------------------
-ameba_add_subdirectory_if_exist(base)
 ameba_add_subdirectory_if_exist(foundation)
-include(base.cmake)
+ameba_add_subdirectory_if_exist(base)
 include(foundation.cmake)
+include(base.cmake)
 
 # --------------------------------------------------------------
 # Audio Framework (CONFIG_AUDIO_FWK)
