@@ -67,6 +67,10 @@ ameba_list_append_if(CONFIG_CMD_PCRECORD private_sources
     pcrecord/pcrecord.c
 )
 
+ameba_list_append_if(CONFIG_CMD_VAD private_sources
+    vad/vad.c
+)
+
 ameba_list_append_if(CONFIG_CMD_EQUALIZER_TUNE private_includes
     ${c_CMPT_NETWORK_DIR}
 )
