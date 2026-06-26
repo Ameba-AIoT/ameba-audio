@@ -710,7 +710,7 @@ static void parse_aplay_params(cmd_params_t *params, aplay_params_t *p)
                   aplay_get_file_type_name(p->file_type), p->file_type, p->filename);
     }
 
-    CMD_PARSE_INT(kEqVersion,                               "--version",        1);
+    CMD_PARSE_INT(kEqVersion,                               "--version",        0);
     CMD_PARSE_INT(kPrimaryAudioConfig.out_period_frames,    "--period-size",    1024);
     CMD_PARSE_INT(kPrimaryAudioConfig.out_min_frames_stage, "--min-stage",      1);
 }
