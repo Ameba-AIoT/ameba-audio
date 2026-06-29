@@ -48,7 +48,7 @@ int osal_mutex_init(osal_mutex_t *mutex) {
 }
 
 OSAL_STATIC_INLINE
-void osal_mutex_destroy(osal_mutex_t *mutex) {
+int osal_mutex_destroy(osal_mutex_t *mutex) {
     return -pthread_mutex_destroy(&mutex->handle);
 }
 

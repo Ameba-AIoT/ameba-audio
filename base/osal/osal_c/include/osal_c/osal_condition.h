@@ -65,7 +65,7 @@ int osal_cond_wait_relative(osal_cond_t *cond, osal_mutex_t *mutex, int64_t usec
     // On 32-bit devices, tv_sec is 32-bit, but `reltime` is 64-bit.
     int64_t reltime_sec = usec / 1000000;
 
-    ts.tv_nsec += static_cast<long>((usec % 1000000) * 1000);
+    ts.tv_nsec += (long)((usec % 1000000) * 1000);
     if (reltime_sec < INT64_MAX && ts.tv_nsec >= 1000000000) {
         ts.tv_nsec -= 1000000000;
         ++reltime_sec;
@@ -78,7 +78,7 @@ int osal_cond_wait_relative(osal_cond_t *cond, osal_mutex_t *mutex, int64_t usec
         time_sec += reltime_sec;
     }
 
-    ts.tv_sec = (time_sec > LONG_MAX) ? LONG_MAX : static_cast<long>(time_sec);
+    ts.tv_sec = (time_sec > LONG_MAX) ? LONG_MAX : (long)time_sec;
 
     return -pthread_cond_timedwait(&cond->handle, &mutex->handle, &ts);
 }

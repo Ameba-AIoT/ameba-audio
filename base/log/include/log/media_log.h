@@ -18,7 +18,11 @@
 
 #include <stdint.h>
 
+#ifdef __linux__
+#include "log_posix.h"
+#else
 #include "log.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
