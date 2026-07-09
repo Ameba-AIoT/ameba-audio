@@ -57,6 +57,13 @@ menu "CONFIG AUDIO CMD"
                 select CMD_PCRECORD if WHC_HOST || WHC_NONE
         endif
 
+        if AMEBASMART
+            config CMD_VAD_MENU
+                bool "vad"
+                select AUDIO_FWK_MENU
+                select CMD_VAD if WHC_HOST || WHC_NONE
+        endif
+
     endif
 endmenu
 
@@ -76,4 +83,7 @@ config CMD_PLAYER
 bool
 
 config CMD_PCRECORD
+bool
+
+config CMD_VAD
 bool
