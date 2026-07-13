@@ -500,6 +500,39 @@ void ameba_audio_stream_tx_set_i2s_pin(uint32_t index)
 	#endif
 }
 
+void ameba_audio_stream_tx_reset_i2s_pin(void)
+{
+	#if AUDIO_I2S_OUT_MCLK_PIN != -1
+	Pinmux_Config(AUDIO_I2S_OUT_MCLK_PIN, PINMUX_FUNCTION_GPIO);
+	#endif
+
+	#if AUDIO_I2S_OUT_BCLK_PIN != -1
+	Pinmux_Config(AUDIO_I2S_OUT_BCLK_PIN, PINMUX_FUNCTION_GPIO);
+	#endif
+
+	#if AUDIO_I2S_OUT_LRCLK_PIN != -1
+	Pinmux_Config(AUDIO_I2S_OUT_LRCLK_PIN, PINMUX_FUNCTION_GPIO);
+	#endif
+
+	#if AUDIO_I2S_OUT_DATA0_PIN != -1
+	Pinmux_Config(AUDIO_I2S_OUT_DATA0_PIN, PINMUX_FUNCTION_GPIO);
+	#endif
+
+	#if AUDIO_I2S_OUT_MULTIIO_EN == 1
+		#if AUDIO_I2S_OUT_DATA1_PIN != -1
+		Pinmux_Config(AUDIO_I2S_OUT_DATA1_PIN, PINMUX_FUNCTION_GPIO);
+		#endif
+
+		#if AUDIO_I2S_OUT_DATA2_PIN != -1
+		Pinmux_Config(AUDIO_I2S_OUT_DATA2_PIN, PINMUX_FUNCTION_GPIO);
+		#endif
+
+		#if AUDIO_I2S_OUT_DATA3_PIN != -1
+		Pinmux_Config(AUDIO_I2S_OUT_DATA3_PIN, PINMUX_FUNCTION_GPIO);
+		#endif
+	#endif
+}
+
 void ameba_audio_stream_rx_reset_i2s_pin(void)
 {
 	if (AUDIO_I2S_IN_MCLK_PIN != -1) {

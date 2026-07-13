@@ -1014,9 +1014,9 @@ void ameba_audio_stream_rx_close(Stream *stream)
 			}
 		}
 
-		AUDIO_SP_Deinit(cstream->stream.sport_dev_num, SP_DIR_RX);
-
 		ameba_audio_stream_rx_reset_i2s_pin();
+
+		AUDIO_SP_Deinit(cstream->stream.sport_dev_num, SP_DIR_RX);
 
 		ameba_audio_reset_audio_ip_status((Stream *)cstream);
 

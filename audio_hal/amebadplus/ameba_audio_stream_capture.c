@@ -1046,8 +1046,6 @@ void ameba_audio_stream_rx_close(Stream *stream)
 			}
 		}
 
-		AUDIO_SP_Deinit(cstream->stream.sport_dev_num, SP_DIR_RX);
-
 		if (cstream->stream.sport_dev_num == AUDIO_I2S_IN_SPORT_INDEX) {
 			ameba_audio_stream_rx_reset_i2s_pin();
 		}
@@ -1055,6 +1053,8 @@ void ameba_audio_stream_rx_close(Stream *stream)
 		if (cstream->stream.sport_dev_num == AUDIO_I2S_IN_EXTRA_SPORT_INDEX) {
 			ameba_audio_stream_rx_reset_i2s_extra_pin();
 		}
+
+		AUDIO_SP_Deinit(cstream->stream.sport_dev_num, SP_DIR_RX);
 
 		ameba_audio_reset_audio_ip_status((Stream *)cstream);
 
