@@ -334,8 +334,6 @@ Stream *ameba_audio_stream_tx_init(uint32_t device, StreamConfig config)
 	HAL_AUDIO_INFO("ameba_audio_stream_tx_init device: %ld\n", device);
 
 	rstream->stream.sport_dev_num = 0;
-	ameba_audio_stream_tx_set_i2s_pin(rstream->stream.sport_dev_num);
-
 	rstream->stream.sport_dev_addr = ameba_audio_get_sport_addr(rstream->stream.sport_dev_num);
 
 	ameba_audio_periphclock_init(rstream->stream.sport_dev_num);
@@ -346,6 +344,7 @@ Stream *ameba_audio_stream_tx_init(uint32_t device, StreamConfig config)
 
 	/*configure sport according to the parameters*/
 	ameba_audio_stream_tx_sport_init(&rstream, config, device);
+	ameba_audio_stream_tx_set_i2s_pin(rstream->stream.sport_dev_num);
 	ameba_audio_set_audio_ip_use_status(rstream->stream.direction, SPORT0, true);
 
 	buf_size = config.period_size * config.frame_size * config.period_count;
@@ -985,6 +984,7 @@ void ameba_audio_stream_tx_close(Stream *stream)
 		}
 		rstream->stream.trigger_tstamp = rtos_time_get_current_system_time_ns();
 
+		ameba_audio_stream_tx_reset_i2s_pin();
 		AUDIO_SP_Deinit(rstream->stream.sport_dev_num, SP_DIR_TX);
 		//AUDIO_CODEC_DeInit(APP_LINE_OUT);
 

@@ -359,7 +359,6 @@ Stream *ameba_audio_stream_tx_init(uint32_t device, StreamConfig config)
 
 	if (device == AMEBA_AUDIO_DEVICE_I2S) {
 		rstream->stream.sport_dev_num = AUDIO_I2S_OUT_SPORT_INDEX;
-		ameba_audio_stream_tx_set_i2s_pin(rstream->stream.sport_dev_num);
 	} else {
 		rstream->stream.sport_dev_num = 0;
 	}
@@ -373,6 +372,11 @@ Stream *ameba_audio_stream_tx_init(uint32_t device, StreamConfig config)
 
 	/*configure sport according to the parameters*/
 	ameba_audio_stream_tx_sport_init(&rstream, config);
+
+	if (device == AMEBA_AUDIO_DEVICE_I2S) {
+		ameba_audio_stream_tx_set_i2s_pin(rstream->stream.sport_dev_num);
+	}
+
 	if (rstream->stream.sport_dev_num == 0) {
 		ameba_audio_set_audio_ip_use_status(rstream->stream.direction, SPORT0, true);
 	} else if (rstream->stream.sport_dev_num == 1) {
@@ -1063,6 +1067,7 @@ void ameba_audio_stream_tx_close(Stream *stream)
 		}
 		rstream->stream.trigger_tstamp = ameba_audio_get_now_ns();
 
+		ameba_audio_stream_tx_reset_i2s_pin();
 		AUDIO_SP_Deinit(rstream->stream.sport_dev_num, SP_DIR_TX);
 
 		ameba_audio_reset_audio_ip_status((Stream *)rstream);

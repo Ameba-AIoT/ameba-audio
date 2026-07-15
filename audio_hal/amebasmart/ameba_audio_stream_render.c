@@ -567,17 +567,6 @@ Stream *ameba_audio_stream_tx_init(uint32_t device, StreamConfig config)
 
 	if (device == AMEBA_AUDIO_DEVICE_I2S) {
 		rstream->stream.sport_dev_num = AUDIO_I2S_OUT_SPORT_INDEX;
-		if (AUDIO_I2S_OUT_NEED_MCLK_OUT) {
-			Pinmux_Config(AUDIO_I2S_OUT_MCLK_PIN, ameba_audio_get_i2s_pin_func(AUDIO_I2S_OUT_SPORT_INDEX));
-		}
-		Pinmux_Config(AUDIO_I2S_OUT_BCLK_PIN, ameba_audio_get_i2s_pin_func(AUDIO_I2S_OUT_SPORT_INDEX));
-		Pinmux_Config(AUDIO_I2S_OUT_LRCLK_PIN, ameba_audio_get_i2s_pin_func(AUDIO_I2S_OUT_SPORT_INDEX));
-		Pinmux_Config(AUDIO_I2S_OUT_DATA0_PIN, ameba_audio_get_i2s_pin_func(AUDIO_I2S_OUT_SPORT_INDEX));
-		if (AUDIO_I2S_OUT_MULTIIO_EN == 1) {
-			Pinmux_Config(AUDIO_I2S_OUT_DATA1_PIN, ameba_audio_get_i2s_pin_func(AUDIO_I2S_OUT_SPORT_INDEX));
-			Pinmux_Config(AUDIO_I2S_OUT_DATA2_PIN, ameba_audio_get_i2s_pin_func(AUDIO_I2S_OUT_SPORT_INDEX));
-			Pinmux_Config(AUDIO_I2S_OUT_DATA3_PIN, ameba_audio_get_i2s_pin_func(AUDIO_I2S_OUT_SPORT_INDEX));
-		}
 	} else {
 		rstream->stream.sport_dev_num = 0;
 	}
@@ -591,6 +580,21 @@ Stream *ameba_audio_stream_tx_init(uint32_t device, StreamConfig config)
 
 	/*configure sport according to the parameters*/
 	ameba_audio_stream_tx_sport_init(&rstream, config, device);
+
+	if (device == AMEBA_AUDIO_DEVICE_I2S) {
+		if (AUDIO_I2S_OUT_NEED_MCLK_OUT) {
+			Pinmux_Config(AUDIO_I2S_OUT_MCLK_PIN, ameba_audio_get_i2s_pin_func(rstream->stream.sport_dev_num));
+		}
+		Pinmux_Config(AUDIO_I2S_OUT_BCLK_PIN, ameba_audio_get_i2s_pin_func(rstream->stream.sport_dev_num));
+		Pinmux_Config(AUDIO_I2S_OUT_LRCLK_PIN, ameba_audio_get_i2s_pin_func(rstream->stream.sport_dev_num));
+		Pinmux_Config(AUDIO_I2S_OUT_DATA0_PIN, ameba_audio_get_i2s_pin_func(rstream->stream.sport_dev_num));
+		if (AUDIO_I2S_OUT_MULTIIO_EN == 1) {
+			Pinmux_Config(AUDIO_I2S_OUT_DATA1_PIN, ameba_audio_get_i2s_pin_func(rstream->stream.sport_dev_num));
+			Pinmux_Config(AUDIO_I2S_OUT_DATA2_PIN, ameba_audio_get_i2s_pin_func(rstream->stream.sport_dev_num));
+			Pinmux_Config(AUDIO_I2S_OUT_DATA3_PIN, ameba_audio_get_i2s_pin_func(rstream->stream.sport_dev_num));
+		}
+	}
+
 	if (rstream->stream.sport_dev_num == 0) {
 		ameba_audio_set_audio_ip_use_status(rstream->stream.direction, SPORT0, true);
 	} else if (rstream->stream.sport_dev_num == 1) {
@@ -1291,6 +1295,20 @@ void ameba_audio_stream_tx_close(Stream *stream)
 			}
 		}
 		rstream->stream.trigger_tstamp = ameba_audio_get_now_ns();
+
+		if (rstream->stream.device == AMEBA_AUDIO_DEVICE_I2S) {
+			if (AUDIO_I2S_OUT_NEED_MCLK_OUT) {
+				Pinmux_Config(AUDIO_I2S_OUT_MCLK_PIN, PINMUX_FUNCTION_GPIO);
+			}
+			Pinmux_Config(AUDIO_I2S_OUT_BCLK_PIN, PINMUX_FUNCTION_GPIO);
+			Pinmux_Config(AUDIO_I2S_OUT_LRCLK_PIN, PINMUX_FUNCTION_GPIO);
+			Pinmux_Config(AUDIO_I2S_OUT_DATA0_PIN, PINMUX_FUNCTION_GPIO);
+			if (AUDIO_I2S_OUT_MULTIIO_EN == 1) {
+				Pinmux_Config(AUDIO_I2S_OUT_DATA1_PIN, PINMUX_FUNCTION_GPIO);
+				Pinmux_Config(AUDIO_I2S_OUT_DATA2_PIN, PINMUX_FUNCTION_GPIO);
+				Pinmux_Config(AUDIO_I2S_OUT_DATA3_PIN, PINMUX_FUNCTION_GPIO);
+			}
+		}
 
 		AUDIO_SP_Deinit(rstream->stream.sport_dev_num, SP_DIR_TX);
 

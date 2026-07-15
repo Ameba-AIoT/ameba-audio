@@ -1177,8 +1177,6 @@ void ameba_audio_stream_rx_close(Stream *stream)
 			}
 		}
 
-		AUDIO_SP_Deinit(cstream->stream.sport_dev_num, SP_DIR_RX);
-
 		if (cstream->stream.device == AMEBA_AUDIO_IN_I2S) {
 			if (AUDIO_I2S_IN_NEED_MCLK_OUT) {
 				Pinmux_Config(AUDIO_I2S_IN_MCLK_PIN, PINMUX_FUNCTION_GPIO);
@@ -1192,6 +1190,8 @@ void ameba_audio_stream_rx_close(Stream *stream)
 				Pinmux_Config(AUDIO_I2S_IN_DATA3_PIN, PINMUX_FUNCTION_GPIO);
 			}
 		}
+
+		AUDIO_SP_Deinit(cstream->stream.sport_dev_num, SP_DIR_RX);
 
 		ameba_audio_reset_audio_ip_status((Stream *)cstream);
 
