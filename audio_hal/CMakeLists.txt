@@ -98,7 +98,7 @@ ameba_list_append_if(CONFIG_AUDIO_DEVICE_A2DP private_includes
 ameba_list_append_if(CONFIG_AUDIO_DEVICE_USB private_includes
     ${c_COMPONENT_DIR}/usb/common
     ${c_COMPONENT_DIR}/usb/host/core
-    ${c_COMPONENT_DIR}/usb/host/composite
+    ${c_COMPONENT_DIR}/usb/host/uac
 )
 
 ameba_list_append(private_definitions
