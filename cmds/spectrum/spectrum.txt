@@ -1,0 +1,78 @@
+aplay -r 48000 -c 2 -f 16 -d 600
+[Aplay-A] file_type: unknown (-1), filename: 
+[Aplay-A] create aplay example 
+[Aplay-A] Aplay demo begin, free heap:3050736
+[AudioPolicy-I] card loaded:1, name:primary
+[AudioPolicy-I] matched default output device:1
+[AudioPolicy-I] open output, card: 1, device:1
+[GeneralAudio-I] create output card:1, device:0x1
+[GeneralAudio-I] create output port:0
+[AudioHal-I] [CreateAudioHwStreamOut]: startAudioHwStreamOut samplerate:48000, format:2, channel:2, framesize:4, period_size:1024
+[AmpDummy-I] ++Create
+[AThread-I] Min:48, max:1024, multiplier:[AThread-I] HAL buffer 1024 frames, refined 1024 frames
+[Mixer-I] RawMixer init time_freq_
+[GeneralAudio-I] Output created, io:1
+[AThread-I] standby 1
+[AudioPolicy-E] fail to open card: ��@`
+[AThread-I] sleep 1
+[AudioPolicy-E] fail to open card: ��@`
+[AudioDev-W] RemoveDetachedDevice
+[AudioDev-W] remove device:1
+[Aplay-A] play sample channels:2, rate:48000,param->bits=16,period_size=480 
+[AudioPolicy-I] Get out id device 0x1, rate 48000, format 2, channels 2, flags 0
+[AudioPolicy-I] only one output available
+[AudioPolicy-I] picked output:1
+[GenTrack-I] track format:48000-2-2 buffer size:65536, this:60422300, frame_count:16384, frame_count_:16384
+[GeneralAudio-I] create track to output:1 in thread:6041BEC8 done
+[AudioHal-I] [ameba_audio_ctl_set_tx_volume]: set dacl volume to 0x8d
+[AudioHal-I] [ameba_audio_ctl_set_tx_volume]: set dacr volume to 0x8d
+[GenTrack-I] 60422300 Start time(29645381) track(0)
+[AThread-I] wake 1
+[AudioHal-I] [ameba_audio_stream_tx_write_in_irq_mode]: gdma start: index:0, chNum:0, tx_addr:0x60417c80, dma_len:4096
+[AudioHal-I] [ameba_audio_stream_tx_start]: tx start at:29496536086ns
+spectrum -b 10 -d 15 -i 500
+[Spectrum-A] create spectrum example 
+[EfEntry-I] SetConfig()
+[EfEntry-I] set in buf
+[EfEntry-I] set out buf
+[EfEntry-I] SetConfig
+spectrum_mem size: 20540
+[NewEffect-I] spectrum created, fft_size:1024 rate:48000 frames:1024
+[EfEntry-I] Effect start
+[NewEffect-I] new effect enabled: 1
+[Spectrum-A] [SPEC] META rate=48000 fft_size=1024 nbins=513 bands=10
+[Spectrum-A] [SPEC] FREQ 31,63,125,250,500,1000,2000,4000,8000,16000
+[Spectrum-A] spectrum start: 10 bands, 30 frames, every 500 ms (play sound with aplay now)
+[Spectrum-A] [SPEC] FRAME 0 BAND_DB -54.44,-51.81,-48.95,-42.62,-35.40,-3.72,-35.21,-43.18,-49.29,-54.18
+[Spectrum-A] [SPEC] FRAME 1 BAND_DB -54.44,-51.81,-48.95,-42.62,-35.40,-3.72,-35.21,-43.18,-49.29,-54.18
+[Spectrum-A] [SPEC] FRAME 2 BAND_DB -54.44,-51.81,-48.95,-42.62,-35.40,-3.72,-35.21,-43.18,-49.29,-54.18
+[Spectrum-A] [SPEC] FRAME 3 BAND_DB -54.44,-51.81,-48.95,-42.62,-35.40,-3.72,-35.21,-43.18,-49.29,-54.18
+[Spectrum-A] [SPEC] FRAME 4 BAND_DB -33.34,-33.29,-33.20,-32.62,-30.48,-3.68,-38.37,-47.72,-54.26,-59.25
+[Spectrum-A] [SPEC] FRAME 5 BAND_DB -33.34,-33.29,-33.20,-32.62,-30.48,-3.68,-38.37,-47.72,-54.26,-59.25
+[Spectrum-A] [SPEC] FRAME 6 BAND_DB -33.34,-33.29,-33.20,-32.62,-30.48,-3.68,-38.37,-47.72,-54.26,-59.25
+[Spectrum-A] [SPEC] FRAME 7 BAND_DB -33.34,-33.29,-33.20,-32.62,-30.48,-3.68,-38.37,-47.72,-54.26,-59.25
+[Spectrum-A] [SPEC] FRAME 8 BAND_DB -33.34,-33.29,-33.20,-32.62,-30.48,-3.68,-38.37,-47.72,-54.26,-59.25
+[Spectrum-A] [SPEC] FRAME 9 BAND_DB -33.34,-33.29,-33.20,-32.62,-30.48,-3.68,-38.37,-47.72,-54.26,-59.25
+[Spectrum-A] [SPEC] FRAME 10 BAND_DB -33.34,-33.29,-33.20,-32.62,-30.48,-3.68,-38.37,-47.72,-54.26,-59.25
+[Spectrum-A] [SPEC] FRAME 11 BAND_DB -32.68,-32.64,-32.55,-32.02,-30.02,-3.67,-39.21,-49.29,-56.14,-61.22
+[Spectrum-A] [SPEC] FRAME 12 BAND_DB -32.68,-32.64,-32.55,-32.02,-30.02,-3.67,-39.21,-49.29,-56.14,-61.22
+[Spectrum-A] [SPEC] FRAME 13 BAND_DB -32.68,-32.64,-32.55,-32.02,-30.02,-3.67,-39.21,-49.29,-56.14,-61.22
+[Spectrum-A] [SPEC] FRAME 14 BAND_DB -32.68,-32.64,-32.55,-32.02,-30.02,-3.67,-39.21,-49.29,-56.14,-61.22
+[Spectrum-A] [SPEC] FRAME 15 BAND_DB -32.68,-32.64,-32.55,-32.02,-30.02,-3.67,-39.21,-49.29,-56.14,-61.22
+[Spectrum-A] [SPEC] FRAME 16 BAND_DB -32.68,-32.64,-32.55,-32.02,-30.02,-3.67,-39.21,-49.29,-56.14,-61.22
+[Spectrum-A] [SPEC] FRAME 17 BAND_DB -32.68,-32.64,-32.55,-32.02,-30.02,-3.67,-39.21,-49.29,-56.14,-61.22
+[Spectrum-A] [SPEC] FRAME 18 BAND_DB -54.44,-51.81,-48.95,-42.62,-35.40,-3.72,-35.21,-43.18,-49.29,-54.18
+[Spectrum-A] [SPEC] FRAME 19 BAND_DB -54.44,-51.81,-48.95,-42.62,-35.40,-3.72,-35.21,-43.18,-49.29,-54.18
+[Spectrum-A] [SPEC] FRAME 20 BAND_DB -54.44,-51.81,-48.95,-42.62,-35.40,-3.72,-35.21,-43.18,-49.29,-54.18
+[Spectrum-A] [SPEC] FRAME 21 BAND_DB -54.44,-51.81,-48.95,-42.62,-35.40,-3.72,-35.21,-43.18,-49.29,-54.18
+[Spectrum-A] [SPEC] FRAME 22 BAND_DB -54.44,-51.81,-48.95,-42.62,-35.40,-3.72,-35.21,-43.18,-49.29,-54.18
+[Spectrum-A] [SPEC] FRAME 23 BAND_DB -54.44,-51.81,-48.95,-42.62,-35.40,-3.72,-35.21,-43.18,-49.29,-54.18
+[Spectrum-A] [SPEC] FRAME 24 BAND_DB -54.44,-51.81,-48.95,-42.62,-35.40,-3.72,-35.21,-43.18,-49.29,-54.18
+[Spectrum-A] [SPEC] FRAME 25 BAND_DB -33.34,-33.29,-33.20,-32.62,-30.48,-3.68,-38.37,-47.72,-54.26,-59.25
+[Spectrum-A] [SPEC] FRAME 26 BAND_DB -33.34,-33.29,-33.20,-32.62,-30.48,-3.68,-38.37,-47.72,-54.26,-59.25
+[Spectrum-A] [SPEC] FRAME 27 BAND_DB -33.34,-33.29,-33.20,-32.62,-30.48,-3.68,-38.37,-47.72,-54.26,-59.25
+[Spectrum-A] [SPEC] FRAME 28 BAND_DB -33.34,-33.29,-33.20,-32.62,-30.48,-3.68,-38.37,-47.72,-54.26,-59.25
+[Spectrum-A] [SPEC] FRAME 29 BAND_DB -33.34,-33.29,-33.20,-32.62,-30.48,-3.68,-38.37,-47.72,-54.26,-59.25
+[Spectrum-A] [SPEC] END
+[EfEntry-I] Effect stop
+[NewEffect-I] new effect enabled: 0

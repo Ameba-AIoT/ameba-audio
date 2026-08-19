@@ -71,6 +71,14 @@ ameba_list_append_if(CONFIG_CMD_VAD private_sources
     vad/vad.c
 )
 
+# The spectrum CLI drives the FFT analyzer, which is not built on the RISC-V KR4
+# core (no ARM CMSIS-DSP). Skip the command there so it isn't compiled on KR4.
+if(NOT c_MCU_TYPE STREQUAL "kr4")
+ameba_list_append_if(CONFIG_CMD_SPECTRUM private_sources
+    spectrum/spectrum.c
+)
+endif()
+
 ameba_list_append_if(CONFIG_CMD_EQUALIZER_TUNE private_includes
     ${c_CMPT_NETWORK_DIR}
 )
