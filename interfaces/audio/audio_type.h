@@ -174,6 +174,8 @@ enum {
     AUDIO_EFFECT_INVALID           = 0xFFFFFFFFu,
     /** audio equalizer of audio effect */
     AUDIO_EFFECT_EQUALIZER         = 0x1u,
+    /** audio spectrum analyzer of audio effect */
+    AUDIO_EFFECT_SPECTRUM          = 0x2u,
 };
 
 /**
@@ -222,6 +224,21 @@ enum {
     AUDIO_EFFECT_PARAM_QFACTOR         = 0x6u,
     /** audio effect filter type */
     AUDIO_EFFECT_PARAM_FILTER_TYPE     = 0x7u,
+};
+
+/**
+ * @brief Defines all the audio spectrum analyzer param types.
+ *
+ * @since 1.0
+ * @version 1.0
+ */
+enum {
+    /** spectrum FFT size (capture size), in samples */
+    AUDIO_EFFECT_PARAM_SPECTRUM_CAPTURE_SIZE   = 0x0u,
+    /** spectrum sampling rate of the analyzed stream, in Hz */
+    AUDIO_EFFECT_PARAM_SPECTRUM_SAMPLING_RATE  = 0x1u,
+    /** spectrum complex FFT data, interleaved real/imaginary floats */
+    AUDIO_EFFECT_PARAM_SPECTRUM_FFT            = 0x2u,
 };
 
 /**
