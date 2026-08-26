@@ -1119,6 +1119,12 @@ HAL_AUDIO_WEAK void ameba_audio_stream_rx_stop(Stream *stream)
 		// please mask interrupt in the handling.
 		cstream->stream.sem_gdma_end_need_post = true;
 		GDMA_INTConfig(sp_rxgdma_initstruct->GDMA_Index, sp_rxgdma_initstruct->GDMA_ChNum, sp_rxgdma_initstruct->GDMA_IsrType, ENABLE);
+
+		// sometimes user start gdma, but never start sport, irq will never come.
+		if(!ameba_audio_sport_started(cstream->stream.sport_dev_num)) {
+			AUDIO_SP_RXStart(cstream->stream.sport_dev_num, ENABLE);
+		}
+
 		int32_t sem_ret = rtos_sema_take(cstream->stream.sem_gdma_end,
 						  cstream->stream.config.period_count * cstream->stream.config.period_size * 1000 / cstream->stream.config.rate);
 		if (sem_ret < 0) {
@@ -1135,6 +1141,12 @@ HAL_AUDIO_WEAK void ameba_audio_stream_rx_stop(Stream *stream)
 		if (cstream->stream.extra_channel) {
 			GDMA_INTConfig(extra_sp_rxgdma_initstruct->GDMA_Index, extra_sp_rxgdma_initstruct->GDMA_ChNum, extra_sp_rxgdma_initstruct->GDMA_IsrType, ENABLE);
 		}
+
+		// sometimes user start gdma, but never start sport, irq will never come.
+		if(!ameba_audio_sport_started(cstream->stream.sport_dev_num)) {
+			AUDIO_SP_RXStart(cstream->stream.sport_dev_num, ENABLE);
+		}
+
 		int32_t sem_ret = rtos_sema_take(cstream->stream.extra_sem_gdma_end,
 						  cstream->stream.config.period_count * cstream->stream.config.period_size * 1000 / cstream->stream.config.rate);
 		if (sem_ret < 0) {
