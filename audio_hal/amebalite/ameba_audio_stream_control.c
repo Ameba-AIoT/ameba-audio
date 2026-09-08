@@ -32,7 +32,14 @@
 #include "ameba_audio_stream_control.h"
 
 #define DEVICE_SPEAKER 1
-#define MAX_DAC_VOLUME 141
+
+/* DAC digital volume register: index 175 means 0dB, each step down is -0.375dB,
+ * so index 0 means -65.625dB. The default max index keeps the legacy 141(-12.75dB). */
+#define DAC_ZERO_DB_VOLUME_INDEX  175
+#define DAC_VOLUME_STEP_DB        0.375f
+#define DAC_MAX_VOLUME_DB         0.0f
+#define DAC_MIN_VOLUME_DB         (-65.625f)
+#define DEFAULT_MAX_DAC_VOLUME    141
 
 #define IS_AUDIO_DMIC(NUM) (((NUM) == AMEBA_AUDIO_DMIC1) || ((NUM) == AMEBA_AUDIO_DMIC2) \
 						|| ((NUM) == AMEBA_AUDIO_DMIC3) || ((NUM) == AMEBA_AUDIO_DMIC4))
@@ -75,6 +82,7 @@ StreamControl *ameba_audio_get_ctl(void)
 		g_control_instance->playback_device = DEVICE_SPEAKER;
 		g_control_instance->capture_usage = AMEBA_AUDIO_CAPTURE_USAGE_AMIC;
 		g_control_instance->adc_use_status = 0;
+		g_control_instance->max_volume_index = DEFAULT_MAX_DAC_VOLUME;
 		g_control_instance->volume_for_dac = 0x50;
 		g_control_instance->volume_for_adc[0] = 0x2f;
 		g_control_instance->volume_for_adc[1] = 0x2f;
@@ -134,8 +142,8 @@ int32_t ameba_audio_ctl_set_tx_volume(StreamControl *control, float left, float 
 		return HAL_OSAL_ERR_INVALID_OPERATION;
 	}
 
-	uint32_t l = left * MAX_DAC_VOLUME;
-	uint32_t r = right * MAX_DAC_VOLUME;
+	uint32_t l = left * control->max_volume_index;
+	uint32_t r = right * control->max_volume_index;
 	if (l != r) {
 		HAL_AUDIO_VERBOSE("left & right volume is not same");
 	}
@@ -158,8 +166,45 @@ int32_t ameba_audio_ctl_get_tx_volume(StreamControl *control, float *left, float
 		return HAL_OSAL_ERR_INVALID_OPERATION;
 	}
 
-	*left = (float)control->volume_for_dac / (float)MAX_DAC_VOLUME;
-	*right = (float)control->volume_for_dac / (float)MAX_DAC_VOLUME;
+	if (control->max_volume_index == 0) {
+		*left = 0;
+		*right = 0;
+	} else {
+		*left = (float)control->volume_for_dac / (float)control->max_volume_index;
+		*right = (float)control->volume_for_dac / (float)control->max_volume_index;
+	}
+
+	return HAL_OSAL_OK;
+}
+
+int32_t ameba_audio_ctl_set_max_volume(StreamControl *control, float volume_db)
+{
+	if (control == NULL) {
+		HAL_AUDIO_ERROR("ops, %s fail, control null", __func__);
+		return HAL_OSAL_ERR_INVALID_OPERATION;
+	}
+
+	if (volume_db < DAC_MIN_VOLUME_DB || volume_db > DAC_MAX_VOLUME_DB) {
+		HAL_AUDIO_ERROR("ops, %s fail, volume_db out of range [-65.625, 0]", __func__);
+		return HAL_OSAL_ERR_INVALID_OPERATION;
+	}
+
+	/* index = 175 + volume_db / 0.375, rounded to nearest, clamped to [0, 175]. */
+	int32_t index = (int32_t)(volume_db / DAC_VOLUME_STEP_DB + DAC_ZERO_DB_VOLUME_INDEX + 0.5f);
+	if (index < 0) {
+		index = 0;
+	}
+	if (index > DAC_ZERO_DB_VOLUME_INDEX) {
+		index = DAC_ZERO_DB_VOLUME_INDEX;
+	}
+
+	HAL_AUDIO_INFO("set max dac volume to index 0x%lx", index);
+	control->max_volume_index = index;
+	control->volume_for_dac = index;
+
+	if (ameba_audio_is_audio_ip_in_use(CODEC)) {
+		AUDIO_CODEC_SetDACVolume(DAC_L, index);
+	}
 
 	return HAL_OSAL_OK;
 }
