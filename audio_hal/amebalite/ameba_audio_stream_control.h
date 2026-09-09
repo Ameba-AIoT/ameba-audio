@@ -31,6 +31,7 @@ typedef struct _StreamControl {
 	uint32_t             capture_usage;
 	uint32_t             adc_use_status;
 	bool                 amic_ref_for_dmic;
+	int32_t              max_volume_index;
 	uint32_t             volume_for_dac;
 	uint32_t             volume_for_adc[MAX_AD_NUM];
 	uint32_t             mic_category_for_adc[MAX_AD_NUM];
@@ -44,6 +45,7 @@ StreamControl *ameba_audio_get_ctl(void);
 void ameba_audio_destroy_ctl(void);
 int32_t ameba_audio_ctl_set_tx_volume(StreamControl *control, float left, float right);
 int32_t ameba_audio_ctl_get_tx_volume(StreamControl *control, float *left, float *right);
+int32_t ameba_audio_ctl_set_max_volume(StreamControl *control, float volume_db);
 int32_t ameba_audio_ctl_set_amp_pin(StreamControl *control, uint32_t pin);
 int32_t ameba_audio_ctl_get_amp_pin(StreamControl *control);
 int32_t ameba_audio_ctl_set_amp_state(StreamControl *control, bool state);
