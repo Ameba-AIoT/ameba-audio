@@ -173,6 +173,24 @@ int32_t AudioControl_SetHardwareVolume(float left_volume, float right_volume);
 int32_t AudioControl_GetHardwareVolume(float *left_volume, float *right_volume);
 
 /**
+ * @brief Set max Hardware Volume of audio dac.
+ *
+ * This sets the dac register value that maps to full scale (left/right volume 1.0)
+ * in AudioControl_SetHardwareVolume. The dac register 175 means 0dB, and each step
+ * down is -0.375dB, so volume_db ranges -65.625dB ~ 0dB in 0.375dB step.
+ *
+ * @param volume_db max dac volume in dB, ranges -65.625dB ~ 0dB.
+ * @return Returns a value listed below: \n
+ * int32_t | Description
+ * ----------------------| -----------------------
+ * AUDIO_OK | the operation is successful.
+ * AUDIO_ERR_INVALID_OPERATION | param not supported.
+ * @since 1.0
+ * @version 1.0
+ */
+int32_t AudioControl_SetMaxHardwareVolume(float volume_db);
+
+/**
  * @brief Set Amplifier En Pin.
  *
  * @param amp_pin the pin of the amplifier en, you can get your pin value from:
