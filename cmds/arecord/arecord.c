@@ -14,6 +14,7 @@
  */
 
 #include "ameba_soc.h"
+#include "ameba_audio_mixer_usrcfg.h"
 #include "audio/audio_control.h"
 #include "audio/audio_record.h"
 #include "audio/audio_service.h"
@@ -469,6 +470,9 @@ static void arecord_help(void)
         "  -ts     <0|1>       1:test timestamp/ppm                      (default 0)\n"
         "  -d      <dev>       0:amic  1:dmic+amic ref  2:i2s            (default 0:amic)\n"
         "  -cNs    <src>       mic source for channel N (N=0..3)         (default amic1..3)\n"
+        "  --version     <n>   sw eq version                              (default 0)\n"
+        "  --period-size <n>   audio out period frames                    (default 1024)\n"
+        "  --min-stage   <n>   audio out minimum stage                    (default 1)\n"
         "\nExamples:\n"
         "  arecord -r 16000 -b 8192\n"
         "  arecord -c 1 -b 256 -noirq 1 -r 16000    (noirq: -b should be 8ms of bytes)\n");
@@ -505,6 +509,10 @@ static void parse_arecord_params(cmd_params_t *params, arecord_params_t *p)
     CMD_PARSE_INT(p->channel_src[1], "-c1s", AUDIO_AMIC2);
     CMD_PARSE_INT(p->channel_src[2], "-c2s", AUDIO_AMIC3);
     CMD_PARSE_INT(p->channel_src[3], "-c3s", 0);
+
+    CMD_PARSE_INT(kEqVersion,                               "--version",        0);
+    CMD_PARSE_INT(kPrimaryAudioConfig.out_period_frames,    "--period-size",    1024);
+    CMD_PARSE_INT(kPrimaryAudioConfig.out_min_frames_stage, "--min-stage",      1);
 }
 
 static uint32_t arecord_handler(cmd_params_t *params)

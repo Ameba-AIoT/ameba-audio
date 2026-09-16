@@ -35,6 +35,12 @@ static int32_t AmebaGetHardwareVolume(struct AudioHwControl *control, float *lef
 	return ameba_audio_ctl_get_tx_volume(ameba_audio_get_ctl(), left_volume, right_volume);
 }
 
+static int32_t AmebaSetMaxHardwareVolume(struct AudioHwControl *control, float volume_db)
+{
+	(void) control;
+	return ameba_audio_ctl_set_max_volume(ameba_audio_get_ctl(), volume_db);
+}
+
 static int32_t AmebaSetAmplifierEnPin(struct AudioHwControl *control, uint32_t amp_pin)
 {
 	(void) control;
@@ -220,6 +226,7 @@ struct AudioHwControl *GetAudioHwControl(void)
 
 		s_hw_ctl_instance->SetHardwareVolume = AmebaSetHardwareVolume;
 		s_hw_ctl_instance->GetHardwareVolume = AmebaGetHardwareVolume;
+		s_hw_ctl_instance->SetMaxHardwareVolume = AmebaSetMaxHardwareVolume;
 		s_hw_ctl_instance->SetAmplifierEnPin = AmebaSetAmplifierEnPin;
 		s_hw_ctl_instance->GetAmplifierEnPin = AmebaGetAmplifierEnPin;
 		s_hw_ctl_instance->SetAmplifierMute = AmebaSetAmplifierMute;
