@@ -176,6 +176,8 @@ enum {
     AUDIO_EFFECT_EQUALIZER         = 0x1u,
     /** audio spectrum analyzer of audio effect */
     AUDIO_EFFECT_SPECTRUM          = 0x2u,
+    /** audio dynamic range compression of audio effect */
+    AUDIO_EFFECT_DRC               = 0x3u,
 };
 
 /**
@@ -239,6 +241,21 @@ enum {
     AUDIO_EFFECT_PARAM_SPECTRUM_SAMPLING_RATE  = 0x1u,
     /** spectrum complex FFT data, interleaved real/imaginary floats */
     AUDIO_EFFECT_PARAM_SPECTRUM_FFT            = 0x2u,
+};
+
+/**
+ * @brief Defines all the audio DRC param types.
+ *
+ * @since 1.0
+ * @version 1.0
+ */
+enum {
+    /** DRC processing mode: single-band or multi-band */
+    AUDIO_EFFECT_PARAM_DRC_MODE                = 0x0u,
+    /** DRC single-band config blob (struct AudioDrcConfig) */
+    AUDIO_EFFECT_PARAM_DRC_CONFIG              = 0x1u,
+    /** DRC three-band config blob (struct AudioMultiBandsDrcConfig) */
+    AUDIO_EFFECT_PARAM_DRC_MBDRC_CONFIG        = 0x2u,
 };
 
 /**
