@@ -24,6 +24,17 @@ menu "CONFIG AUDIO CMD"
             select AUDIO_FWK_MENU
             select CMD_SPECTRUM if WHC_HOST || WHC_NONE
 
+        config CMD_DRC_MENU
+            bool "drc"
+            select AUDIO_FWK_MENU
+            # The drc command only drives the AudioDrc_* framework interface;
+            # it needs an active AudioTrack to attach to, so it pairs with
+            # arecord's mic->speaker loopback. Auto-select arecord so users
+            # get both binaries in the image with one menu toggle.
+            select CMD_ARECORD_MENU if WHC_HOST || WHC_NONE
+            select CMD_ARECORD if WHC_HOST || WHC_NONE
+            select CMD_DRC if WHC_HOST || WHC_NONE
+
         if AMEBASMART || AMEBALITE
             config CMD_EQUALIZER_TUNE_MENU
                 bool "tune equalizer"
@@ -82,6 +93,9 @@ config CMD_EQUALIZER
 bool
 
 config CMD_SPECTRUM
+bool
+
+config CMD_DRC
 bool
 
 config CMD_EQUALIZER_TUNE

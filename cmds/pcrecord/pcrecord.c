@@ -51,14 +51,18 @@ static int end_cnt = 0;
 
 unsigned char pc_buf[PC_BUFLEN];
 char record_buf[RECORD_PAGE_NUM * RECORD_PAGE_SIZE]__attribute__((aligned(64)));
+#if PR_UART_USE_DMA_TX == 0
 char tx_buf[RECORD_PAGE_SIZE];
+#endif
 int pc_datasize = 0;
 rtos_sema_t pr_rx_sema;
 rtos_sema_t pr_dma_tx_sema;
 rtos_mutex_t pr_tx_mutex;
 struct AudioRecord *audio_record = NULL;
 rtos_task_t record_task;
+#if PR_UART_USE_DMA_TX == 0
 rtos_task_t tx_task;
+#endif
 rtos_task_t playback_task;
 
 volatile bool recorder_is_running = false;
@@ -630,7 +634,7 @@ void pc_msg_process(msg_attrib_t *pattrib)
             } else {
                 pr_adapter.record_stop = 0; // add for play before start record
                 if (rtos_task_create(&playback_task, ((const char *)"playback_task"), pc_playback_task,
-                                     pattrib, 6144, 2) != RTK_SUCCESS) {
+                                     pattrib, 2048 * 4, 2) != RTK_SUCCESS) {
                     RTK_LOGI(TAG, "%s rtos_task_create(playback_task) failed", __FUNCTION__);
                 }
             }
@@ -733,6 +737,7 @@ void pc_rx_task(void *param)
     rtos_task_delete(NULL);
 }
 
+#if PR_UART_USE_DMA_TX == 0
 void pc_tx_task(void *param)
 {
     (void)param;
@@ -755,6 +760,7 @@ void pc_tx_task(void *param)
     RTK_LOGI(TAG, "[PCRECORD INFO] %s, exit", __func__);
     rtos_task_delete(tx_task);
 }
+#endif
 
 static void pc_recorder_task(void *param)
 {
@@ -1123,7 +1129,7 @@ void pcrecord_thread(void *data)
         RTK_LOGE(TAG, "[%s] Create pc_rx_task failed", __FUNCTION__);
     }
 
-    return;
+    rtos_task_delete(NULL);
 }
 
 uint32_t pcrecord_cmd_handle(int argc, char *argv[])

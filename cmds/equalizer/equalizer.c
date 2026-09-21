@@ -46,11 +46,11 @@ static const eq_params_t EQ_DEFAULT_PARAMS = {
     .channel        = 1,
     .rate           = 48000,
     .format         = 16,
-    .bytes_one_time = 960,
+    .bytes_one_time = 4096,
     .device         = DEVICE_IN_MIC,
     .duration       = 86400,
     .pressure_test  = 0,
-    .eq            = 0,
+    .eq            = 1,
 };
 
 static eq_params_t s_params[MAX_EQUALIZER_INSTANCES];
@@ -236,9 +236,11 @@ static uint32_t Record_Sample(eq_params_t *param)
         if (bytes_read >= 100 * param->rate * param->channel * param->format / 8 / 1000) {
             AudioTrack_Write(audio_track, out_buffer, size, true);
         } else {
+#ifndef CONFIG_AUDIO_MIXER
             memset(out_buffer, 0, size);
             AudioTrack_Write(audio_track, out_buffer, size, true);
             AudioTrack_Write(audio_track, out_buffer, size, true);
+#endif
         }
 
         bytes_read += size;
