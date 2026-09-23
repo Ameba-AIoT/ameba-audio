@@ -64,6 +64,11 @@ endif()
 ameba_add_subdirectory_if_exist(third_party)
 
 # --------------------------------------------------------------
+# IMQ / RPC
+# --------------------------------------------------------------
+ameba_add_subdirectory_if_exist(rpc)
+
+# --------------------------------------------------------------
 # Audio Example
 # --------------------------------------------------------------
 ameba_submodule_register(audio p_EXAMPLE_DIRS

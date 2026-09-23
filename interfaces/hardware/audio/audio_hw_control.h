@@ -138,6 +138,18 @@ struct AudioHwControl {
 	int32_t (*GetHardwareVolume)(struct AudioHwControl *control, float *left_volume, float *right_volume);
 
 	/**
+	 * @brief set max audio dac hardware volume.
+	 *
+	 * @param control is the pointer to the audio control to operate.
+	 * @param volume_db is the max dac volume in dB, ranges -65.625dB ~ 0dB in 0.375dB step.
+	 * @return Returns 0 if the operation is successful;
+	 * returns < 0 if error happens.
+	 * @since 1.0
+	 * @version 1.0
+	 */
+	int32_t (*SetMaxHardwareVolume)(struct AudioHwControl *control, float volume_db);
+
+	/**
 	 * @brief set audio amplifier pin.
 	 *
 	 * @param control is the pointer to the audio control to operate.
