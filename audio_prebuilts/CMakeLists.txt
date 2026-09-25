@@ -17,7 +17,7 @@ ameba_list_append_if(CONFIG_AUDIO_FWK public_libraries
 # lib_audio_spectrum.a's FFT depends on ARM CMSIS-DSP (arm_rfft_fast_f32 /
 # arm_rfft_fast_init_f32), which do not exist on the RISC-V KR4 core -> linking
 # it there fails with undefined references. Skip it on KR4; the spectrum
-# algorithm is disabled on that core (CONFIG_AUDIO_SPECTRUM_EFFECT is left
+# algorithm is disabled on that core (CONFIG_NEW_SPECTRUM_EFFECT is left
 # undefined, see audio_effect/sw_algorithm/wrapper). EQ/DRC are unaffected.
 if(NOT c_MCU_TYPE STREQUAL "kr4")
     ameba_list_append_if(CONFIG_AUDIO_FWK public_libraries
