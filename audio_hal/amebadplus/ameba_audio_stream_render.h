@@ -41,6 +41,7 @@ void ameba_audio_stream_tx_standby(Stream *stream);
 void ameba_audio_stream_tx_close(Stream *stream);
 int32_t  ameba_audio_stream_tx_set_amp_state(bool state);
 int32_t  ameba_audio_stream_tx_get_htimestamp(Stream *stream, uint32_t *avail, struct timespec *tstamp);
+int32_t  ameba_audio_stream_tx_get_position(Stream *stream, uint64_t *rendered_frames, struct timespec *tstamp);
 int32_t  ameba_audio_stream_tx_get_time(Stream *stream, int64_t *now_ns, int64_t *audio_ns);
 int64_t ameba_audio_stream_tx_sport_rendered_frames(Stream *stream);
 int64_t ameba_audio_stream_tx_get_frames_written(Stream *stream);
