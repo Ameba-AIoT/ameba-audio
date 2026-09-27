@@ -58,6 +58,10 @@ ameba_list_append_if(CONFIG_CMD_EQUALIZER private_sources
     equalizer/equalizer.c
 )
 
+ameba_list_append_if(CONFIG_CMD_DRC private_sources
+    drc/drc.c
+)
+
 ameba_list_append_if(CONFIG_CMD_PLAYER private_sources
     player/mystream_source.c
     player/player.c
