@@ -158,6 +158,38 @@ int32_t ameba_audio_stream_tx_get_htimestamp(Stream *stream, uint32_t *avail, st
 	return HAL_OSAL_OK;
 }
 
+int32_t ameba_audio_stream_tx_get_position(Stream *stream, uint64_t *rendered_frames, struct timespec *tstamp)
+{
+	//now nsec;
+	uint64_t nsec;
+	//current total i2s counter of audio frames;
+	uint64_t now_counter = 0;
+	//means the delta_counter between now counter and last irq total counter.
+	uint32_t delta_counter = 0;
+
+	RenderStream *rstream = (RenderStream *)stream;
+	if (!rstream) {
+		return HAL_OSAL_ERR_NO_INIT;
+	}
+
+	AUDIO_SP_SetPhaseLatch(rstream->stream.sport_dev_num);
+	delta_counter = AUDIO_SP_GetTXCounterVal(rstream->stream.sport_dev_num);
+	now_counter = rstream->stream.total_counter + delta_counter;
+
+	*rendered_frames = now_counter;
+
+	//tv_sec is lld, tv_nsec is ld
+	//nsec will exceed at (2^64 / 50M / 3600 / 24 / 365 / 20 = 584 years)
+	nsec = rtos_time_get_current_system_time_ns();
+	tstamp->tv_sec = nsec / 1000000000LL;
+	tstamp->tv_nsec = nsec - tstamp->tv_sec * 1000000000LL;
+
+	HAL_AUDIO_PVERBOSE("rendered_frames:%llu, trigger:%llu, usec:%llu, tv_sec:%llu, tv_nsec:%lu",
+					   *rendered_frames, rstream->stream.trigger_tstamp, nsec, tstamp->tv_sec, tstamp->tv_nsec);
+
+	return HAL_OSAL_OK;
+}
+
 HAL_AUDIO_WEAK int32_t ameba_audio_stream_tx_get_time(Stream *stream, int64_t *now_ns, int64_t *audio_ns)
 {
 	(void) stream;
