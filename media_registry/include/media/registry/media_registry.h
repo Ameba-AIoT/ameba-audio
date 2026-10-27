@@ -40,8 +40,8 @@ extern size_t gNumMediaSourceConfigs;
 // ----------------------------------------------------------------------
 //MediaExtractorConfig
 typedef struct MediaExtractorConfig {
-	const char *name;
-	void *extractor_type;
+    const char *name;
+    void *extractor_type;
 } MediaExtractorConfig;
 
 extern MediaExtractorConfig gMediaExtractorConfigs[];
@@ -51,16 +51,29 @@ extern size_t gNumMediaExtractorConfigs;
 // ----------------------------------------------------------------------
 //MediaDecoderConfig
 typedef void *(*CreateComponentFunc)(
-	const char *, const void *,
-	void *, void **);
+    const char *, const void *,
+    void *, void **);
 
 typedef struct MediaDecoderConfig {
-	const char *name;
-	CreateComponentFunc codec_func;
+    const char *name;
+    CreateComponentFunc codec_func;
 } MediaDecoderConfig;
 
 extern MediaDecoderConfig gMediaDecoderConfigs[];
 extern size_t gNumMediaDecoderConfigs;
+
+
+// ----------------------------------------------------------------------
+//MediaDecoderLiteConfig
+typedef void *(*CreateCodecFunc)();
+
+typedef struct MediaDecoderLiteConfig {
+    const char *name;
+    CreateCodecFunc codec_func;
+} MediaDecoderLiteConfig;
+
+extern MediaDecoderLiteConfig gMediaDecoderLiteConfigs[];
+extern size_t gNumMediaDecoderLiteConfigs;
 
 
 // ----------------------------------------------------------------------

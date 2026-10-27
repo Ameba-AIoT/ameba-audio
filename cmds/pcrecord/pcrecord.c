@@ -36,6 +36,9 @@ extern s32 wifi_get_join_status(u8 *join_status);
 
 #define PR_UART_TX          PA_25
 #define PR_UART_RX          PA_24
+#define PR_UART_RTS         PA_30
+#define PR_UART_CTS         PA_31
+#define PR_UART_FLOW_CTRL   0
 #define PR_UART_USE_DMA_TX  1
 
 #define PR_BAUDRATE         1500000
@@ -285,6 +288,9 @@ void pr_uart_send_string(char *pstr, int len)
     ret = serial_send_stream_dma(&pr_sobj, pstr, len);
     if (ret != 0) {
         RTK_LOGE(TAG, "%s Error(%d)", __FUNCTION__, (int)ret);
+        /* no tx done irq will come, reset tx state and release sema to avoid blocking later sends */
+        serial_send_stream_abort(&pr_sobj);
+        rtos_sema_give(pr_dma_tx_sema);
     }
 #else
     while (len) {
@@ -292,6 +298,15 @@ void pr_uart_send_string(char *pstr, int len)
         pstr++;
         len--;
     }
+#endif
+}
+
+/* wait until dma tx done, call it before freeing the buffer passed to pr_uart_send_string */
+static void pr_uart_wait_tx_done(void)
+{
+#if PR_UART_USE_DMA_TX
+    rtos_sema_take(pr_dma_tx_sema, RTOS_MAX_TIMEOUT);
+    rtos_sema_give(pr_dma_tx_sema);
 #endif
 }
 
@@ -337,7 +352,11 @@ void pr_uart_init_mbed(void)
     serial_format(&pr_sobj, 8, ParityNone, 1);
 
     serial_rx_fifo_level(&pr_sobj, FifoLvHalf);
+#if PR_UART_FLOW_CTRL
+    serial_set_flow_control(&pr_sobj, FlowControlRTSCTS, PR_UART_RTS, PR_UART_CTS);
+#else
     serial_set_flow_control(&pr_sobj, FlowControlNone, 0, 0);
+#endif
     serial_irq_handler(&pr_sobj, pr_uart_irq, (uint32_t)&pr_sobj);
     serial_irq_set(&pr_sobj, RxIrq, ENABLE);
 #if PR_UART_USE_DMA_TX
@@ -372,6 +391,7 @@ int pr_audiorecord_query(void)
     RTK_LOGI(TAG, "[PCRECORD INFO] %s, %s", __func__, msg_js);
     rtos_mutex_take(pr_tx_mutex, MUTEX_WAIT_TIMEOUT);
     pr_uart_send_string(msg_js, strlen(msg_js));
+    pr_uart_wait_tx_done();
     rtos_mutex_give(pr_tx_mutex);
     rtos_mem_free(msg_js);
 
@@ -499,6 +519,7 @@ int pc_msg_response_ack(int opt)
     RTK_LOGI(TAG, "[PCRECORD INFO] %s, %s", __func__, msg_js);
     rtos_mutex_take(pr_tx_mutex, MUTEX_WAIT_TIMEOUT);
     pr_uart_send_string(msg_js, strlen(msg_js));
+    pr_uart_wait_tx_done();
     RTK_LOGI(TAG, "[PCRECORD INFO] %s, send ack done(%d)", __func__, strlen(msg_js));
     rtos_mutex_give(pr_tx_mutex);
 

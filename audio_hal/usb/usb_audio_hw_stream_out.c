@@ -262,10 +262,9 @@ static ssize_t UsbStreamOutWrite(struct AudioHwStreamOut *stream, const void *bu
         HAL_AUDIO_INFO("bytes: %d, written: %ld", bytes, ret);
     }
 
-    //write successfully
-    if (ret >= 0) {
-        ret = bytes;
-        out->written += bytes / frame_size;
+    //count only what usbh_uac_write() queued; a negative value is the stream or device error
+    if (ret > 0) {
+        out->written += (uint32_t)ret / frame_size;
         //sync with ameba audio driver's total_counter_boundary max value.
         if (out->written > UINT64_MAX) {
             out->written = 0;
