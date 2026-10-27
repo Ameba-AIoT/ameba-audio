@@ -166,3 +166,25 @@ MediaDecoderConfig gMediaDecoderConfigs[] = {
 
 size_t gNumMediaDecoderConfigs =
     sizeof(gMediaDecoderConfigs) / sizeof(gMediaDecoderConfigs[0]);
+
+
+// ----------------------------------------------------------------------
+//MediaDecoderLiteConfig
+void *CreateRawDecLite();
+void *CreateMp3DecLite();
+void *CreateOpusDecLite();
+
+MediaDecoderLiteConfig gMediaDecoderLiteConfigs[] = {
+#if defined(MEDIA_CODEC_PCM)
+    { "wav", CreateRawDecLite },
+#endif
+#if defined(MEDIA_CODEC_MP3)
+    { "mp3", CreateMp3DecLite },
+#endif
+#if defined(MEDIA_CODEC_OPUS)
+    { "ogg-opus", CreateOpusDecLite },
+#endif
+};
+
+size_t gNumMediaDecoderLiteConfigs =
+    sizeof(gMediaDecoderLiteConfigs) / sizeof(gMediaDecoderLiteConfigs[0]);
