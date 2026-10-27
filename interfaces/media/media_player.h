@@ -30,7 +30,7 @@
  * @brief Provides the APIs to implement operations related to manage playback.
  * These player interfaces can be used to control playback of audio files and streams(via https or rtsp),
  * register observer functions, and control the feature status.
- * Playback control includs start, stop, pause, resume, rewind and so on.
+ * Playback control includes start, stop, pause, resume, seek and so on.
  *
  *
  * @since 1.0
@@ -50,10 +50,9 @@ extern "C" {
 
 typedef struct MediaPlayer MediaPlayer;
 typedef struct MediaPlayerCallback MediaPlayerCallback;
-typedef enum AudioSinkTypes AudioSinkTypes;
 
 /**
- * @brief Provides calback interfaces.
+ * @brief Provides callback interfaces.
  */
 struct MediaPlayerCallback {
     /**
@@ -65,7 +64,7 @@ struct MediaPlayerCallback {
      * @since 1.0
      * @version 1.0
      */
-    void (*OnMediaPlayerStateChanged)(const MediaPlayerCallback *listener, const MediaPlayer *player, int state);
+    void (*OnStateChanged)(const MediaPlayerCallback *listener, const MediaPlayer *player, int state);
 
     /**
      * @brief Called when player information is received.
@@ -77,7 +76,7 @@ struct MediaPlayerCallback {
      * @since 1.0
      * @version 1.0
      */
-    void (*OnMediaPlayerInfo)(const MediaPlayerCallback *listener, const MediaPlayer *player, int info, int extra);
+    void (*OnInfo)(const MediaPlayerCallback *listener, const MediaPlayer *player, int info, int extra);
 
     /**
      * @brief Called when a player error occurs.
@@ -89,7 +88,7 @@ struct MediaPlayerCallback {
      * @since 1.0
      * @version 1.0
      */
-    void (*OnMediaPlayerError)(const MediaPlayerCallback *listener, const MediaPlayer *player, int error, int extra);
+    void (*OnError)(const MediaPlayerCallback *listener, const MediaPlayer *player, int error, int extra);
 };
 
 /**
@@ -100,16 +99,6 @@ struct MediaPlayerCallback {
  * @version 1.0
  */
 MediaPlayer *MediaPlayer_Create(void);
-
-/**
- * @brief Creates MediaPlayer with sink type.
- *
- * @param type The sink type, one of {@link AudioSinkTypes}
- * @return a new MediaPlayer object pointer.
- * @since 1.0
- * @version 1.0
- */
-MediaPlayer *MediaPlayer_CreateEx(AudioSinkTypes type);
 
 /**
  * @brief Destory MediaPlayer.
@@ -134,7 +123,7 @@ void    MediaPlayer_Destory(MediaPlayer *player);
  * @since 1.0
  * @version 1.0
  */
-int32_t MediaPlayer_SetSource(MediaPlayer *player, const char *url);
+int32_t MediaPlayer_SetDataSource(MediaPlayer *player, const char *url);
 
 /**
  * @brief Sets the StreamSource to use.
@@ -150,7 +139,7 @@ int32_t MediaPlayer_SetSource(MediaPlayer *player, const char *url);
  * @since 1.0
  * @version 1.0
  */
-int32_t MediaPlayer_SetDataSource(MediaPlayer *player, StreamSource *source);
+int32_t MediaPlayer_SetStreamSource(MediaPlayer *player, StreamSource *source);
 
 /**
  * @brief Prepares the player for playback, synchronously.
@@ -174,7 +163,7 @@ int32_t MediaPlayer_Prepare(MediaPlayer *player);
  * (which occurs almost right away) while the internal player engine continues
  * working on the rest of preparation work until the preparation work completes.
  * When the preparation completes, the internal player engine then calls a user
- * supplied callback method OnMediaPlayerStateChanged(..., MEDIA_PLAYER_PREPARED)
+ * supplied callback method OnStateChanged(..., MEDIA_PLAYER_PREPARED)
  * of the MediaPlayerCallbacks interface, if an MediaPlayerCallbacks object is registered
  * beforehand via {@link MediaPlayer_SetCallbacks()}.
  *
@@ -258,7 +247,7 @@ int32_t MediaPlayer_Pause(MediaPlayer *player);
  * @brief Moves the media to specified time position.
  *
  * @param player The MediaPlayer object pointer.
- * @param msec The offset in milliseconds from the start to rewind to.
+ * @param msec The offset in milliseconds from the start to seek to.
  * @return Returns a value listed below: \n
  * int32_t | Description
  * ----------------------| -----------------------
@@ -268,7 +257,7 @@ int32_t MediaPlayer_Pause(MediaPlayer *player);
  * @since 1.0
  * @version 1.0
  */
-int32_t MediaPlayer_Rewind(MediaPlayer *player, int64_t msec);
+int32_t MediaPlayer_Seek(MediaPlayer *player, int64_t msec);
 
 /**
  * @brief Resets the Player to its uninitialized state. After calling
@@ -362,7 +351,7 @@ int32_t MediaPlayer_SetVolume(MediaPlayer *player, float left, float right);
  *
  * @param player The MediaPlayer object pointer.
  * @param speed The speed of player.
- * @param speed The pitch of player.
+ * @param pitch The pitch of player.
  * @return Returns a value listed below: \n
  * int32_t | Description
  * ----------------------| -----------------------

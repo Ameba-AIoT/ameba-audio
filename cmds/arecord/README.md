@@ -22,15 +22,17 @@ Ameba audio project can achieve:
 3. AmebaDplus(for mixer architecture, please set psram for img2 in menuconfig)
 
 ## Configurations
+User can use default configurations when running on demo board. If user wants to change configuration:
 Please see discriptions in component/soc/usrcfg/xx/include/ameba_audio_hw_usrcfg.h, ameba_audio_hw_usrcfg.h is for audio hardware configurations.
 
 ### Hardware Configurations
+User can use default configurations when running on demo board. If user wants to change configuration:
 1. Setup the hardware pins, like dmic pins and so on.
 2. Define using pll clock or xtal clock for record.
 3. Please refer to component/audio/audio_hal/xx/README.md.
 
 ## How to Build
-1. **GCC:** cd amebaxxx_gcc_project and run `./menuconfig.py` to enable configs.
+1. Refer to the online documentation to do menuconfig:
    ```
    CONFIG APPLICATION  --->
       Audio Config  --->
@@ -38,8 +40,11 @@ Please see discriptions in component/soc/usrcfg/xx/include/ameba_audio_hw_usrcfg
             [*]     arecord
    ```
 
-2. **GCC:** cd amebaxxx_gcc_project and run `./build.py` to compile.
+2. Refer to the online documentation to compile.
 
 ## How to Run
 1. `Download` images to board by Ameba Image Tool.
-2. For record run command and parameters, please refer to arecord.c.
+2. Here's a simple demo of recording through microphone and playing recorded sound through speaker:
+   ```
+   arecord -r 48000 -c 2 -f 16
+   ```
