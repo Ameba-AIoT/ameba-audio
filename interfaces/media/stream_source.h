@@ -27,6 +27,8 @@
 /**
  * @file stream_source.h
  *
+ * @brief Defines the StreamSource interface for custom data source implementation.
+ *
  *
  * @since 1.0
  * @version 1.0
@@ -44,7 +46,7 @@ extern "C" {
 typedef struct StreamSource StreamSource;
 struct StreamSource {
     /**
-     * @brief Check whether the data source init success.
+     * @brief Check whether the data source has been initialized successfully.
      *
      * @param source The StreamSource object pointer.
      * @return Returns a value listed below: \n
@@ -65,7 +67,7 @@ struct StreamSource {
      * @param source The StreamSource object pointer.
      * @param offset The offset from the beginning of the source.
      * @param data The pointer that stores the data.
-     * @param size The size need to read.
+     * @param size The size of data to read.
      * @return Returns the number of bytes read, or error value on failure: \n
      * AUDIO_ERR_INVALID_OPERATION | the operation is invalid.
      * STREAM_SOURCE_EOF | read meet the end of stream.

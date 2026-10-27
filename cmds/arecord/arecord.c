@@ -13,9 +13,8 @@
  * limitations under the License.
  */
 
-#define TAG "Arecod"
-
 #include "ameba_soc.h"
+#include "ameba_audio_mixer_usrcfg.h"
 #include "audio/audio_control.h"
 #include "audio/audio_record.h"
 #include "audio/audio_service.h"
@@ -25,23 +24,14 @@
 #include "platform_stdlib.h"
 #include "basic_types.h"
 
-#include "arecord.h"
-
 #include "audio_cmd_common.h"
 
-#define DUMP_FRAME            96000
-#define RECORD_TIME_SECONDS   10
-#define REF_PLAY_SECONDS      3
-#define MAX_CHANNEL_COUNT     8
-/*when dump, d2 needs invalidate, lite doesn't need invalidate*/
-#define NEED_CACHE_INVALIDATE 1
-#define DUMP_BUFFER           0
-//to test ppm between system clock and audio clock, please remember
-//to use pll for audio record in ameba_audio_hw_usrcfg.h.
-#define TEST_TIMESTAMP        0
-//if running in mixer architecture, please set 1 here.
-//if running in passthrough architecture, please set 0 here.
-#define TEST_MIXER_ARCH       1
+static const char *const TAG = "arecord";
+
+enum {
+    MAX_CHANNEL_COUNT = 8,
+    DUMP_FRAME        = 96000,
+};
 
 enum {
     EQLPF = 1,
@@ -52,22 +42,6 @@ enum {
     EQNF = 6,
     EQPF = 7,
 };
-
-#define EXAMPLE_AUDIO_DEBUG(fmt, args...)    RTK_LOGI(TAG, "[%s]: " fmt "", __func__, ## args)
-#define EXAMPLE_AUDIO_ERROR(fmt, args...)    RTK_LOGE(TAG, "[%s]: " fmt "", __func__, ## args)
-
-#define  ARECORD_DEBUG_HEAP_BEGIN() \
-    unsigned int heap_start;\
-    unsigned int heap_end;\
-    unsigned int heap_min_ever_free;\
-    EXAMPLE_AUDIO_DEBUG("[Mem] mem debug info init \n");\
-    heap_start = rtos_mem_get_free_heap_size()
-
-#define  ARECORD_DEBUG_HEAP_END() \
-    heap_end = rtos_mem_get_free_heap_size();\
-    heap_min_ever_free = rtos_mem_get_minimum_ever_free_heap_size();\
-    EXAMPLE_AUDIO_DEBUG("[Mem] start (0x%x), end (0x%x), \n", heap_start, heap_end);\
-    EXAMPLE_AUDIO_DEBUG(" diff (%d), peak (%d) \n", heap_start - heap_end, heap_start - heap_min_ever_free)
 
 typedef struct {
     unsigned int rate;
@@ -83,6 +57,9 @@ typedef struct {
     unsigned int channel_src[MAX_CHANNEL_COUNT];
     unsigned int hpf_fc;
     unsigned int eq_filter_type;
+    unsigned int record_seconds;
+    unsigned int dump_buffer;
+    unsigned int test_timestamp;
 } arecord_params_t;
 
 static const arecord_params_t ARECORD_DEFAULT_PARAMS = {
@@ -99,6 +76,9 @@ static const arecord_params_t ARECORD_DEFAULT_PARAMS = {
     .channel_src = {AUDIO_AMIC1, AUDIO_AMIC2, AUDIO_AMIC3, 0, 0, 0, 0, 0},
     .hpf_fc = 3,
     .eq_filter_type = 0,
+    .record_seconds = 600,
+    .dump_buffer = 0,
+    .test_timestamp = 0,
 };
 
 static void arecord_help(void);
@@ -106,30 +86,20 @@ static void arecord_help(void);
 static struct AudioRecord *g_arecord = NULL;
 static unsigned int  g_only_record = 0;
 static unsigned int  g_noirq_test = 0;
-static unsigned int  g_test_ref = 0;
 static unsigned int  g_pressure_test = 0;
 static unsigned int  g_record_rate = 16000;
 static unsigned int  g_record_channel = 2;
 static unsigned int  g_record_mode = 0;
 static unsigned int  g_record_format = 16;
 static unsigned int  g_record_bytes_one_time = 8192;
-static unsigned int  g_record_mic_category = DEVICE_IN_MIC;
+static unsigned int  g_record_mic_category = DEVICE_IN_I2S;
 static unsigned int  g_record_channel_src[MAX_CHANNEL_COUNT] = {AUDIO_AMIC1};
 static unsigned int  g_hpf_fc = 3;
 static unsigned int  g_eq_filter_type = 0;
-static unsigned int  Record_Sample(void);
-static          void Play_Sample(unsigned int channels, unsigned int rate);
-
-static u16 sine_48000[96] = {
-    0X0000, 0X0000, 0X10B5, 0X10B5, 0X2120, 0X2120, 0X30FB, 0X30FB, 0X3FFF, 0X3FFF, 0X4DEB, 0X4DEB,
-    0X5A82, 0X5A82, 0X658C, 0X658C, 0X6ED9, 0X6ED9, 0X7641, 0X7641, 0X7BA3, 0X7BA3, 0X7EE7, 0X7EE7,
-    0X7FFF, 0X7FFF, 0X7EE7, 0X7EE7, 0X7BA3, 0X7BA3, 0X7641, 0X7641, 0X6ED9, 0X6ED9, 0X658C, 0X658C,
-    0X5A82, 0X5A82, 0X4DEB, 0X4DEB, 0X3FFF, 0X3FFF, 0X30FB, 0X30FB, 0X2120, 0X2120, 0X10B5, 0X10B5,
-    0X0000, 0X0000, 0XEF4A, 0XEF4A, 0XDEDF, 0XDEDF, 0XCF04, 0XCF04, 0XC000, 0XC000, 0XB214, 0XB214,
-    0XA57D, 0XA57D, 0X9A73, 0X9A73, 0X9126, 0X9126, 0X89BE, 0X89BE, 0X845C, 0X845C, 0X8118, 0X8118,
-    0X8000, 0X8000, 0X8118, 0X8118, 0X845C, 0X845C, 0X89BE, 0X89BE, 0X9126, 0X9126, 0X9A73, 0X9A73,
-    0XA57D, 0XA57D, 0XB214, 0XB214, 0XC000, 0XC000, 0XCF04, 0XCF04, 0XDEDF, 0XDEDF, 0XEF4A, 0XEF4A
-};
+static unsigned int  g_record_seconds = 600;
+static unsigned int  g_dump_buffer = 0;
+static unsigned int  g_test_timestamp = 0;
+static unsigned int  record_sample(void);
 
 static int GetFormatForBits(void)
 {
@@ -145,7 +115,7 @@ static int GetFormatForBits(void)
         format = AUDIO_FORMAT_PCM_32_BIT;
         break;
     default:
-        EXAMPLE_AUDIO_ERROR("format:%d not supportd \n", g_record_format);
+        RTK_LOGE(TAG, "format:%d not supportd \n", g_record_format);
         return AUDIO_FORMAT_INVALID;
     }
 
@@ -205,25 +175,23 @@ static void FillEqFilterCoef(EqFilterCoef *coef) {
     }
 }
 
-static unsigned int Record_Sample()
+static unsigned int record_sample()
 {
     char *buffer;
-    char *dump_buffer;
+    char *dump_buffer = NULL;
     unsigned int size;
     ssize_t size_read;
-#if DUMP_BUFFER
     int dumped_size = 0;
-#endif
     uint32_t flags = AUDIO_OUTPUT_FLAG_NONE;
     uint32_t record_flags = AUDIO_INPUT_FLAG_NONE;
     int64_t bytes_read = 0;
     unsigned int frames = 0;
     int format = GetFormatForBits();
-    int64_t record_size = (int64_t)g_record_rate * (int64_t)RECORD_TIME_SECONDS * (int64_t)g_record_channel * (int64_t)g_record_format / (int64_t)8;
+    int64_t record_size = (int64_t)g_record_rate * (int64_t)g_record_seconds * (int64_t)g_record_channel * (int64_t)g_record_format / (int64_t)8;
     int track_buf_size = 4096;
 
     if (format == (int)AUDIO_FORMAT_INVALID) {
-        EXAMPLE_AUDIO_ERROR("invalid record format bits:%u \n", g_record_format);
+        RTK_LOGE(TAG, "invalid record format bits:%u \n", g_record_format);
         return 0;
     }
 
@@ -235,7 +203,7 @@ static unsigned int Record_Sample()
     struct AudioRecord *arecord;
     arecord = AudioRecord_Create();
     if (!arecord) {
-        EXAMPLE_AUDIO_ERROR("record create failed \n");
+        RTK_LOGE(TAG, "record create failed \n");
         return 0;
     }
 
@@ -244,7 +212,7 @@ static unsigned int Record_Sample()
     record_config.format = format;
     record_config.channel_count = g_record_channel;
     record_config.device = g_record_mic_category;
-    record_config.buffer_bytes = 0; //0 means using default period bytes
+    record_config.buffer_bytes = g_record_bytes_one_time; //0 means using default period bytes
     if (g_noirq_test) {
         record_config.buffer_bytes = g_record_bytes_one_time;
     }
@@ -255,7 +223,7 @@ static unsigned int Record_Sample()
         AudioService_Init();
         audio_track = AudioTrack_Create();
         if (!audio_track) {
-            EXAMPLE_AUDIO_ERROR("new AudioTrack failed, destroy record \n");
+            RTK_LOGE(TAG, "new AudioTrack failed, destroy record \n");
             AudioRecord_Destroy(arecord);
             return 0;
         }
@@ -289,7 +257,7 @@ static unsigned int Record_Sample()
     AudioControl_SetMicBstGain(AUDIO_AMIC2, MICBST_GAIN_30DB);
     AudioControl_SetCaptureHpfFc(0, g_hpf_fc);
     int32_t ch0_hpf_fc = AudioControl_GetCaptureHpfFc(0);
-    EXAMPLE_AUDIO_DEBUG("hpf fc for channel 0 is:%ld", ch0_hpf_fc);
+    RTK_LOGI(TAG, "hpf fc for channel 0 is:%ld \n", ch0_hpf_fc);
 
     if (g_eq_filter_type) {
         AudioControl_SetCaptureEqEnable(0, true);
@@ -318,43 +286,43 @@ static unsigned int Record_Sample()
 
     buffer = (char *) malloc(size);
     if (!buffer) {
-        free(buffer);
-        EXAMPLE_AUDIO_ERROR("failed to malloc buffer \n");
+        RTK_LOGE(TAG, "failed to malloc buffer \n");
         return 0;
     }
 
-#if DUMP_BUFFER
-    dump_buffer = (char *) malloc(DUMP_FRAME * g_record_channel * g_record_format / 8);
-    if (!dump_buffer) {
-        free(dump_buffer);
-        EXAMPLE_AUDIO_ERROR("failed to malloc dump_buffer \n");
-        return 0;
+    if (g_dump_buffer) {
+        dump_buffer = (char *) malloc(DUMP_FRAME * g_record_channel * g_record_format / 8);
+        if (!dump_buffer) {
+            RTK_LOGE(TAG, "failed to malloc dump_buffer \n");
+            free(buffer);
+            return 0;
+        }
     }
-#endif
 
-    EXAMPLE_AUDIO_DEBUG("Capturing sample: %u ch, %u hz, record bytes one time:%d, dump_buffer:%p \n", g_record_channel, g_record_rate,
-                        g_record_bytes_one_time, dump_buffer);
+    RTK_LOGI(TAG, "Capturing sample: %u ch, %u hz, record bytes one time:%d, dump_buffer:%p \n",
+             g_record_channel, g_record_rate, g_record_bytes_one_time, dump_buffer);
     do {
         size_read = AudioRecord_Read(arecord, buffer, size, true);
         if ((unsigned int)size_read != size) {
-            EXAMPLE_AUDIO_DEBUG("opps size wanted:%d, size actually read:%d \n", size, size_read);
+            RTK_LOGI(TAG, "opps size wanted:%d, size actually read:%d \n", size, size_read);
         }
 
-#if DUMP_BUFFER
-        if (dumped_size + size <= DUMP_FRAME * g_record_channel * g_record_format / 8) {
-            memcpy(dump_buffer + dumped_size, buffer, size);
-#if NEED_CACHE_INVALIDATE
-            DCache_Invalidate((u32)(dump_buffer + dumped_size), size);
+        if (g_dump_buffer) {
+            if (dumped_size + (int)size <= (int)(DUMP_FRAME * g_record_channel * g_record_format / 8)) {
+                memcpy(dump_buffer + dumped_size, buffer, size);
+                /* when dump, d2 needs invalidate, lite doesn't need invalidate */
+#ifdef CONFIG_AMEBASMART
+                DCache_Invalidate((u32)(dump_buffer + dumped_size), size);
 #endif
-            dumped_size += size;
+                dumped_size += size;
+            }
         }
-#endif
 
         //drop first 100ms data of record, and instead send 0, because record need some time to be stable, it's normal.
         if (!g_only_record && bytes_read >= 100 * g_record_rate * g_record_channel * g_record_format / 8 / 1000) {
             AudioTrack_Write(audio_track, buffer, size, true);
         } else if (!g_only_record && !g_noirq_test) {
-#if !TEST_MIXER_ARCH
+#ifndef CONFIG_AUDIO_MIXER
             memset(buffer, 0, size);
             AudioTrack_Write(audio_track, buffer, size, true);
             //To give another 0 buf at beginning, in case of xrun. For real case, please add ringbuffer between record and track.
@@ -377,10 +345,10 @@ static unsigned int Record_Sample()
     free(buffer);
     buffer = NULL;
 
-#if DUMP_BUFFER
-    free(dump_buffer);
-    dump_buffer = NULL;
-#endif
+    if (g_dump_buffer) {
+        free(dump_buffer);
+        dump_buffer = NULL;
+    }
 
     AudioRecord_Stop(arecord);
     AudioRecord_Destroy(arecord);
@@ -392,85 +360,42 @@ static unsigned int Record_Sample()
     return frames;
 }
 
-static void Play_Sample(unsigned int channels, unsigned int rate)
-{
-    struct AudioTrack *audio_track;
-    int track_buf_size = 4096;
-    unsigned int frames_played = 0;
-    unsigned int play_frame_size = rate * REF_PLAY_SECONDS;
-    uint32_t flags = AUDIO_OUTPUT_FLAG_NONE;
-
-    AudioService_Init();
-    audio_track = AudioTrack_Create();
-    if (!audio_track) {
-        EXAMPLE_AUDIO_ERROR("new AudioTrack failed");
-        return;
-    }
-
-    track_buf_size = AudioTrack_GetMinBufferBytes(audio_track, AUDIO_CATEGORY_MEDIA, rate, AUDIO_FORMAT_PCM_16_BIT, channels) * 4;
-    AudioTrackConfig  track_config;
-    track_config.category_type = AUDIO_CATEGORY_MEDIA;
-    track_config.sample_rate = rate;
-    track_config.format = AUDIO_FORMAT_PCM_16_BIT;
-    track_config.channel_count = channels;
-    track_config.buffer_bytes = track_buf_size;
-    AudioTrack_Init(audio_track, &track_config, flags);
-
-    AudioTrack_Start(audio_track);
-
-    ssize_t size = 96 * 2;
-    while (1) {
-
-        AudioTrack_Write(audio_track, (u8 *)sine_48000, size, true);
-        frames_played += size / 4;
-
-        if (frames_played >= play_frame_size) {
-            break;
-        }
-    }
-
-    AudioTrack_Stop(audio_track);
-    AudioTrack_Destroy(audio_track);
-
-}
-
-static void RecordTask(void *param)
+static void example_arecord_thread(void *param)
 {
     unsigned int frames;
+    unsigned int heap_start;
+    unsigned int heap_end;
+    unsigned int heap_min_ever_free;
     (void) param;
 
-    ARECORD_DEBUG_HEAP_BEGIN();
-    frames = Record_Sample();
+    RTK_LOGI(TAG, "[Mem] mem debug info init \n");
+    heap_start = rtos_mem_get_free_heap_size();
+
+    frames = record_sample();
     rtos_time_delay_ms(2 * RTOS_TICK_RATE_HZ);
-    ARECORD_DEBUG_HEAP_END();
+
+    heap_end = rtos_mem_get_free_heap_size();
+    heap_min_ever_free = rtos_mem_get_minimum_ever_free_heap_size();
+    RTK_LOGI(TAG, "[Mem] start (0x%x), end (0x%x), \n", heap_start, heap_end);
+    RTK_LOGI(TAG, " diff (%d), peak (%d) \n", heap_start - heap_end, heap_start - heap_min_ever_free);
 
     RTK_LOGI(TAG, "Recorded %u frames", frames);
     free(param);
     rtos_task_delete(NULL);
 }
 
-static void PlayTask(void *Data)
-{
-    unsigned int channels = 2;
-    unsigned int rate = 48000;
+static int64_t last_frames_captured_ns = 0;
+static int64_t last_frames_captured_at_ns = 0;
+static int64_t last_phase_captured_ns = 0;
+static int64_t last_phase_captured_at_ns = 0;
+static int32_t ppm_test_cnt = 0;
 
-    Play_Sample(channels, rate);
-
-    free(Data);
-    rtos_task_delete(NULL);
-}
-
-#if TEST_TIMESTAMP
-int64_t last_frames_captured_ns = 0;
-int64_t last_frames_captured_at_ns = 0;
-int64_t last_phase_captured_ns = 0;
-int64_t last_phase_captured_at_ns = 0;
-int32_t ppm_test_cnt = 0;
-
-void example_audio_counter_time(void *param)
+//to test ppm between system clock and audio clock, please remember
+//to use pll for audio record in ameba_audio_hw_usrcfg.h.
+static void example_audio_counter_time(void *param)
 {
     rtos_time_delay_ms(2 * RTOS_TICK_RATE_HZ);
-    EXAMPLE_AUDIO_DEBUG("arecord time begin");
+    RTK_LOGI(TAG, "arecord time begin");
     (void) param;
 
     AudioTimestamp tstamp;
@@ -495,19 +420,19 @@ void example_audio_counter_time(void *param)
         }
 
         if (AudioRecord_GetPresentTime(g_arecord, &phase_captured_at_ns, &phase_captured_ns) != AUDIO_OK) {
-            EXAMPLE_AUDIO_ERROR("get present time fail");
+            RTK_LOGE(TAG, "get present time fail");
         }
 
         if (ppm_test_cnt) {
-            EXAMPLE_AUDIO_DEBUG("ppm:%.16f frames_captured:%ld, frames_captured_ns:%lld, frames_captured_at_ns:%lld, last_frames_captured_ns:%lld, last_frames_captured_at_ns:%lld",
-                                (double)(frames_captured_ns - last_frames_captured_ns  - (frames_captured_at_ns - last_frames_captured_at_ns)) / (double)(
-                                    frames_captured_at_ns - last_frames_captured_at_ns) * (double)1000000,
-                                frames_captured, frames_captured_ns, frames_captured_at_ns, last_frames_captured_ns, last_frames_captured_at_ns);
+            RTK_LOGI(TAG, "ppm:%.16f frames_captured:%ld, frames_captured_ns:%lld, frames_captured_at_ns:%lld, last_frames_captured_ns:%lld, last_frames_captured_at_ns:%lld",
+                     (double)(frames_captured_ns - last_frames_captured_ns  - (frames_captured_at_ns - last_frames_captured_at_ns)) / (double)(
+                         frames_captured_at_ns - last_frames_captured_at_ns) * (double)1000000,
+                     frames_captured, frames_captured_ns, frames_captured_at_ns, last_frames_captured_ns, last_frames_captured_at_ns);
 
-            EXAMPLE_AUDIO_DEBUG("phase ppm:%.16f phase_captured_ns:%lld, phase_captured_at_ns:%lld, last_phase_captured_ns:%lld, last_phase_captured_at_ns:%lld",
-                                (double)(phase_captured_ns - last_phase_captured_ns  - (phase_captured_at_ns - last_phase_captured_at_ns)) / (double)(
-                                    phase_captured_at_ns - last_phase_captured_at_ns) * (double)1000000,
-                                phase_captured_ns, phase_captured_at_ns, last_phase_captured_ns, last_phase_captured_at_ns);
+            RTK_LOGI(TAG, "phase ppm:%.16f phase_captured_ns:%lld, phase_captured_at_ns:%lld, last_phase_captured_ns:%lld, last_phase_captured_at_ns:%lld",
+                     (double)(phase_captured_ns - last_phase_captured_ns  - (phase_captured_at_ns - last_phase_captured_at_ns)) / (double)(
+                         phase_captured_at_ns - last_phase_captured_at_ns) * (double)1000000,
+                     phase_captured_ns, phase_captured_at_ns, last_phase_captured_ns, last_phase_captured_at_ns);
         }
 
         last_frames_captured_ns = frames_captured_ns;
@@ -522,19 +447,35 @@ void example_audio_counter_time(void *param)
     free(param);
     rtos_task_delete(NULL);
 }
-#endif
 
 
 static void arecord_help(void)
 {
-    RTK_LOGI(TAG, "arecord [OPTION...]\n"
-        "\t\t test cmd: arecord [-r] rate [-b] record_bytes_one_time [-c] record_channels [-m] record_mode [-f] format  \n"
-        "\t\t           [-or] 1:only do record, 0:record then play [-noirq] 1:irq mode, 0:no irq mode [-ref] 1:test ref 0: not test ref\n"
-        "\t\t           [-pres] 1: pressure test, 0: record fixed time [-cxs] mic source for channelx, exp, -c0s: mic src for channel0 \n"
-        "\t\t default params: [-r] 16000 [-b] 8192 [-c] 2 [-m] 0 [-f] format 16 [-or] 0 [-noirq] 0 [-ref] 0\n"
-        "\t\t record_mode: 0:no_afe_pure_data; 1:no_afe_all_data \n"
-        "\t\t test demo: arecord -r 16000 -b 8192 \n"
-        "\t\t test noirq, -b should be 8ms bytes: arecord -c 1 -b 256 -noirq 1 -r 16000;\n");
+    RTK_LOGI(TAG,
+        "\nUsage: arecord [OPTION VALUE]...\n"
+        "  -r      <rate>      sample rate in Hz                          (default 16000)\n"
+        "  -c      <channels>  record channel count                      (default 2)\n"
+        "  -f      <format>    sample bits: 16 / 24 / 32                  (default 16)\n"
+        "  -b      <bytes>     bytes read one time                       (default 8192)\n"
+        "  -m      <mode>      0:no_afe_pure_data 1:no_afe_all_data       (default 0)\n"
+        "  -or     <0|1>       1:only record  0:record then play          (default 0)\n"
+        "  -noirq  <0|1>       1:no irq mode  0:irq mode                  (default 0)\n"
+        "  -ref    <0|1>       1:test ref     0:not test ref              (default 0)\n"
+        "  -pres   <0|1>       1:pressure test 0:record for fixed time    (default 0)\n"
+        "  -t      <seconds>   record duration when -pres is 0           (default 600)\n"
+        "  -hpf    <fc>        capture high-pass filter cutoff index      (default 3)\n"
+        "  -filter <type>      capture EQ 1:LPF 2:HPF 3:BPF 4:LSF\n"
+        "                                 5:HSF 6:NF  7:PF                (default 0:off)\n"
+        "  -dump   <0|1>       1:dump recorded data to memory            (default 0)\n"
+        "  -ts     <0|1>       1:test timestamp/ppm                      (default 0)\n"
+        "  -d      <dev>       0:amic  1:dmic+amic ref  2:i2s            (default 0:amic)\n"
+        "  -cNs    <src>       mic source for channel N (N=0..3)         (default amic1..3)\n"
+        "  --version     <n>   sw eq version                              (default 0)\n"
+        "  --period-size <n>   audio out period frames                    (default 1024)\n"
+        "  --min-stage   <n>   audio out minimum stage                    (default 1)\n"
+        "\nExamples:\n"
+        "  arecord -r 16000 -b 8192\n"
+        "  arecord -c 1 -b 256 -noirq 1 -r 16000    (noirq: -b should be 8ms of bytes)\n");
 }
 
 static void parse_arecord_params(cmd_params_t *params, arecord_params_t *p)
@@ -552,6 +493,9 @@ static void parse_arecord_params(cmd_params_t *params, arecord_params_t *p)
     CMD_PARSE_INT(p->pressure_test, "-pres", ARECORD_DEFAULT_PARAMS.pressure_test);
     CMD_PARSE_INT(p->hpf_fc, "-hpf", ARECORD_DEFAULT_PARAMS.hpf_fc);
     CMD_PARSE_INT(p->eq_filter_type, "-filter", ARECORD_DEFAULT_PARAMS.eq_filter_type);
+    CMD_PARSE_INT(p->record_seconds, "-t", ARECORD_DEFAULT_PARAMS.record_seconds);
+    CMD_PARSE_INT(p->dump_buffer, "-dump", ARECORD_DEFAULT_PARAMS.dump_buffer);
+    CMD_PARSE_INT(p->test_timestamp, "-ts", ARECORD_DEFAULT_PARAMS.test_timestamp);
 
     int mic_val = 0;
     CMD_PARSE_INT(mic_val, "-d", 0);
@@ -565,6 +509,10 @@ static void parse_arecord_params(cmd_params_t *params, arecord_params_t *p)
     CMD_PARSE_INT(p->channel_src[1], "-c1s", AUDIO_AMIC2);
     CMD_PARSE_INT(p->channel_src[2], "-c2s", AUDIO_AMIC3);
     CMD_PARSE_INT(p->channel_src[3], "-c3s", 0);
+
+    CMD_PARSE_INT(kEqVersion,                               "--version",        0);
+    CMD_PARSE_INT(kPrimaryAudioConfig.out_period_frames,    "--period-size",    1024);
+    CMD_PARSE_INT(kPrimaryAudioConfig.out_min_frames_stage, "--min-stage",      1);
 }
 
 static uint32_t arecord_handler(cmd_params_t *params)
@@ -577,32 +525,36 @@ static uint32_t arecord_handler(cmd_params_t *params)
     arecord_params_t p;
     parse_arecord_params(params, &p);
 
-    RTK_LOGI(TAG, "arecord params: rate=%u, channels=%u, format=%u",
-                p.rate, p.channels, p.format);
-
-    arecord_params_t *task_params = malloc(sizeof(arecord_params_t));
-    if (!task_params) {
-        RTK_LOGE(TAG, "Failed to allocate task params");
-        return FALSE;
+    g_record_rate           = p.rate;
+    g_record_channel        = p.channels;
+    g_record_format         = p.format;
+    g_record_bytes_one_time = p.bytes_one_time;
+    g_record_mode           = p.mode;
+    g_only_record           = p.only_record;
+    g_noirq_test            = p.noirq_test;
+    g_pressure_test         = p.pressure_test;
+    g_record_mic_category   = p.mic_category;
+    for (unsigned int i = 0; i < MAX_CHANNEL_COUNT; i++) {
+        g_record_channel_src[i] = p.channel_src[i];
     }
-    *task_params = p;
+    g_hpf_fc         = p.hpf_fc;
+    g_eq_filter_type = p.eq_filter_type;
+    g_record_seconds = p.record_seconds;
+    g_dump_buffer    = p.dump_buffer;
+    g_test_timestamp = p.test_timestamp;
 
-    if (RTK_SUCCESS != rtos_task_create(NULL, ((const char *)"RecordTask"), RecordTask, NULL, 5376, 5)) {
-        EXAMPLE_AUDIO_ERROR("%s rtos_task_create(RecordTask) failed \n", __FUNCTION__);
+    RTK_LOGI(TAG, "arecord params: rate=%u, channels=%u, format=%u, bytes=%u, or=%u, mic_cat=%u \n",
+                p.rate, p.channels, p.format, p.bytes_one_time, p.only_record, p.mic_category);
+
+    if (RTK_SUCCESS != rtos_task_create(NULL, ((const char *)"record_task"), example_arecord_thread, NULL, 5376, 5)) {
+        RTK_LOGE(TAG, "rtos_task_create(record_task) failed \n");
     }
 
-    if (g_test_ref) {
-        rtos_time_delay_ms(1000);//for test noise
-        if (RTK_SUCCESS != rtos_task_create(NULL, (const char *const)"PlayTask", PlayTask, NULL, 4864, 5)) {
-            EXAMPLE_AUDIO_ERROR("create PlayTask error \n");
+    if (g_test_timestamp) {
+        if (rtos_task_create(NULL, ((const char *)"example_audio_counter_time"), example_audio_counter_time, NULL, 8192 * 4, 1) != RTK_SUCCESS) {
+            RTK_LOGE(TAG, "error: rtos_task_create(example_audio_counter_time) failed");
         }
     }
-
-#if TEST_TIMESTAMP
-    if (rtos_task_create(NULL, ((const char *)"example_audio_counter_time"), example_audio_counter_time, NULL, 8192 * 4, 1) != RTK_SUCCESS) {
-        EXAMPLE_AUDIO_ERROR("error: rtos_task_create(example_audio_counter_time) failed");
-    }
-#endif
 
     return TRUE;
 }

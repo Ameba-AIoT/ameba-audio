@@ -56,6 +56,7 @@ int32_t ameba_audio_stream_get_sp_tx_channel_idx(uint32_t channel);
 void ameba_audio_stream_rx_set_i2s_pin(uint32_t index);
 void ameba_audio_stream_rx_reset_i2s_pin(void);
 void ameba_audio_stream_tx_set_i2s_pin(uint32_t index);
+void ameba_audio_stream_tx_reset_i2s_pin(void);
 
 #ifdef __cplusplus
 }

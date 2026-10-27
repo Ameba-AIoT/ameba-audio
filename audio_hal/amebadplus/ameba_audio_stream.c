@@ -145,5 +145,5 @@ void ameba_audio_reset_audio_ip_status(Stream *stream)
 		RCC_PeriphClockCmd(APBPeriph_SPORT1, APBPeriph_SPORT1_CLOCK, DISABLE);
 	}
 
-	HAL_AUDIO_INFO("audioIP status: %" PRIu32 "", g_audio_ip_status);
+	HAL_AUDIO_INFO("audioIP status: %lu", g_audio_ip_status);
 }

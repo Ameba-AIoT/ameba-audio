@@ -28,6 +28,8 @@ This example support audio record and playback.
 
 ## How to Run
 1. `Download` images to board by Ameba Image Tool.
-2. Connect uart adapter with PC. TX: PA_25, RX: PA_24, baudrate: 1500000.
+2. Connect uart adapter with PC. TX: PA_25, RX: PA_24, baudrate: 1500000, no flow control by default.
+   To enable hardware flow control, wire RTS: PA_30, CTS: PA_31 and set `PR_UART_FLOW_CTRL` to 1 in pcrecord.c,
+   then set `"SerialHwFlowCtrl": true` in Settings.json of the PC AudioRecorder tool.
 3. Default payload size is 2048 bytes, make sure settings on RtkAudioRecordTool.exe stay the same as demo.
 4. Run RtkAudioTestToolv1.0.1/RtkAudioTestTool.exe on PC, and start to record.

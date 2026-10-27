@@ -31,6 +31,7 @@ typedef int32_t    status_t;
  */
 enum {
     OSAL_OK                      = 0,
+    OSAL_NO_ERROR                = 0,
 
     // Common errors
     OSAL_ERR_NO_MEMORY           = -12,   // -ENOMEM,

@@ -17,7 +17,7 @@
  * @addtogroup Media
  * @{
  *
- * @brief Declares variables for media framework.
+ * @brief Declares constants and enums for media framework.
  *
  *
  * @since 1.0
@@ -27,7 +27,7 @@
 /**
  * @file media_player_common.h
  *
- * @brief Provides status, errors, info variables for media framework..
+ * @brief Provides status, errors, info variables for media framework.
  *
  *
  * @since 1.0
@@ -42,22 +42,7 @@ extern "C" {
 #endif
 
 /**
- * @brief Defines the sink types of a player.
- *
- * @since 1.0
- * @version 1.0
- */
-enum AudioSinkTypes {
-    /** Audio is played in local. */
-    AUDIO_SINK_TYPE_LOCAL = 0,
-    /** Audio is played via bluetooth. */
-    AUDIO_SINK_TYPE_BT = 1,
-    /** Audio is played via uac. */
-    AUDIO_SINK_TYPE_UAC = 2,
-};
-
-/**
- * @brief Defines all the player status.
+ * @brief Defines all the player states.
  *
  * @since 1.0
  * @version 1.0
@@ -77,7 +62,7 @@ enum MediaPlayerStates {
     MEDIA_PLAYER_STOPPED = 5,
     /** Used to indicate player completed */
     MEDIA_PLAYER_PLAYBACK_COMPLETE = 6,
-    /** Used to indicate rewind player completed */
+    /** Used to indicate seek player completed */
     MEDIA_PLAYER_REWIND_COMPLETE = 7,
     /** Used to indicate player error */
     MEDIA_PLAYER_ERROR = 8,
@@ -95,7 +80,7 @@ enum MediaPlayerErrors {
 };
 
 /**
- * @brief Defines the extra informations of a player.
+ * @brief Defines the extra information of a player.
  *
  * @since 1.0
  * @version 1.0
@@ -107,7 +92,7 @@ enum MediaPlayerInfos {
     MEDIA_PLAYER_INFO_BUFFERING_END = 1,
     /** Player buffered data percentage update. */
     MEDIA_PLAYER_INFO_BUFFERING_INFO_UPDATE = 2,
-    /** The media is not rewindable (e.g live stream). */
+    /** The media is not seekable (e.g live stream). */
     MEDIA_PLAYER_INFO_NOT_REWINDABLE = 3,
 };
 

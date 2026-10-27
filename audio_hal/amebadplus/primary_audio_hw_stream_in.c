@@ -365,7 +365,7 @@ static int32_t ConfigurePureData(struct PrimaryAudioHwStreamIn *cap)
 								cap->requested_channels * cap->config.period_count;
 
 	if (cap->requested_channels == 3) {
-		HAL_AUDIO_INFO("malloc stream_buf:%" PRId32 ", cap->config.channels:%" PRId32 ", cap->requested_channels:%" PRId32 "", driver_bytes, cap->config.channels,
+		HAL_AUDIO_INFO("malloc stream_buf:%ld, cap->config.channels:%ld, cap->requested_channels:%ld", driver_bytes, cap->config.channels,
 					   cap->requested_channels);
 		cap->stream_buf = (char *) rtos_mem_zmalloc(driver_bytes);
 		if (cap->stream_buf == NULL) {
@@ -390,7 +390,7 @@ static int32_t ConfigurePureData(struct PrimaryAudioHwStreamIn *cap)
 			return HAL_OSAL_ERR_NO_MEMORY;
 		}
 		cap->cap_stream_buf_bytes_extra = driver_bytes_extra;
-		HAL_AUDIO_INFO("alloc stream_buf:%" PRId32 ", stream_buf_extra:%" PRId32 "", driver_bytes, driver_bytes_extra);
+		HAL_AUDIO_INFO("alloc stream_buf:%ld, stream_buf_extra:%ld", driver_bytes, driver_bytes_extra);
 
 	}
 
@@ -420,9 +420,7 @@ static int32_t StartAudioHwStreamIn(struct PrimaryAudioHwStreamIn *cap)
 	}
 
 	cap->config.frame_size = PrimaryAudioHwStreamInFrameSize(&cap->stream) * cap->config.channels / cap->requested_channels;
-	HAL_AUDIO_VERBOSE("rate = %" PRId32 " , channels = %" PRId32 ", format = %" PRId32 ", period_size = %" PRIu32 ", period_count = %" PRIu32 ", frame_size = %"
-					  PRId32
-					  "",
+	HAL_AUDIO_VERBOSE("rate = %ld , channels = %ld, format = %ld, period_size = %lu, period_count = %lu, frame_size = %ld",
 					  cap->config.rate, cap->config.channels, cap->config.format, cap->config.period_size, cap->config.period_count, cap->config.frame_size);
 
 	if (cap->in_pcm == NULL) {
@@ -715,7 +713,7 @@ struct AudioHwStreamIn *CreateAudioHwStreamIn(struct AudioHwCard *card, const st
 	struct PrimaryAudioHwCard *lpri_card = (struct PrimaryAudioHwCard *)card;
 	struct PrimaryAudioHwStreamIn *in;
 
-	HAL_AUDIO_VERBOSE("primaryCreateStreamIn() with format:%d, sample_rate:%" PRId32 " channel_count:0x%lx", config->format, config->sample_rate,
+	HAL_AUDIO_VERBOSE("primaryCreateStreamIn() with format:%d, sample_rate:%ld channel_count:0x%lx", config->format, config->sample_rate,
 					  config->channel_count);
 	if (CheckInputParameters(config->sample_rate, config->format, config->channel_count) != 0) {
 		HAL_AUDIO_ERROR("primaryCreateStreamIn: invalid config");
