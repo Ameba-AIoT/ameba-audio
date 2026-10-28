@@ -52,6 +52,19 @@ typedef struct MediaPlayer MediaPlayer;
 typedef struct MediaPlayerCallback MediaPlayerCallback;
 
 /**
+ * @brief Defines the player implementation selected by MediaPlayer_CreateEx().
+ *
+ * @since 1.0
+ * @version 1.0
+ */
+typedef enum MediaPlayerType {
+    /** Full-featured asynchronous player */
+    MEDIA_PLAYER_TYPE_STANDARD = 0,
+    /** Minimal player */
+    MEDIA_PLAYER_TYPE_PICO = 1,
+} MediaPlayerType;
+
+/**
  * @brief Provides callback interfaces.
  */
 struct MediaPlayerCallback {
@@ -99,6 +112,16 @@ struct MediaPlayerCallback {
  * @version 1.0
  */
 MediaPlayer *MediaPlayer_Create(void);
+
+/**
+ * @brief Creates MediaPlayer of the given type.
+ *
+ * @param type The player implementation to use, one of {@link MediaPlayerType}.
+ * @return a new MediaPlayer object pointer, or NULL if type is not supported or creation fails.
+ * @since 1.0
+ * @version 1.0
+ */
+MediaPlayer *MediaPlayer_CreateEx(MediaPlayerType type);
 
 /**
  * @brief Destory MediaPlayer.

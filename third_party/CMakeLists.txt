@@ -1,3 +1,4 @@
+ameba_add_subdirectory_if(CONFIG_THIRD_PARTY_HMP3 hmp3)
 ameba_add_subdirectory_if(CONFIG_THIRD_PARTY_HAAC haac)
 ameba_add_subdirectory_if(CONFIG_THIRD_PARTY_FLAC flac)
 ameba_add_subdirectory_if(CONFIG_THIRD_PARTY_OPUS libopus)

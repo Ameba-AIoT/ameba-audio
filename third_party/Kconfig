@@ -1,5 +1,11 @@
 menu "Third Party Libraries"
 
+config THIRD_PARTY_HMP3_MENU
+    bool "HMP3"
+    select THIRD_PARTY_HMP3 if WHC_HOST || WHC_NONE
+    help
+        Helix MP3 library for MP3 decoding
+
 config THIRD_PARTY_HAAC_MENU
     bool "HAAC"
     select THIRD_PARTY_HAAC if WHC_HOST || WHC_NONE
@@ -41,6 +47,9 @@ endmenu
 # -------------------------------------------------------------
 # Hidden config symbols (used by CMakeLists.txt)
 # -------------------------------------------------------------
+
+config THIRD_PARTY_HMP3
+    bool
 
 config THIRD_PARTY_HAAC
     bool
