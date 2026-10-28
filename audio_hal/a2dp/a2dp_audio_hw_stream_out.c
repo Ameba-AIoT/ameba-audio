@@ -270,7 +270,7 @@ int32_t a2dp_hal_buffer_read(int8_t *buffer, int32_t bytes)
         rtos_sema_give(k_out->rb_sem);
     }
     if (bytes != size_read) {
-        printf("prefer size %d, size read %d \r\n", (int)bytes, (int)size_read);
+        HAL_AUDIO_WARN("prefer size %d, size read %d \r\n", (int)bytes, (int)size_read);
     }
 
     return size_read;

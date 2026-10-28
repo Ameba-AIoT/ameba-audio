@@ -18,6 +18,9 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "ameba_soc.h"
 
 #define AUDIO_CMD_TAG "AudioCmd"
@@ -104,6 +107,48 @@ typedef struct {
             } \
         } \
     } while (0)
+
+typedef struct {
+    const char *arg;
+    int *value;
+    int default_value;
+} cmd_parse_entry_t;
+
+typedef struct {
+    const char *arg;
+    float *value;
+    float default_value;
+} cmd_parse_float_entry_t;
+
+static inline void cmd_parse_all_int(cmd_params_t *params, cmd_parse_entry_t *entries, int count)
+{
+    for (int i = 0; i < count; i++) {
+        *entries[i].value = entries[i].default_value;
+    }
+    for (int i = 0; i < params->argc - 1; i++) {
+        for (int j = 0; j < count; j++) {
+            if (strcmp(params->argv[i], entries[j].arg) == 0) {
+                *entries[j].value = atoi(params->argv[i + 1]);
+                break;
+            }
+        }
+    }
+}
+
+static inline void cmd_parse_all_float(cmd_params_t *params, cmd_parse_float_entry_t *entries, int count)
+{
+    for (int i = 0; i < count; i++) {
+        *entries[i].value = entries[i].default_value;
+    }
+    for (int i = 0; i < params->argc - 1; i++) {
+        for (int j = 0; j < count; j++) {
+            if (strcmp(params->argv[i], entries[j].arg) == 0) {
+                *entries[j].value = atof(params->argv[i + 1]);
+                break;
+            }
+        }
+    }
+}
 
 void cmd_dispatch_task(void *param);
 

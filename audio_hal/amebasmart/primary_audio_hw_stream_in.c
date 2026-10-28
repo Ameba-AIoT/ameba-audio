@@ -327,7 +327,7 @@ static int32_t ConfigurePureData(struct PrimaryAudioHwStreamIn *cap)
 		cap->config.channels = 4;   //no 3 channels tdm in driver
 		uint32_t driver_bytes = PrimaryGetStreamInBufferSize((struct AudioHwStream *)&cap->stream) * cap->config.channels /
 									cap->requested_channels * cap->config.period_count;   // *4chan/3chan
-		HAL_AUDIO_INFO("malloc stream_buf:%" PRId32 ", cap->config.channels:%" PRId32 ", cap->requested_channels:%" PRId32 "", driver_bytes, cap->config.channels,
+		HAL_AUDIO_INFO("malloc stream_buf:%ld, cap->config.channels:%ld, cap->requested_channels:%ld", driver_bytes, cap->config.channels,
 					   cap->requested_channels);
 		cap->stream_buf = (char *) rtos_mem_zmalloc(driver_bytes);
 		if (cap->stream_buf == NULL) {
@@ -372,7 +372,7 @@ static int32_t ConfigurePureDataAddOut(struct PrimaryAudioHwStreamIn *cap)
 
 	uint32_t driver_bytes = PrimaryGetStreamInBufferSize((struct AudioHwStream *)&cap->stream) * cap->config.channels /
 								cap->requested_channels * cap->config.period_count;   // *4chan/3chan
-	HAL_AUDIO_INFO("malloc stream_buf:%" PRId32 ", cap->config.channels:%" PRId32 ", cap->requested_channels:%" PRId32 "", driver_bytes, cap->config.channels,
+	HAL_AUDIO_INFO("malloc stream_buf:%ld, cap->config.channels:%ld, cap->requested_channels:%ld", driver_bytes, cap->config.channels,
 				   cap->requested_channels);
 	cap->stream_buf = (char *) rtos_mem_zmalloc(driver_bytes);
 	if (cap->stream_buf == NULL) {
@@ -380,7 +380,7 @@ static int32_t ConfigurePureDataAddOut(struct PrimaryAudioHwStreamIn *cap)
 		return HAL_OSAL_ERR_NO_MEMORY;
 	}
 	cap->cap_stream_buf_bytes = driver_bytes;
-	HAL_AUDIO_INFO("cap stream buf bytes:%" PRId32 "", cap->cap_stream_buf_bytes);
+	HAL_AUDIO_INFO("cap stream buf bytes:%ld", cap->cap_stream_buf_bytes);
 
 #if ALL_DATA_DUMP
 	//cap->in_buf = (char *)rtos_mem_zmalloc(DUMP_FRAME * cap->config.channels * 2);
@@ -415,9 +415,7 @@ static int32_t StartAudioHwStreamIn(struct PrimaryAudioHwStreamIn *cap)
 	}
 
 	cap->config.frame_size = PrimaryAudioHwStreamInFrameSize(&cap->stream) * cap->config.channels / cap->requested_channels;
-	HAL_AUDIO_VERBOSE("rate = %" PRId32 " , channels = %" PRId32 ", format = %" PRId32 ", period_size = %" PRIu32 ", period_count = %" PRIu32 ", frame_size = %"
-					  PRId32
-					  "",
+	HAL_AUDIO_VERBOSE("rate = %ld , channels = %ld, format = %ld, period_size = %lu, period_count = %lu, frame_size = %ld",
 					  cap->config.rate, cap->config.channels, cap->config.format, cap->config.period_size, cap->config.period_count, cap->config.frame_size);
 
 	if (cap->in_pcm == NULL) {
@@ -564,7 +562,7 @@ static ssize_t PureDataAddOutRead(struct AudioHwStreamIn *stream, void *buffer, 
 		break;
 
 	default:
-		HAL_AUDIO_ERROR("channel(%" PRId32 ")not supported", cap->requested_channels);
+		HAL_AUDIO_ERROR("channel(%ld)not supported", cap->requested_channels);
 		break;
 	}
 
@@ -738,7 +736,7 @@ struct AudioHwStreamIn *CreateAudioHwStreamIn(struct AudioHwCard *card, const st
 	struct PrimaryAudioHwCard *lpri_card = (struct PrimaryAudioHwCard *)card;
 	struct PrimaryAudioHwStreamIn *in;
 
-	HAL_AUDIO_VERBOSE("primaryCreateStreamIn() with format:%d, sample_rate:%" PRId32 " channel_count:0x%lx", config->format, config->sample_rate,
+	HAL_AUDIO_VERBOSE("primaryCreateStreamIn() with format:%d, sample_rate:%ld channel_count:0x%lx", config->format, config->sample_rate,
 					  config->channel_count);
 	if (CheckInputParameters(config->sample_rate, config->format, config->channel_count) != 0) {
 		HAL_AUDIO_ERROR("primaryCreateStreamIn: invalid config");
@@ -791,7 +789,7 @@ struct AudioHwStreamIn *CreateAudioHwStreamIn(struct AudioHwCard *card, const st
 	in->data_format = AUDIO_I2S_IN_DATA_FORMAT;
 
 	if (desc->flags & AUDIO_HW_INPUT_FLAG_NOIRQ) {
-		HAL_AUDIO_INFO("CreateAudioHwStreamIn in NO_IRQ mode, buffer_bytes: %" PRIu32 "", config->buffer_bytes);
+		HAL_AUDIO_INFO("CreateAudioHwStreamIn in NO_IRQ mode, buffer_bytes: %lu", config->buffer_bytes);
 		in->config.mode = AMEBA_AUDIO_DMA_NOIRQ_MODE;
 		if (config->buffer_bytes) {
 			in->config.period_size = config->buffer_bytes / PrimaryAudioHwStreamInFrameSize(&in->stream);

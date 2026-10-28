@@ -52,6 +52,11 @@ ameba_list_append(private_sources
     common/audio_hw_params_handle.c
 )
 
+ameba_list_append_if(CONFIG_AMEBASMART private_sources
+    ${c_SOC_TYPE}/ameba_audio_vad.c
+    ${c_SOC_TYPE}/primary_audio_hw_vad.c
+)
+
 ameba_list_append_if(CONFIG_AMEBADPLUS private_sources
     ${c_SOC_TYPE}/ameba_audio_stream_audio_patch.c
 )

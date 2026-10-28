@@ -21,52 +21,44 @@
 #include "os_wrapper.h"
 #include "xlib/string_ext.h"
 
+#define AUDIO_HAL_TAG "AudioHal"
+
 /* Debug options */
-#define HAL_AUDIO_COMMON_DEBUG                1
+#define HAL_AUDIO_ENABLE_LOG                  1
 #define HAL_AUDIO_VERBOSE_DEBUG               0
 #define HAL_AUDIO_PLAYBACK_VERY_VERBOSE_DEBUG 0
 #define HAL_AUDIO_CAPTURE_VERY_VERBOSE_DEBUG  0
 #define HAL_AUDIO_PLAYBACK_DUMP_DEBUG         0
 #define HAL_AUDIO_CAPTURE_DUMP_DEBUG          0
 
-#define HAL_AUDIO_ERROR(fmt, args...)         RTK_LOGE("AudioHal", "[%s]: " fmt "\n", __FUNCTION__, ## args)
-#define HAL_AUDIO_DUMP_INFO(fmt, args...)     RTK_LOGI("AudioHal", "[%s]: " fmt "\n", __FUNCTION__, ## args)
+#define HAL_AUDIO_ERROR(fmt, args...)         RTK_LOGE(AUDIO_HAL_TAG, "[%s]: " fmt "\n", __func__, ## args)
 
-#if HAL_AUDIO_COMMON_DEBUG
-#define HAL_AUDIO_DEBUG(fmt, args...)         RTK_LOGD("AudioHal", "[%s]: " fmt "\n", __func__, ## args)
-#define HAL_AUDIO_INFO(fmt, args...)          RTK_LOGI("AudioHal", "[%s]: " fmt "\n", __FUNCTION__, ## args)
-#define HAL_AUDIO_WARN(fmt, args...)          RTK_LOGW("AudioHal", "[%s]: " fmt "\n", __FUNCTION__, ## args)
-#define HAL_AUDIO_ENTER                       RTK_LOGA("AudioHal", "[%s]: enter\n", __FUNCTION__)
-#define HAL_AUDIO_EXIT                        RTK_LOGA("AudioHal", "[%s]: exit\n", __FUNCTION__)
-#define HAL_AUDIO_EXIT_ERR                    RTK_LOGA("AudioHal", "[%s]: error: exit\n", __FUNCTION__)
-#define HAL_AUDIO_TRACE                       RTK_LOGA("AudioHal", "[%s]: line:%d\n", __FUNCTION__, __LINE__)
-#define HAL_AUDIO_IRQ_INFO(fmt, args...)      DiagPrintf("AudioHal [%s]: " fmt "\n", __FUNCTION__, ## args)
+#if HAL_AUDIO_ENABLE_LOG
+#define HAL_AUDIO_DEBUG(fmt, args...)         RTK_LOGD(AUDIO_HAL_TAG, "[%s]: " fmt "\n", __func__, ## args)
+#define HAL_AUDIO_INFO(fmt, args...)          RTK_LOGI(AUDIO_HAL_TAG, "[%s]: " fmt "\n", __func__, ## args)
+#define HAL_AUDIO_WARN(fmt, args...)          RTK_LOGW(AUDIO_HAL_TAG, "[%s]: " fmt "\n", __func__, ## args)
+#define HAL_AUDIO_IRQ_INFO(fmt, args...)      RTK_LOGS(NOTAG, RTK_LOG_ALWAYS, "AudioHal [%s]: " fmt "\n", __func__, ## args)
 #else
 #define HAL_AUDIO_DEBUG(fmt, args...)         do { } while(0)
 #define HAL_AUDIO_INFO(fmt, args...)          do { } while(0)
 #define HAL_AUDIO_WARN(fmt, args...)          do { } while(0)
-
-#define HAL_AUDIO_ENTER                       do { } while(0)
-#define HAL_AUDIO_EXIT                        do { } while(0)
-#define HAL_AUDIO_EXIT_ERR                    do { } while(0)
-#define HAL_AUDIO_TRACE                       do { } while(0)
 #define HAL_AUDIO_IRQ_INFO(fmt, args...)      do { } while(0)
 #endif
 
-#if HAL_AUDIO_COMMON_DEBUG && HAL_AUDIO_VERBOSE_DEBUG
-#define HAL_AUDIO_VERBOSE(fmt, args...)       RTK_LOGA("AudioHal", "=>V [%s]: " fmt "\n", __func__, ##args)
+#if HAL_AUDIO_ENABLE_LOG && HAL_AUDIO_VERBOSE_DEBUG
+#define HAL_AUDIO_VERBOSE(fmt, args...)       RTK_LOGI(AUDIO_HAL_TAG, "[%s]: " fmt "\n", __func__, ## args)
 #else
 #define HAL_AUDIO_VERBOSE(fmt, args...)       do { } while(0)
 #endif
 
-#if HAL_AUDIO_COMMON_DEBUG && HAL_AUDIO_VERBOSE_DEBUG && HAL_AUDIO_PLAYBACK_VERY_VERBOSE_DEBUG
-#define HAL_AUDIO_PVERBOSE(fmt, args...)      RTK_LOGA("AudioHal", "=>PV [%s]: " fmt "\n", __FUNCTION__, ## args)
+#if HAL_AUDIO_ENABLE_LOG && HAL_AUDIO_VERBOSE_DEBUG && HAL_AUDIO_PLAYBACK_VERY_VERBOSE_DEBUG
+#define HAL_AUDIO_PVERBOSE(fmt, args...)      RTK_LOGI(AUDIO_HAL_TAG, "[%s]: " fmt "\n", __func__, ## args)
 #else
 #define HAL_AUDIO_PVERBOSE(fmt, args...)      do { } while(0)
 #endif
 
-#if HAL_AUDIO_COMMON_DEBUG && HAL_AUDIO_VERBOSE_DEBUG && HAL_AUDIO_CAPTURE_VERY_VERBOSE_DEBUG
-#define HAL_AUDIO_CVERBOSE(fmt, args...)      RTK_LOGA("AudioHal", "=>CV [%s]: " fmt "\n", __FUNCTION__, ## args)
+#if HAL_AUDIO_ENABLE_LOG && HAL_AUDIO_VERBOSE_DEBUG && HAL_AUDIO_CAPTURE_VERY_VERBOSE_DEBUG
+#define HAL_AUDIO_CVERBOSE(fmt, args...)      RTK_LOGI(AUDIO_HAL_TAG, "[%s]: " fmt "\n", __func__, ## args)
 #else
 #define HAL_AUDIO_CVERBOSE(fmt, args...)      do { } while(0)
 #endif
