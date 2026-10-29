@@ -45,6 +45,11 @@ extern "C" {
 #endif
 
 /**
+ * @defgroup AudioControl_Constants AudioControl Constants
+ * @{
+ */
+
+/**
  * @brief Defines all the audio playback devices.
  *
  * @since 1.0
@@ -115,6 +120,13 @@ enum {
 	AUDIO_PLL_SLOWER  = 2,
 };
 
+/** @} End of AudioControl_Constants group */
+
+/**
+ * @defgroup AudioControl_Types AudioControl Types
+ * @{
+ */
+
 typedef struct {
 	uint32_t H0_Q;
 	uint32_t B1_Q;
@@ -122,6 +134,13 @@ typedef struct {
 	uint32_t A1_Q;
 	uint32_t A2_Q;
 } EqFilterCoef;
+
+/** @} End of AudioControl_Types group */
+
+/**
+ * @defgroup AudioControl_Functions AudioControl Functions
+ * @{
+ */
 
 /**
  * @brief Set Hardware Volume of audio dac.
@@ -152,6 +171,24 @@ int32_t AudioControl_SetHardwareVolume(float left_volume, float right_volume);
  * @version 1.0
  */
 int32_t AudioControl_GetHardwareVolume(float *left_volume, float *right_volume);
+
+/**
+ * @brief Set max Hardware Volume of audio dac.
+ *
+ * This sets the dac register value that maps to full scale (left/right volume 1.0)
+ * in AudioControl_SetHardwareVolume. The dac register 175 means 0dB, and each step
+ * down is -0.375dB, so volume_db ranges -65.625dB ~ 0dB in 0.375dB step.
+ *
+ * @param volume_db max dac volume in dB, ranges -65.625dB ~ 0dB.
+ * @return Returns a value listed below: \n
+ * int32_t | Description
+ * ----------------------| -----------------------
+ * AUDIO_OK | the operation is successful.
+ * AUDIO_ERR_INVALID_OPERATION | param not supported.
+ * @since 1.0
+ * @version 1.0
+ */
+int32_t AudioControl_SetMaxHardwareVolume(float volume_db);
 
 /**
  * @brief Set Amplifier En Pin.
@@ -518,9 +555,12 @@ int32_t AudioControl_SetRecordMute(uint32_t channel, bool mute);
  */
 bool AudioControl_GetRecordMute(uint32_t channel);
 
+/** @} End of AudioControl_Functions group */
+
 #ifdef __cplusplus
 }
 #endif
 
+/** @} */
 
 #endif

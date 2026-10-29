@@ -41,12 +41,25 @@ ameba_list_append(private_sources
     audio_cmd_common.c
 )
 
+ameba_list_append_if(CONFIG_CMD_EQUALIZER_TUNE private_sources
+    equalizer_tune/equalizer_tune.c
+)
+
 ameba_list_append_if(CONFIG_CMD_ARECORD private_sources
     arecord/arecord.c
 )
 
 ameba_list_append_if(CONFIG_CMD_APLAY private_sources
     aplay/aplay.c
+    aplay/amixer.c
+)
+
+ameba_list_append_if(CONFIG_CMD_EQUALIZER private_sources
+    equalizer/equalizer.c
+)
+
+ameba_list_append_if(CONFIG_CMD_DRC private_sources
+    drc/drc.c
 )
 
 ameba_list_append_if(CONFIG_CMD_PLAYER private_sources
@@ -58,8 +71,25 @@ ameba_list_append_if(CONFIG_CMD_PCRECORD private_sources
     pcrecord/pcrecord.c
 )
 
+ameba_list_append_if(CONFIG_CMD_VAD private_sources
+    vad/vad.c
+)
+
+# The spectrum CLI drives the FFT analyzer, which is not built on the RISC-V KR4
+# core (no ARM CMSIS-DSP). Skip the command there so it isn't compiled on KR4.
+if(NOT c_MCU_TYPE STREQUAL "kr4")
+ameba_list_append_if(CONFIG_CMD_SPECTRUM private_sources
+    spectrum/spectrum.c
+)
+endif()
+
+ameba_list_append_if(CONFIG_CMD_EQUALIZER_TUNE private_includes
+    ${c_CMPT_NETWORK_DIR}
+)
+
 ameba_list_append(private_includes
     ${c_CMPT_AUDIO_DIR}/interfaces
+    ${c_CMPT_AUDIO_DIR}/configs/include
     ${c_CMPT_AUDIO_DIR}/base/log/include
     ${c_CMPT_AUDIO_DIR}/cmds
 )

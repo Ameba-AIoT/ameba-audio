@@ -33,7 +33,14 @@
 #include "ameba_audio_stream_control.h"
 
 #define DEVICE_SPEAKER 1
-#define MAX_DAC_VOLUME 141
+
+/* DAC digital volume register: index 175 means 0dB, each step down is -0.375dB,
+ * so index 0 means -65.625dB. The default max index keeps the legacy 141(-12.75dB). */
+#define DAC_ZERO_DB_VOLUME_INDEX  175
+#define DAC_VOLUME_STEP_DB        0.375f
+#define DAC_MAX_VOLUME_DB         0.0f
+#define DAC_MIN_VOLUME_DB         (-65.625f)
+#define DEFAULT_MAX_DAC_VOLUME    141
 
 #define IS_AUDIO_DMIC(NUM) (((NUM) == AMEBA_AUDIO_DMIC1) || ((NUM) == AMEBA_AUDIO_DMIC2) \
 						|| ((NUM) == AMEBA_AUDIO_DMIC3) || ((NUM) == AMEBA_AUDIO_DMIC4) \
@@ -69,6 +76,7 @@ StreamControl *ameba_audio_get_ctl(void)
 			g_control_instance->playback_device = AMEBA_AUDIO_DEVICE_SPEAKER;
 			g_control_instance->capture_usage = AMEBA_AUDIO_CAPTURE_USAGE_AMIC;
 			g_control_instance->adc_use_status = 0;
+			g_control_instance->max_volume_index = DEFAULT_MAX_DAC_VOLUME;
 			g_control_instance->volume_for_dacl = 0x50;
 			g_control_instance->volume_for_dacr = 0x50;
 			g_control_instance->volume_for_adc[0] = 0x2f;
@@ -156,8 +164,8 @@ int32_t ameba_audio_ctl_set_tx_volume(StreamControl *control, float left, float 
 		return HAL_OSAL_ERR_INVALID_OPERATION;
 	}
 
-	uint32_t l = left * MAX_DAC_VOLUME;
-	uint32_t r = right * MAX_DAC_VOLUME;
+	uint32_t l = left * control->max_volume_index;
+	uint32_t r = right * control->max_volume_index;
 	if (l != r) {
 		HAL_AUDIO_VERBOSE("left & right volume is not same");
 	}
@@ -188,8 +196,47 @@ int32_t ameba_audio_ctl_get_tx_volume(StreamControl *control, float *left, float
 		return HAL_OSAL_ERR_INVALID_OPERATION;
 	}
 
-	*left = (float)control->volume_for_dacl / (float)MAX_DAC_VOLUME;
-	*right = (float)control->volume_for_dacr / (float)MAX_DAC_VOLUME;
+	if (control->max_volume_index == 0) {
+		*left = 0;
+		*right = 0;
+	} else {
+		*left = (float)control->volume_for_dacl / (float)control->max_volume_index;
+		*right = (float)control->volume_for_dacr / (float)control->max_volume_index;
+	}
+
+	return HAL_OSAL_OK;
+}
+
+int32_t ameba_audio_ctl_set_max_volume(StreamControl *control, float volume_db)
+{
+	if (control == NULL) {
+		HAL_AUDIO_ERROR("ops, %s fail, control null", __func__);
+		return HAL_OSAL_ERR_INVALID_OPERATION;
+	}
+
+	if (volume_db < DAC_MIN_VOLUME_DB || volume_db > DAC_MAX_VOLUME_DB) {
+		HAL_AUDIO_ERROR("ops, %s fail, volume_db out of range [-65.625, 0]", __func__);
+		return HAL_OSAL_ERR_INVALID_OPERATION;
+	}
+
+	/* index = 175 + volume_db / 0.375, rounded to nearest, clamped to [0, 175]. */
+	int32_t index = (int32_t)(volume_db / DAC_VOLUME_STEP_DB + DAC_ZERO_DB_VOLUME_INDEX + 0.5f);
+	if (index < 0) {
+		index = 0;
+	}
+	if (index > DAC_ZERO_DB_VOLUME_INDEX) {
+		index = DAC_ZERO_DB_VOLUME_INDEX;
+	}
+
+	HAL_AUDIO_INFO("set max dac volume to index 0x%lx", index);
+	control->max_volume_index = index;
+	control->volume_for_dacl = index;
+	control->volume_for_dacr = index;
+
+	if (ameba_audio_is_audio_ip_in_use(CODEC)) {
+		AUDIO_CODEC_SetDACVolume(DAC_L, index);
+		AUDIO_CODEC_SetDACVolume(DAC_R, index);
+	}
 
 	return HAL_OSAL_OK;
 }
@@ -248,7 +295,7 @@ int32_t ameba_audio_ctl_set_amp_pin(StreamControl *control, uint32_t pin)
 	}
 
 	if (control->board_amp_pin != (int32_t)pin) {
-		HAL_AUDIO_INFO("set amp pin from %" PRId32 " to %" PRIu32 "", control->board_amp_pin, pin);
+		HAL_AUDIO_INFO("set amp pin from %ld to %lu", control->board_amp_pin, pin);
 		control->board_amp_pin = pin;
 		AmpPinConfig amp_info;
 		amp_info.pinmux = pin;
@@ -388,7 +435,7 @@ int32_t ameba_audio_ctl_set_mic_category_for_adc(StreamControl *control, uint32_
 	control->adc_use_status |= ((uint32_t)0x00000001 << channel);
 
 	if (control->mic_category_for_adc[channel] != mic_category) {
-		HAL_AUDIO_VERBOSE("ADC: %" PRIu32 " use mic: %" PRIu32 "", channel, mic_category);
+		HAL_AUDIO_VERBOSE("ADC: %lu use mic: %lu", channel, mic_category);
 		control->mic_category_for_adc[channel] = mic_category;
 	}
 
@@ -484,11 +531,11 @@ int32_t ameba_audio_ctl_set_mic_bst_gain(StreamControl *control, uint32_t mic_ca
 		amic_num = AMIC5;
 		break;
 	default:
-		HAL_AUDIO_ERROR("mic category not supported:%" PRIu32 "", mic_category);
+		HAL_AUDIO_ERROR("mic category not supported:%lu", mic_category);
 		return HAL_OSAL_ERR_INVALID_OPERATION;
 	}
 
-	HAL_AUDIO_INFO("ameba_audio_ctl_set_mic_bst_gain mic: %" PRIu32 ", gain: %" PRIu32 "",
+	HAL_AUDIO_INFO("ameba_audio_ctl_set_mic_bst_gain mic: %lu, gain: %lu",
 				   amic_num, gain);
 	if (control->gain_for_micbst[amic_num - 1] != gain) {
 		if (ameba_audio_is_audio_ip_in_use(CODEC)) {
@@ -526,7 +573,7 @@ int32_t ameba_audio_ctl_get_mic_bst_gain(StreamControl *control, uint32_t mic_ca
 		amic_num = AMIC5;
 		break;
 	default:
-		HAL_AUDIO_ERROR("mic category not supported:%" PRIu32 "", mic_category);
+		HAL_AUDIO_ERROR("mic category not supported:%lu", mic_category);
 		return HAL_OSAL_ERR_INVALID_OPERATION;
 	}
 

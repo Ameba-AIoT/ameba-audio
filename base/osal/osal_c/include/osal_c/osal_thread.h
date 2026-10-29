@@ -16,6 +16,9 @@
 #ifndef AMEBA_BASE_OSAL_OSAL_C_INCLUDE_OSAL_C_OSAL_THREAD_H
 #define AMEBA_BASE_OSAL_OSAL_C_INCLUDE_OSAL_C_OSAL_THREAD_H
 
+#include <stddef.h>
+#include <stdbool.h>
+
 #include "osal_c/osal_errnos.h"
 
 #ifdef __cplusplus
@@ -46,33 +49,18 @@ typedef struct osal_thread_param {
     bool joinable;
 } osal_thread_param;
 
-// ---------------------------------------------------
-// raw thread function
-typedef void* osal_thread_id_t;
-typedef void* (*osal_thread_func_t)(void *);
+typedef void *osal_thread_t;
+typedef void *(*osal_thread_entry_t)(void *);
 
-status_t osal_create_raw_thread(osal_thread_id_t *thread_id,
-                                osal_thread_func_t func, void *userdata,
-                                const char *name, int32_t priority, size_t stack_size);
+int osal_thread_create(osal_thread_t *thread,
+                       osal_thread_entry_t start_routine, void *arg,
+                       osal_thread_param *param);
 
-// ---------------------------------------------------
-// thread function
-typedef bool (*osal_thread_loop)(void *);
-typedef struct osal_thread_t osal_thread_t;
+int osal_thread_join(osal_thread_t thread, void **retval);
 
-status_t osal_thread_create(osal_thread_t **thread,
-                            osal_thread_loop loop_func,
-                            void *userdata,
-                            osal_thread_param *param);
+osal_thread_t osal_thread_self(void);
 
-status_t osal_thread_request_exit(osal_thread_t *thread);    
-status_t osal_thread_request_exitAndWait(osal_thread_t *thread);
-status_t osal_thread_join(osal_thread_t *thread);
-
-osal_thread_id_t osal_thread_self(void);
-
-bool osal_thread_is_running(osal_thread_t *thread);
-bool osal_thread_exit_pending(osal_thread_t *thread);
+int osal_thread_equal(osal_thread_t t1, osal_thread_t t2);
 
 #ifdef __cplusplus
 }

@@ -238,11 +238,35 @@ static uint32_t PrimaryGetStreamOutLatency(const struct AudioHwStreamOut *stream
 static int32_t PrimaryGetPresentationPosition(const struct AudioHwStreamOut *stream, uint64_t *frames, struct timespec *timestamp)
 {
 	HAL_AUDIO_VERBOSE("primaryGetPresentationPosition latency:%lu", PrimaryGetStreamOutLatency(stream));
-	(void) stream;
-	(void) frames;
-	(void) timestamp;
 
-	return -1;
+	struct PrimaryAudioHwStreamOut *out = (struct PrimaryAudioHwStreamOut *)stream;
+	int32_t ret = -1;
+
+	rtos_mutex_take(out->lock, MUTEX_WAIT_TIMEOUT);
+
+	if (out->out_pcm) {
+		uint64_t rendered_frames;
+		if (ameba_audio_stream_tx_get_position(out->out_pcm, &rendered_frames, timestamp) == 0) {
+			int64_t signed_frames = out->written - (ameba_audio_stream_tx_get_frames_written(out->out_pcm) - rendered_frames);
+			HAL_AUDIO_VERBOSE("out->written:%llu, rendered_frames:%llu, written to driver:%llu, signed_frames:%lld, sec:%lld, nsec:%ld", out->written, rendered_frames,
+							  ameba_audio_stream_tx_get_frames_written(out->out_pcm),
+							  signed_frames, timestamp->tv_sec, timestamp->tv_nsec);
+			if (signed_frames >= 0) {
+				*frames = signed_frames;
+				HAL_AUDIO_VERBOSE("frames:%llu", *frames);
+				rtos_mutex_give(out->lock);
+				return 0;
+			}
+		} else {
+			HAL_AUDIO_ERROR("get ts fail");
+		}
+	} else {
+		HAL_AUDIO_ERROR("%s no out_pcm", __func__);
+	}
+
+	rtos_mutex_give(out->lock);
+
+	return ret;
 }
 
 static int32_t PrimaryGetPresentTime(const struct AudioHwStreamOut *stream, int64_t *now_ns, int64_t *audio_ns)
@@ -470,7 +494,7 @@ struct AudioHwStreamOut *CreateAudioHwStreamOut(struct AudioHwCard *card, const 
 
 	/*stream_tx_init can only be set here, because if it's in first write, then set parameters will stuck.Because setparameters should be called before write*/
 	if (out->out_pcm == NULL) {
-		HAL_AUDIO_INFO("startAudioHwStreamOut samplerate:%" PRIu32 ", format:%" PRIu32 ", channel:%" PRIu32 ", framesize:%" PRIu32 ", period_size:%" PRIu32 "",
+		HAL_AUDIO_INFO("startAudioHwStreamOut samplerate:%lu, format:%lu, channel:%lu, framesize:%lu, period_size:%lu",
 					   out->config.rate, out->config.format,
 					   out->config.channels,
 					   out->config.frame_size, out->config.period_size);

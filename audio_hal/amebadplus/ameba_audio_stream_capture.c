@@ -149,8 +149,11 @@ static void ameba_audio_stream_rx_sport_init(CaptureStream **stream, StreamConfi
 
 	AUDIO_SP_Init(cstream->stream.sport_dev_num, SP_DIR_RX, &cstream->stream.sp_initstruct);
 
-	if (device == AMEBA_AUDIO_IN_I2S && AUDIO_I2S_IN_ROLE == AUDIO_I2S_SLAVE) {
-		AUDIO_SP_SetMasterSlave(cstream->stream.sport_dev_num, SLAVE);
+	if (device == AMEBA_AUDIO_IN_I2S) {
+		if (AUDIO_I2S_IN_ROLE == AUDIO_I2S_SLAVE)
+			AUDIO_SP_SetMasterSlave(cstream->stream.sport_dev_num, SLAVE);
+		else
+			AUDIO_SP_SetMasterSlave(cstream->stream.sport_dev_num, MASTER);
 	}
 
 }
@@ -234,7 +237,7 @@ static void ameba_audio_stream_rx_adc_mic_configure(StreamConfig config)
 		uint32_t adc_chn_idx = ameba_audio_stream_get_adc_chn_idx(i);
 		uint32_t mic_idx = ameba_audio_stream_get_mic_idx(dc->mic_category_for_adc[i - 1]);
 
-		HAL_AUDIO_VERBOSE("adc_idx: %" PRIu32 ", adc_chn: %" PRIu32 ", mic_idx: %" PRIu32 ", mic_category: %" PRIu32 ", ",
+		HAL_AUDIO_VERBOSE("adc_idx: %lu, adc_chn: %lu, mic_idx: %lu, mic_category: %lu, ",
 						  adc_idx, adc_chn_idx, mic_idx, dc->mic_category_for_adc[i - 1]);
 
 		switch (dc->mic_category_for_adc[i - 1]) {
@@ -343,7 +346,7 @@ uint32_t ameba_audio_stream_rx_sport_interrupt(void *data)
 		cstream->stream.sport_irq_count = 0;
 	}
 
-	HAL_AUDIO_PVERBOSE("total_counter:%" PRIu64 " \n", cstream->stream.total_counter);
+	HAL_AUDIO_PVERBOSE("total_counter:%llu \n", cstream->stream.total_counter);
 	AUDIO_SP_ClearRXCounterIrq(cstream->stream.sport_dev_num);
 
 	return 0;
@@ -375,7 +378,7 @@ int32_t ameba_audio_stream_rx_get_position(Stream *stream, uint64_t *captured_fr
 	tstamp->tv_sec = nsec / 1000000000LL;
 	tstamp->tv_nsec = nsec - tstamp->tv_sec * 1000000000LL;
 
-	HAL_AUDIO_PVERBOSE("captured_frames:%" PRIu64 ", trigger:%" PRIu64 ", usec:%" PRIu64 ", tv_sec:%" PRIu64 ", tv_nsec:%" PRIu32 "",
+	HAL_AUDIO_PVERBOSE("captured_frames:%llu, trigger:%llu, usec:%llu, tv_sec:%llu, tv_nsec:%lu",
 					   *captured_frames, cstream->stream.trigger_tstamp, nsec, tstamp->tv_sec, tstamp->tv_nsec);
 
 	return HAL_OSAL_OK;
@@ -399,7 +402,7 @@ Stream *ameba_audio_stream_rx_init(uint32_t device, StreamConfig config)
 		HAL_AUDIO_ERROR("calloc stream fail");
 		return NULL;
 	}
-	HAL_AUDIO_INFO("device: %" PRId32 " rate:%ld, channels:%ld, format:%ld\n", device, config.rate, config.channels, config.format);
+	HAL_AUDIO_INFO("device: %ld rate:%ld, channels:%ld, format:%ld\n", device, config.rate, config.channels, config.format);
 
 	cstream->stream.config = config;
 	cstream->stream.direction = STREAM_IN;
@@ -827,7 +830,7 @@ static void ameba_audio_stream_rx_check_and_start_gdma(CaptureStream *cstream)
 
 static int32_t ameba_audio_stream_rx_read_in_noirq_mode(Stream *stream, void *data, uint32_t bytes)
 {
-	HAL_AUDIO_CVERBOSE("bytes:%" PRId32 "", __func__, bytes);
+	HAL_AUDIO_CVERBOSE("bytes:%ld", __func__, bytes);
 
 	uint32_t total_bytes_0 = bytes;
 	uint32_t bytes_to_read_0 = total_bytes_0;
@@ -982,6 +985,12 @@ HAL_AUDIO_WEAK void ameba_audio_stream_rx_stop(Stream *stream)
 		// please mask interrupt in the handling.
 		cstream->stream.sem_gdma_end_need_post = true;
 		GDMA_INTConfig(sp_rxgdma_initstruct->GDMA_Index, sp_rxgdma_initstruct->GDMA_ChNum, sp_rxgdma_initstruct->GDMA_IsrType, ENABLE);
+
+		// sometimes user start gdma, but never start sport, irq will never come.
+		if(!ameba_audio_sport_started(cstream->stream.sport_dev_num)) {
+			AUDIO_SP_RXStart(cstream->stream.sport_dev_num, ENABLE);
+		}
+
 		int32_t sem_ret = rtos_sema_take(cstream->stream.sem_gdma_end,
 						  cstream->stream.config.period_count * cstream->stream.config.period_size * 1000 / cstream->stream.config.rate);
 		if (sem_ret < 0) {
@@ -998,6 +1007,12 @@ HAL_AUDIO_WEAK void ameba_audio_stream_rx_stop(Stream *stream)
 		if (cstream->stream.extra_channel) {
 			GDMA_INTConfig(extra_sp_rxgdma_initstruct->GDMA_Index, extra_sp_rxgdma_initstruct->GDMA_ChNum, extra_sp_rxgdma_initstruct->GDMA_IsrType, ENABLE);
 		}
+
+		// sometimes user start gdma, but never start sport, irq will never come.
+		if(!ameba_audio_sport_started(cstream->stream.sport_dev_num)) {
+			AUDIO_SP_RXStart(cstream->stream.sport_dev_num, ENABLE);
+		}
+
 		int32_t sem_ret = rtos_sema_take(cstream->stream.extra_sem_gdma_end,
 						  cstream->stream.config.period_count * cstream->stream.config.period_size * 1000 / cstream->stream.config.rate);
 		if (sem_ret < 0) {
@@ -1043,8 +1058,6 @@ void ameba_audio_stream_rx_close(Stream *stream)
 			}
 		}
 
-		AUDIO_SP_Deinit(cstream->stream.sport_dev_num, SP_DIR_RX);
-
 		if (cstream->stream.sport_dev_num == AUDIO_I2S_IN_SPORT_INDEX) {
 			ameba_audio_stream_rx_reset_i2s_pin();
 		}
@@ -1052,6 +1065,8 @@ void ameba_audio_stream_rx_close(Stream *stream)
 		if (cstream->stream.sport_dev_num == AUDIO_I2S_IN_EXTRA_SPORT_INDEX) {
 			ameba_audio_stream_rx_reset_i2s_extra_pin();
 		}
+
+		AUDIO_SP_Deinit(cstream->stream.sport_dev_num, SP_DIR_RX);
 
 		ameba_audio_reset_audio_ip_status((Stream *)cstream);
 
