@@ -12,11 +12,9 @@ set(public_libraries)               #public libraries(files), NOTE: linked with 
 # You may use if-else condition to set or update predefined variable above
 
 ## Differentiated configuration based on SoC types
-if (CONFIG_MEDIA_PLAYER)
-    ameba_list_append(public_libraries
-        ${c_SDK_LIB_APPLICATION_DIR}/lib_gsm.a
-    )
-endif()
+ameba_list_append(public_libraries
+    ${c_SDK_LIB_APPLICATION_DIR}/lib_gsm.a
+)
 
 list(REMOVE_DUPLICATES public_libraries)
 # Component public part, user config end

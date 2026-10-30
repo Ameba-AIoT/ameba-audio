@@ -181,7 +181,7 @@ int32_t ameba_audio_ctl_set_amp_pin(StreamControl *control, uint32_t pin)
 	}
 
 	if (control->board_amp_pin != (int32_t)pin) {
-		HAL_AUDIO_INFO("set amp pin from %" PRId32 " to %" PRIu32 "", control->board_amp_pin, pin);
+		HAL_AUDIO_INFO("set amp pin from %ld to %lu", control->board_amp_pin, pin);
 		control->board_amp_pin = pin;
 		AmpPinConfig amp_info;
 		amp_info.pinmux = pin;

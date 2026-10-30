@@ -214,6 +214,7 @@ ameba_list_append(private_definitions
     ENABLE_HARDENING
 )
 ameba_list_append(private_compile_options
+    -Os
     -Wno-error
     -Wno-undef
     -Wno-stringop-overread
