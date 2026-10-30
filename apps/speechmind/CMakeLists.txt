@@ -1,0 +1,1 @@
+ameba_add_subdirectory_if(CONFIG_SPEECHMIND_EN src)
