@@ -120,7 +120,7 @@ static void AIVoiceManager_AdjustTo32Multiple(int num, int *ones, int *twos, int
 
 AIVoiceManager *AIVoiceManager_Create(AIVoiceFlowType type, struct aivoice_config *config)
 {
-    ipc_app_init(1024 * 4, 6, 0);
+    ipc_app_init(1536, 6, 0);   /* ReceiverLoop stack; measured peak ~880-1232B */
     while (!RPC_IsInited()) {
         osal_msleep(5);
     }
