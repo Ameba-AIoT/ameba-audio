@@ -64,7 +64,12 @@ endif()
 ameba_add_subdirectory_if_exist(third_party)
 
 # --------------------------------------------------------------
-# Audio Example
+# Apps (CONFIG_SPEECHMIND_EN)
+# --------------------------------------------------------------
+if(CONFIG_SPEECHMIND_EN)
+    ameba_add_subdirectory_if_exist(apps/speechmind)
+endif()
+
 # --------------------------------------------------------------
 ameba_submodule_register(audio p_EXAMPLE_DIRS
     examples/audio_manager
