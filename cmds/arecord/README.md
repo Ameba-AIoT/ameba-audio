@@ -23,7 +23,7 @@ Ameba audio project can achieve:
 
 ## Configurations
 User can use default configurations when running on demo board. If user wants to change configuration:
-Please see discriptions in component/soc/usrcfg/xx/include/ameba_audio_hw_usrcfg.h, ameba_audio_hw_usrcfg.h is for audio hardware configurations.
+Please see discriptions in component/audio/audio_hal/<soc>/ameba_audio_hw_usrcfg.h, ameba_audio_hw_usrcfg.h is for audio hardware configurations.
 
 ### Hardware Configurations
 User can use default configurations when running on demo board. If user wants to change configuration:
