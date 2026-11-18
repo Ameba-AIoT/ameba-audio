@@ -21,7 +21,7 @@ Ameba audio project can achieve:
 
 ## Configurations <a name = "configurations"></a>
 
-Please see discriptions in component/soc/**/usrcfg/include/ameba_audio_hw_usrcfg.h.
+Please see discriptions in component/audio/audio_hal/<soc>/ameba_audio_hw_usrcfg.h.
 
 ### internal playback
 
@@ -55,7 +55,7 @@ If you want to play with I2S, please change the following codes:
     component/audio/audio_hal/ameba**/primary_audio_hw_stream_out.c
     out->out_pcm = ameba_audio_stream_tx_init(AMEBA_AUDIO_DEVICE_I2S, out->config);
 
-    component/soc/**/usrcfg/include/ameba_audio_hw_usrcfg.h
+    component/audio/audio_hal/<soc>/ameba_audio_hw_usrcfg.h
 
     //define your I2S out sport index and I2S out devices of your board.
     #define AUDIO_I2S_OUT_SPORT_INDEX        1
@@ -113,7 +113,7 @@ If you want to use dmic, please set following configurations.
 If you want to record with I2S, please change the following codes:
 
 ```
-    component/soc/**/usrcfg/include/ameba_audio_hw_usrcfg.h
+    component/audio/audio_hal/<soc>/ameba_audio_hw_usrcfg.h
 
     //define your I2S in sport index and I2S in devices of your board.
     #define AUDIO_I2S_IN_SPORT_INDEX        1
