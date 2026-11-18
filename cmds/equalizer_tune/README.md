@@ -27,7 +27,7 @@ Ameba audio project can achieve:
 ## Configurations <a name = "configurations"></a>
 
 User can use default configurations when running on demo board. If user wants to change configuration:
-Please see discriptions in component/soc/usrcfg/xx/include/ameba_audio_hw_usrcfg.h, ameba_audio_hw_usrcfg.h is for audio hardware configurations.
+Please see discriptions in component/audio/audio_hal/<soc>/ameba_audio_hw_usrcfg.h, ameba_audio_hw_usrcfg.h is for audio hardware configurations.
 Please see discriptions in component/audio/configs/include/ameba_audio_mixer_usrcfg.h, and setup component/audio/configs/ameba_audio_mixer_usrcfg.cpp.
 
 ### Hardware configurations
