@@ -80,6 +80,7 @@ ameba_list_append_if(CONFIG_AUDIO_DEVICE_USB private_sources
 )
 
 ameba_list_append(private_includes
+    ${c_CMPT_AUDIO_DIR}/audio_hal/${c_SOC_TYPE}
     ${c_CMPT_AUDIO_DIR}/interfaces
     ${c_CMPT_AUDIO_DIR}/audio_driver/include
     ${c_CMPT_AUDIO_DIR}/audio_hal/common
