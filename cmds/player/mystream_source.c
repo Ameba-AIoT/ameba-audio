@@ -137,7 +137,7 @@ int32_t MyStreamSource_CheckPrepared(const StreamSource *source)
     return data_source->data ? AUDIO_OK : AUDIO_ERR_NO_INIT;
 }
 
-ssize_t MyStreamSource_ReadAt(const StreamSource *source, off_t offset, void *data, size_t size)
+ssize_t MyStreamSource_ReadAt(const StreamSource *source, int64_t offset, void *data, size_t size)
 {
     if (!source || !data || !size) {
         RTK_LOGE(TAG, "ReadAt invalid param, source: %p, data: %p, size: %d", source, data, size);
@@ -153,7 +153,7 @@ ssize_t MyStreamSource_ReadAt(const StreamSource *source, off_t offset, void *da
             //RTK_LOGE(TAG, "ReadAt offset(%d) beyond unknown length data, now data_length(%d)", offset, data_source->data_length);
             return (ssize_t)STREAM_SOURCE_READ_AGAIN;
         }
-        RTK_LOGD(TAG, "ReadAt offset(%ld) beyond data length(%d), unknown_length(%d), source(%p), data(%p)",
+        RTK_LOGD(TAG, "ReadAt offset(%lld) beyond data length(%d), unknown_length(%d), source(%p), data(%p)",
                offset,
                data_source->data_length, data_source->unknown_data_length,
                data_source, data);
@@ -187,7 +187,7 @@ ssize_t MyStreamSource_ReadAt(const StreamSource *source, off_t offset, void *da
     return size;
 }
 
-int32_t MyStreamSource_GetLength(const StreamSource *source, off_t *size)
+int32_t MyStreamSource_GetLength(const StreamSource *source, int64_t *size)
 {
     if (!source) {
         return STREAM_SOURCE_FAIL;

@@ -37,6 +37,7 @@
 #ifndef AMEBA_FWK_MEDIA_PLAYBACK_MEDIA_STREAM_SOURCE_H
 #define AMEBA_FWK_MEDIA_PLAYBACK_MEDIA_STREAM_SOURCE_H
 
+#include <stdint.h>
 #include <sys/types.h>
 
 #ifdef __cplusplus
@@ -75,7 +76,7 @@ struct StreamSource {
      * @since 1.0
      * @version 1.0
      */
-    ssize_t (*ReadAt)(const StreamSource *source, off_t offset, void *data, size_t size);
+    ssize_t (*ReadAt)(const StreamSource *source, int64_t offset, void *data, size_t size);
 
     /**
      * @brief Get the whole length of the source.
@@ -91,7 +92,7 @@ struct StreamSource {
      * @since 1.0
      * @version 1.0
      */
-    int32_t (*GetLength)(const StreamSource *source, off_t *size);
+    int32_t (*GetLength)(const StreamSource *source, int64_t *size);
 };
 
 enum {

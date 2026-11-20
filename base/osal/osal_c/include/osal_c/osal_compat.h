@@ -18,11 +18,14 @@
 
 #if !defined(__linux__)
 
+#include <stdint.h>
+
 #ifndef __ICCARM__
 #include <machine/endian.h>
 #endif
 
-typedef off_t off64_t;
+/* off64_t must be 64-bit; newlib off_t is only 32-bit */
+typedef int64_t off64_t;
 
 #ifndef SSIZE_MAX
 #define SSIZE_MAX INT_MAX // Assume 32bit system
