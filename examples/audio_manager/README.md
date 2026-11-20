@@ -23,7 +23,7 @@ Ameba audio project can achieve:
 
 ## Configurations <a name = "configurations"></a>
 
-1. Please see discriptions in component/soc/usrcfg/xx/include/ameba_audio_hw_usrcfg.h.
+1. Please see discriptions in component/audio/audio_hal/<soc>/ameba_audio_hw_usrcfg.h.
 ameba_audio_hw_usrcfg.h is for audio Hardware configurations.
 2. Please set component/soc/usrcfg/xxx/ameba_bootcfg.c's Boot_SocClk_Info_Idx to choose right cpu pll.
 take amebadplus for example: 48000 rate, choose PLL_688P128M. 44100 rate choose PLL_677P376M.

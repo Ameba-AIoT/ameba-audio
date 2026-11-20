@@ -121,7 +121,7 @@ ameba.py monitor -p <PORT> -b 1500000
 - **Audio Commands** → 编译 `cmds/` 下的控制台命令
 
 硬件接线（功放、PLL 与 XTAL 时钟选择、端口引脚等）在各 SoC 的
-`component/soc/usrcfg/<soc>/include/ameba_audio_hw_usrcfg.h` 中配置。
+`component/audio/audio_hal/<soc>/ameba_audio_hw_usrcfg.h` 中配置。
 
 ### 试用控制台命令
 
