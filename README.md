@@ -121,7 +121,7 @@ Key menuconfig options (see `Kconfig`):
 - **Audio Commands** → build the console commands under `cmds/`
 
 Hardware wiring (amplifier, PLL vs. XTAL clock, port pins, etc.) is configured per SoC in
-`component/soc/usrcfg/<soc>/include/ameba_audio_hw_usrcfg.h`.
+`component/audio/audio_hal/<soc>/ameba_audio_hw_usrcfg.h`.
 
 ### Try a console command
 
