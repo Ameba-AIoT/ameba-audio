@@ -21,7 +21,7 @@ Ameba audio project can achieve:
 
 ## Configurations <a name = "configurations"></a>
 
-Please see discriptions in component/soc/**/usrcfg/include/ameba_audio_hw_usrcfg.h.
+Please see discriptions in component/audio/audio_hal/<soc>/ameba_audio_hw_usrcfg.h.
 
 ### demoboard playback
 
@@ -66,7 +66,7 @@ If you want to play with I2S, please change the following codes:
     component/audio/audio_hal/ameba**/primary_audio_hw_stream_out.c
     out->out_pcm = ameba_audio_stream_tx_init(AMEBA_AUDIO_DEVICE_I2S, out->config);
 
-    component/soc/**/usrcfg/include/ameba_audio_hw_usrcfg.h
+    component/audio/audio_hal/<soc>/ameba_audio_hw_usrcfg.h
     //if your external codec needs mclk from soc, and it's mclk should be mulitiplier of fs, set 1 here.
     //if your external codec needs fixed mclk from soc, set 2 here.
     //if your external codec doesn't need mclk from soc, set 1 here.
@@ -150,7 +150,7 @@ If you want to record with I2S, please change the following codes:
     ......
     record_config.device = DEVICE_IN_I2S;
 
-    component/soc/**/usrcfg/include/ameba_audio_hw_usrcfg.h
+    component/audio/audio_hal/<soc>/ameba_audio_hw_usrcfg.h
     //if your external codec needs mclk from soc, and it's mclk should be mulitiplier of fs, set 1 here.
     //if your external codec needs fixed mclk from soc, set 2 here.
     //if your external codec doesn't need mclk from soc, set 1 here.
