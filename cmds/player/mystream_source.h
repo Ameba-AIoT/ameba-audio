@@ -40,8 +40,8 @@ StreamSource *MyStreamSource_Create(char *source, int length);
 void MyStreamSource_Destroy(MyStreamSource *source);
 
 int32_t MyStreamSource_CheckPrepared(const StreamSource *source);
-ssize_t MyStreamSource_ReadAt(const StreamSource *source, off_t offset, void *data, size_t size);
-int32_t MyStreamSource_GetLength(const StreamSource *source, off_t *size);
+ssize_t MyStreamSource_ReadAt(const StreamSource *source, int64_t offset, void *data, size_t size);
+int32_t MyStreamSource_GetLength(const StreamSource *source, int64_t *size);
 
 #ifdef __cplusplus
 }
