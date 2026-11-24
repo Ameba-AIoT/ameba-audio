@@ -101,6 +101,7 @@ int Dequantize(MP3DecInfo *mp3DecInfo, int gr)
 			&si->sis[gr][ch], &sfi->sfis[gr][ch], &cbi[ch]);
 	}
 
+#ifndef MP3_LOW_MEM_MODE
 	/* joint stereo processing assumes one guard bit in input samples
 	 * it's extremely rare not to have at least one gb, so if this is the case
 	 *   just make a pass over the data and clip to [-2^30+1, 2^30-1]
@@ -123,7 +124,7 @@ int Dequantize(MP3DecInfo *mp3DecInfo, int gr)
 			/* intensity stereo enabled - run mid-side up to start of right zero region */
 			if (cbi[1].cbType == 0)
 				nSamps = fh->sfBand->l[cbi[1].cbEndL + 1];
-			else 
+			else
 				nSamps = 3 * fh->sfBand->s[cbi[1].cbEndSMax + 1];
 		} else {
 			/* intensity stereo disabled - run mid-side on whole spectrum */
@@ -136,7 +137,7 @@ int Dequantize(MP3DecInfo *mp3DecInfo, int gr)
 	if (fh->modeExt & 0x01) {
 		nSamps = hi->nonZeroBound[0];
 		if (fh->ver == MPEG1) {
-			IntensityProcMPEG1(hi->huffDecBuf, nSamps, fh, &sfi->sfis[gr][1], di->cbi, 
+			IntensityProcMPEG1(hi->huffDecBuf, nSamps, fh, &sfi->sfis[gr][1], di->cbi,
 				fh->modeExt >> 1, si->sis[gr][1].mixedBlock, mOut);
 		} else {
 			IntensityProcMPEG2(hi->huffDecBuf, nSamps, fh, &sfi->sfis[gr][1], di->cbi, &sfi->sfjs,
@@ -152,6 +153,7 @@ int Dequantize(MP3DecInfo *mp3DecInfo, int gr)
 		hi->nonZeroBound[0] = nSamps;
 		hi->nonZeroBound[1] = nSamps;
 	}
+#endif /* !MP3_LOW_MEM_MODE */
 
 	/* output format Q(DQ_FRACBITS_OUT) */
 	return 0;

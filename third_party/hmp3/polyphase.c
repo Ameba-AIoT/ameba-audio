@@ -137,7 +137,7 @@ void PolyphaseMono(short *pcm, int *vbuf, const int *coefBase)
 
 	/* special case, output sample 16 */
 	coef = coefBase + 256;
-	vb1 = vbuf + 64*16;
+	vb1 = vbuf + VBUF_ROW_STRIDE*16;
 	sum1L = rndVal;
 
 	MC1M(0)
@@ -153,7 +153,7 @@ void PolyphaseMono(short *pcm, int *vbuf, const int *coefBase)
 
 	/* main convolution loop: sum1L = samples 1, 2, 3, ... 15   sum2L = samples 31, 30, ... 17 */
 	coef = coefBase + 16;
-	vb1 = vbuf + 64;
+	vb1 = vbuf + VBUF_ROW_STRIDE;
 	pcm++;
 
 	/* right now, the compiler creates bad asm from this... */
@@ -169,7 +169,7 @@ void PolyphaseMono(short *pcm, int *vbuf, const int *coefBase)
 		MC2M(6)
 		MC2M(7)
 
-		vb1 += 64;
+		vb1 += VBUF_ROW_STRIDE;
 		*(pcm)       = ClipToShort((int)SAR64(sum1L, (32-CSHIFT)), DEF_NFRACBITS);
 		*(pcm + 2*i) = ClipToShort((int)SAR64(sum2L, (32-CSHIFT)), DEF_NFRACBITS);
 		pcm++;

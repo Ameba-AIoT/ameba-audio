@@ -367,6 +367,18 @@ int MP3Decode(HMP3Decoder hMP3Decoder, unsigned char **inbuf, int *bytesLeft, sh
 #ifdef PROFILE
 	time = systime_get();
 #endif
+		/* reject frames whose bit reservoir + new data would overflow mainBuf
+		 * (e.g. high-bitrate MPEG-2.5 or free-format streams in LOW_MEM mode)
+		 */
+		if ((mp3DecInfo->mainDataBytes >= mp3DecInfo->mainDataBegin ? mp3DecInfo->mainDataBegin : mp3DecInfo->mainDataBytes)
+				+ mp3DecInfo->nSlots > MAINBUF_SIZE) {
+			*inbuf += mp3DecInfo->nSlots;
+			*bytesLeft -= (mp3DecInfo->nSlots);
+			mp3DecInfo->mainDataBytes = 0;
+			MP3ClearBadFrame(mp3DecInfo, outbuf);
+			return ERR_MP3_INVALID_FRAMEHEADER;
+		}
+
 		/* fill main data buffer with enough new data for this frame */
 		if (mp3DecInfo->mainDataBytes >= mp3DecInfo->mainDataBegin) {
 			/* adequate "old" main data available (i.e. bit reservoir) */

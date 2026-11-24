@@ -200,63 +200,63 @@ static const int dcttab[48] = {
 	buf -= 32;	/* reset */
 
 	/* sample 0 - always delayed one block */
-	d = dest + 64*16 + ((offset - oddBlock) & 7) + (oddBlock ? 0 : VBUF_LENGTH);
+	d = dest + VBUF_ROW_STRIDE*16 + ((offset - oddBlock) & 7) + (oddBlock ? 0 : VBUF_LENGTH);
 	s = buf[ 0];				d[0] = d[8] = s;
     
 	/* samples 16 to 31 */
 	d = dest + offset + (oddBlock ? VBUF_LENGTH  : 0);
 
-	s = buf[ 1];				d[0] = d[8] = s;	d += 64;
+	s = buf[ 1];				d[0] = d[8] = s;	d += VBUF_ROW_STRIDE;
 
 	tmp = buf[25] + buf[29];
-	s = buf[17] + tmp;			d[0] = d[8] = s;	d += 64;
-	s = buf[ 9] + buf[13];		d[0] = d[8] = s;	d += 64;
-	s = buf[21] + tmp;			d[0] = d[8] = s;	d += 64;
+	s = buf[17] + tmp;			d[0] = d[8] = s;	d += VBUF_ROW_STRIDE;
+	s = buf[ 9] + buf[13];		d[0] = d[8] = s;	d += VBUF_ROW_STRIDE;
+	s = buf[21] + tmp;			d[0] = d[8] = s;	d += VBUF_ROW_STRIDE;
 
 	tmp = buf[29] + buf[27];
-	s = buf[ 5];				d[0] = d[8] = s;	d += 64;
-	s = buf[21] + tmp;			d[0] = d[8] = s;	d += 64;
-	s = buf[13] + buf[11];		d[0] = d[8] = s;	d += 64;
-	s = buf[19] + tmp;			d[0] = d[8] = s;	d += 64;
+	s = buf[ 5];				d[0] = d[8] = s;	d += VBUF_ROW_STRIDE;
+	s = buf[21] + tmp;			d[0] = d[8] = s;	d += VBUF_ROW_STRIDE;
+	s = buf[13] + buf[11];		d[0] = d[8] = s;	d += VBUF_ROW_STRIDE;
+	s = buf[19] + tmp;			d[0] = d[8] = s;	d += VBUF_ROW_STRIDE;
 
 	tmp = buf[27] + buf[31];
-	s = buf[ 3];				d[0] = d[8] = s;	d += 64;
-	s = buf[19] + tmp;			d[0] = d[8] = s;	d += 64;
-	s = buf[11] + buf[15];		d[0] = d[8] = s;	d += 64;
-	s = buf[23] + tmp;			d[0] = d[8] = s;	d += 64;
+	s = buf[ 3];				d[0] = d[8] = s;	d += VBUF_ROW_STRIDE;
+	s = buf[19] + tmp;			d[0] = d[8] = s;	d += VBUF_ROW_STRIDE;
+	s = buf[11] + buf[15];		d[0] = d[8] = s;	d += VBUF_ROW_STRIDE;
+	s = buf[23] + tmp;			d[0] = d[8] = s;	d += VBUF_ROW_STRIDE;
 
 	tmp = buf[31];
-	s = buf[ 7];				d[0] = d[8] = s;	d += 64;
-	s = buf[23] + tmp;			d[0] = d[8] = s;	d += 64;
-	s = buf[15];				d[0] = d[8] = s;	d += 64;
+	s = buf[ 7];				d[0] = d[8] = s;	d += VBUF_ROW_STRIDE;
+	s = buf[23] + tmp;			d[0] = d[8] = s;	d += VBUF_ROW_STRIDE;
+	s = buf[15];				d[0] = d[8] = s;	d += VBUF_ROW_STRIDE;
 	s = tmp;					d[0] = d[8] = s;
 
 	/* samples 16 to 1 (sample 16 used again) */
 	d = dest + 16 + ((offset - oddBlock) & 7) + (oddBlock ? 0 : VBUF_LENGTH);
 
-	s = buf[ 1];				d[0] = d[8] = s;	d += 64;
+	s = buf[ 1];				d[0] = d[8] = s;	d += VBUF_ROW_STRIDE;
 
 	tmp = buf[30] + buf[25];
-	s = buf[17] + tmp;			d[0] = d[8] = s;	d += 64;
-	s = buf[14] + buf[ 9];		d[0] = d[8] = s;	d += 64;
-	s = buf[22] + tmp;			d[0] = d[8] = s;	d += 64;
-	s = buf[ 6];				d[0] = d[8] = s;	d += 64;
+	s = buf[17] + tmp;			d[0] = d[8] = s;	d += VBUF_ROW_STRIDE;
+	s = buf[14] + buf[ 9];		d[0] = d[8] = s;	d += VBUF_ROW_STRIDE;
+	s = buf[22] + tmp;			d[0] = d[8] = s;	d += VBUF_ROW_STRIDE;
+	s = buf[ 6];				d[0] = d[8] = s;	d += VBUF_ROW_STRIDE;
 
 	tmp = buf[26] + buf[30];
-	s = buf[22] + tmp;			d[0] = d[8] = s;	d += 64;
-	s = buf[10] + buf[14];		d[0] = d[8] = s;	d += 64;
-	s = buf[18] + tmp;			d[0] = d[8] = s;	d += 64;
-	s = buf[ 2];				d[0] = d[8] = s;	d += 64;
+	s = buf[22] + tmp;			d[0] = d[8] = s;	d += VBUF_ROW_STRIDE;
+	s = buf[10] + buf[14];		d[0] = d[8] = s;	d += VBUF_ROW_STRIDE;
+	s = buf[18] + tmp;			d[0] = d[8] = s;	d += VBUF_ROW_STRIDE;
+	s = buf[ 2];				d[0] = d[8] = s;	d += VBUF_ROW_STRIDE;
 
 	tmp = buf[28] + buf[26];
-	s = buf[18] + tmp;			d[0] = d[8] = s;	d += 64;
-	s = buf[12] + buf[10];		d[0] = d[8] = s;	d += 64;
-	s = buf[20] + tmp;			d[0] = d[8] = s;	d += 64;
-	s = buf[ 4];				d[0] = d[8] = s;	d += 64;
+	s = buf[18] + tmp;			d[0] = d[8] = s;	d += VBUF_ROW_STRIDE;
+	s = buf[12] + buf[10];		d[0] = d[8] = s;	d += VBUF_ROW_STRIDE;
+	s = buf[20] + tmp;			d[0] = d[8] = s;	d += VBUF_ROW_STRIDE;
+	s = buf[ 4];				d[0] = d[8] = s;	d += VBUF_ROW_STRIDE;
 
 	tmp = buf[24] + buf[28];
-	s = buf[20] + tmp;			d[0] = d[8] = s;	d += 64;
-	s = buf[ 8] + buf[12];		d[0] = d[8] = s;	d += 64;
+	s = buf[20] + tmp;			d[0] = d[8] = s;	d += VBUF_ROW_STRIDE;
+	s = buf[ 8] + buf[12];		d[0] = d[8] = s;	d += VBUF_ROW_STRIDE;
 	s = buf[16] + tmp;			d[0] = d[8] = s;
 
 	/* this is so rarely invoked that it's not worth making two versions of the output
@@ -264,17 +264,17 @@ static const int dcttab[48] = {
 	 * here we just load, clip, shift, and store on the rare instances that es != 0
 	 */
 	if (es) {
-		d = dest + 64*16 + ((offset - oddBlock) & 7) + (oddBlock ? 0 : VBUF_LENGTH);
+		d = dest + VBUF_ROW_STRIDE*16 + ((offset - oddBlock) & 7) + (oddBlock ? 0 : VBUF_LENGTH);
 		s = d[0];	CLIP_2N(s, 31 - es);	d[0] = d[8] = (s << es);
 	
 		d = dest + offset + (oddBlock ? VBUF_LENGTH  : 0);
 		for (i = 16; i <= 31; i++) {
-			s = d[0];	CLIP_2N(s, 31 - es);	d[0] = d[8] = (s << es);	d += 64;
+			s = d[0];	CLIP_2N(s, 31 - es);	d[0] = d[8] = (s << es);	d += VBUF_ROW_STRIDE;
 		}
 
 		d = dest + 16 + ((offset - oddBlock) & 7) + (oddBlock ? 0 : VBUF_LENGTH);
 		for (i = 15; i >= 0; i--) {
-			s = d[0];	CLIP_2N(s, 31 - es);	d[0] = d[8] = (s << es);	d += 64;
+			s = d[0];	CLIP_2N(s, 31 - es);	d[0] = d[8] = (s << es);	d += VBUF_ROW_STRIDE;
 		}
 	}
 }

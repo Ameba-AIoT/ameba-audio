@@ -22,10 +22,17 @@
 extern "C" {
 #endif
 
+/*
+ * Single-producer / single-consumer ring (one side is usually a GDMA ISR).
+ * read_ptr and write_ptr are mirror indexes in [0, 2 * capacity): the byte
+ * offset is idx % capacity, the extra lap bit tells full from empty when the
+ * offsets meet. read_ptr is written by the consumer only, write_ptr by the
+ * producer only, and the fill level is always derived from both, so no field
+ * is read-modify-written by both sides.
+ */
 typedef struct _AudioBuffer {
-	size_t read_ptr;
-	size_t write_ptr;
-	size_t size_remain;
+	volatile size_t read_ptr;
+	volatile size_t write_ptr;
 	size_t capacity;
 	char *raw_data;
 } AudioBuffer;
