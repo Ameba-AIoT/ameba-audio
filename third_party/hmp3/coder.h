@@ -92,7 +92,19 @@
 #define BLOCK_SIZE				18
 #define	NBANDS					32
 #define MAX_REORDER_SAMPS		((192-126)*3)		/* largest critical band for short blocks (see sfBandTable) */
-#define VBUF_LENGTH				(17 * 2 * NBANDS)	/* for double-sized vbuf FIFO */
+
+/* VBUF_ROW_STRIDE: per-block stride in vbuf, accommodates interleaved channels.
+ *   default: 2*NBANDS = 64 (room for L+R interleaved)
+ *   LOW_MEM: NBANDS   = 32 (mono only, half the row width)
+ * VBUF_LENGTH = 17 rows * row stride. Total vbuf = 2 * VBUF_LENGTH (the "2" is the
+ *   odd/even-block FIFO doubling; independent of channel count).
+ */
+#ifdef MP3_LOW_MEM_MODE
+#define VBUF_ROW_STRIDE			NBANDS
+#else
+#define VBUF_ROW_STRIDE			(2 * NBANDS)
+#endif
+#define VBUF_LENGTH				(17 * VBUF_ROW_STRIDE)	/* for double-sized vbuf FIFO */
 
 /* additional external symbols to name-mangle for static linking */
 #define	SetBitstreamPointer	STATNAME(SetBitstreamPointer)
@@ -193,7 +205,18 @@ typedef struct _DequantInfo {
 } DequantInfo;
 
 typedef struct _HuffmanInfo {
+#ifdef MP3_LOW_MEM_MODE
+	/* huffDecBuf and outBuf share storage. After IMDCT runs, huffDecBuf is dead;
+	 * outBuf is laid out subband-major ([NBANDS][BLOCK_SIZE]) so each subband's
+	 * IMDCT can write back into the same 18-int slot that was its input.
+	 */
+	union {
+		int huffDecBuf[MAX_NCHAN][MAX_NSAMP];
+		int outBuf[MAX_NCHAN][NBANDS][BLOCK_SIZE];
+	};
+#else
 	int huffDecBuf[MAX_NCHAN][MAX_NSAMP];		/* used both for decoded Huffman values and dequantized coefficients */
+#endif
 	int nonZeroBound[MAX_NCHAN];				/* number of coeffs in huffDecBuf[ch] which can be > 0 */
 	int gb[MAX_NCHAN];							/* minimum number of guard bits in huffDecBuf[ch] */
 } HuffmanInfo;
@@ -214,13 +237,29 @@ typedef struct _HuffTabLookup {
 } HuffTabLookup;
 
 typedef struct _IMDCTInfo {
-	int outBuf[MAX_NCHAN][BLOCK_SIZE][NBANDS];	/* output of IMDCT */	
+#ifndef MP3_LOW_MEM_MODE
+	int outBuf[MAX_NCHAN][BLOCK_SIZE][NBANDS];	/* output of IMDCT (LOW_MEM: relocated into HuffmanInfo) */
+#endif
 	int overBuf[MAX_NCHAN][MAX_NSAMP / 2];		/* overlap-add buffer (by symmetry, only need 1/2 size) */
 	int numPrevIMDCT[MAX_NCHAN];				/* how many IMDCT's calculated in this channel on prev. granule */
 	int prevType[MAX_NCHAN];
 	int prevWinSwitch[MAX_NCHAN];
 	int gb[MAX_NCHAN];
 } IMDCTInfo;
+
+/* IMDCT output layout helpers.
+ *   default:  outBuf[BLOCK_SIZE][NBANDS]  — sample-major; stride between samples = NBANDS
+ *   LOW_MEM:  outBuf[NBANDS][BLOCK_SIZE]  — subband-major; stride between samples = 1
+ * The LOW_MEM transpose lets each block's IMDCT write back into the same
+ * memory it just read (allowing union with huffDecBuf). Subband then gathers.
+ */
+#ifdef MP3_LOW_MEM_MODE
+#define IMDCT_SAMPLE_STRIDE	1
+#define IMDCT_BLOCK_OFFSET(b)	((b) * BLOCK_SIZE)
+#else
+#define IMDCT_SAMPLE_STRIDE	NBANDS
+#define IMDCT_BLOCK_OFFSET(b)	(b)
+#endif
 
 typedef struct _BlockCount {
 	int nBlocksLong;
@@ -256,7 +295,7 @@ typedef struct _ScaleFactorInfo {
  *   last 15 blocks to shift them down one, a hardware style FIFO)
  */ 
 typedef struct _SubbandInfo {
-	int vbuf[MAX_NCHAN * VBUF_LENGTH];		/* vbuf for fast DCT-based synthesis PQMF - double size for speed (no modulo indexing) */
+	int vbuf[2 * VBUF_LENGTH];				/* vbuf for fast DCT-based synthesis PQMF - "2" is for odd/even FIFO doubling (NOT channel count) */
 	int vindex;								/* internal index for tracking position in vbuf */
 } SubbandInfo;
 

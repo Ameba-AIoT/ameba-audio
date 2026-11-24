@@ -268,6 +268,14 @@ int UnpackFrameHeader(MP3DecInfo *mp3DecInfo, unsigned char *buf)
 	if (fh->srIdx == 3 || fh->layer == 4 || fh->brIdx == 15)
 		return -1;
 
+#ifdef MP3_LOW_MEM_MODE
+	/* LOW_MEM is sized for MPEG-2/2.5 mono Layer III only; reject anything else
+	 * (otherwise mainBuf / huffDecBuf / vbuf etc. would overflow).
+	 */
+	if (fh->ver == MPEG1 || fh->sMode != Mono || fh->layer != 3)
+		return -1;
+#endif
+
 	fh->sfBand = &sfBandTable[fh->ver][fh->srIdx];	/* for readability (we reference sfBandTable many times in decoder) */
 	if (fh->sMode != Joint)		/* just to be safe (dequant, stproc check fh->modeExt) */
 		fh->modeExt = 0;

@@ -534,7 +534,7 @@ int32_t ameba_audio_stream_tx_get_buffer_status(Stream *stream)
 	uint32_t remain = 0;
 
 	if (rstream->stream.stream_mode == AMEBA_AUDIO_DMA_NOIRQ_MODE) {
-		uint32_t wr = (uint32_t)(rstream->stream.rbuffer->raw_data + rstream->stream.rbuffer->write_ptr);
+		uint32_t wr = (uint32_t)(rstream->stream.rbuffer->raw_data + ameba_audio_stream_buffer_get_rx_writeptr(rstream->stream.rbuffer));
 		uint32_t capacity = rstream->stream.rbuffer->capacity;
 		uint32_t dma_addr = GDMA_GetSrcAddr(txgdma_initstruct->GDMA_Index, txgdma_initstruct->GDMA_ChNum);
 		remain = (wr < dma_addr) ? (capacity - (dma_addr - wr)) : (wr - dma_addr);
@@ -768,7 +768,7 @@ static int32_t ameba_audio_stream_tx_write_in_noirq_mode(Stream *stream, const v
 
 	while (bytes_left_to_write != 0) {
 		if (rstream->stream.start_gdma) {
-			uint32_t wr = (uint32_t)(rstream->stream.rbuffer->raw_data + rstream->stream.rbuffer->write_ptr);
+			uint32_t wr = (uint32_t)(rstream->stream.rbuffer->raw_data + ameba_audio_stream_buffer_get_rx_writeptr(rstream->stream.rbuffer));
 			uint32_t capacity = rstream->stream.rbuffer->capacity;
 			uint32_t dma_addr = GDMA_GetSrcAddr(sp_txgdma_initstruct->GDMA_Index, sp_txgdma_initstruct->GDMA_ChNum);
 			uint32_t avail = (wr < dma_addr) ? (dma_addr - wr) : (capacity - (wr - dma_addr));

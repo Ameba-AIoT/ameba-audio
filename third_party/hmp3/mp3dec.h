@@ -51,15 +51,31 @@
 extern "C" {
 #endif
 
-/* determining MAINBUF_SIZE:
- *   max mainDataBegin = (2^9 - 1) bytes (since 9-bit offset) = 511
- *   max nSlots (concatenated with mainDataBegin bytes from before) = 1440 - 9 - 4 + 1 = 1428
- *   511 + 1428 = 1939, round up to 1940 (4-byte align)
+/* MP3_LOW_MEM_MODE:
+ *   Optimized for 16k/22.05k/24k mono, MPEG-2/2.5 Layer III only.
+ *   Reduces decoder RAM by ~12 KB (see buffers.c sizeof print).
+ *   Streams that violate the constraints (MPEG-1, stereo) are rejected
+ *   in UnpackFrameHeader().
  */
-#define MAINBUF_SIZE	1940
+//#define MP3_LOW_MEM_MODE
 
+/* determining MAINBUF_SIZE:
+ *   normal mode: max mainDataBegin = (2^9 - 1) bytes = 511,
+ *                max nSlots = 1440 - 9 - 4 + 1 = 1428, total = 1939 -> 1940
+ *   LOW_MEM:     MPEG-2 mono Layer III, max bitrate = 160 kbps at 16 kHz,
+ *                frame bytes = 576/16000 * 160000/8 = 720,
+ *                max mainDataBegin = (2^8 - 1) = 255 (MPEG-2 uses 8-bit field),
+ *                total = 255 + 720 = 975 -> round up to 1024 (4-byte align)
+ */
+#ifdef MP3_LOW_MEM_MODE
+#define MAINBUF_SIZE	1024
+#define MAX_NGRAN		1		/* MPEG-2/2.5 only: 1 granule per frame */
+#define MAX_NCHAN		1		/* mono only */
+#else
+#define MAINBUF_SIZE	1940
 #define MAX_NGRAN		2		/* max granules */
 #define MAX_NCHAN		2		/* max channels */
+#endif
 #define MAX_NSAMP		576		/* max samples per channel, per granule */
 
 /* map to 0,1,2 to make table indexing easier */

@@ -60,18 +60,37 @@
 /*__attribute__ ((section (".data"))) */ int Subband(MP3DecInfo *mp3DecInfo, short *pcmBuf)
 {
 	int b;
-	//HuffmanInfo *hi;
 	IMDCTInfo *mi;
 	SubbandInfo *sbi;
+#ifdef MP3_LOW_MEM_MODE
+	/* In LOW_MEM mode outBuf lives in HuffmanInfo, transposed to [NBANDS][BLOCK_SIZE].
+	 * FDCT32 still wants 32 contiguous subband samples per block, so gather here.
+	 */
+	HuffmanInfo *hi;
+	int gather[NBANDS], s;
+#endif
 
 	/* validate pointers */
 	if (!mp3DecInfo || !mp3DecInfo->HuffmanInfoPS || !mp3DecInfo->IMDCTInfoPS || !mp3DecInfo->SubbandInfoPS)
 		return -1;
 
-	//hi = (HuffmanInfo *)mp3DecInfo->HuffmanInfoPS;
 	mi = (IMDCTInfo *)(mp3DecInfo->IMDCTInfoPS);
 	sbi = (SubbandInfo*)(mp3DecInfo->SubbandInfoPS);
+#ifdef MP3_LOW_MEM_MODE
+	hi = (HuffmanInfo *)mp3DecInfo->HuffmanInfoPS;
+#endif
 
+#ifdef MP3_LOW_MEM_MODE
+	/* mono only in LOW_MEM (rejected in UnpackFrameHeader otherwise) */
+	for (b = 0; b < BLOCK_SIZE; b++) {
+		for (s = 0; s < NBANDS; s++)
+			gather[s] = hi->outBuf[0][s][b];
+		FDCT32(gather, sbi->vbuf + 0*32, sbi->vindex, (b & 0x01), mi->gb[0]);
+		PolyphaseMono(pcmBuf, sbi->vbuf + sbi->vindex + VBUF_LENGTH * (b & 0x01), polyCoef);
+		sbi->vindex = (sbi->vindex - (b & 0x01)) & 7;
+		pcmBuf += NBANDS;
+	}
+#else
 	if (mp3DecInfo->nChans == 2) {
 		/* stereo */
 		for (b = 0; b < BLOCK_SIZE; b++) {
@@ -90,6 +109,7 @@
 			pcmBuf += NBANDS;
 		}
 	}
+#endif
 
 	return 0;
 }

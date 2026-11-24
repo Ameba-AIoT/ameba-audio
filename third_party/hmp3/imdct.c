@@ -190,27 +190,27 @@
 	if (es == 0) {
 		/* fast case - frequency invert only (no rescaling) - can fuse into overlap-add for speed, if desired */
 		if (blockIdx & 0x01) {
-			y += NBANDS;
-			y0 = *y;	y += 2*NBANDS;
-			y1 = *y;	y += 2*NBANDS;
-			y2 = *y;	y += 2*NBANDS;
-			y3 = *y;	y += 2*NBANDS;
-			y4 = *y;	y += 2*NBANDS;
-			y5 = *y;	y += 2*NBANDS;
-			y6 = *y;	y += 2*NBANDS;
-			y7 = *y;	y += 2*NBANDS;
-			y8 = *y;	y += 2*NBANDS;
+			y += IMDCT_SAMPLE_STRIDE;
+			y0 = *y;	y += 2*IMDCT_SAMPLE_STRIDE;
+			y1 = *y;	y += 2*IMDCT_SAMPLE_STRIDE;
+			y2 = *y;	y += 2*IMDCT_SAMPLE_STRIDE;
+			y3 = *y;	y += 2*IMDCT_SAMPLE_STRIDE;
+			y4 = *y;	y += 2*IMDCT_SAMPLE_STRIDE;
+			y5 = *y;	y += 2*IMDCT_SAMPLE_STRIDE;
+			y6 = *y;	y += 2*IMDCT_SAMPLE_STRIDE;
+			y7 = *y;	y += 2*IMDCT_SAMPLE_STRIDE;
+			y8 = *y;	y += 2*IMDCT_SAMPLE_STRIDE;
 
-			y -= 18*NBANDS;
-			*y = -y0;	y += 2*NBANDS;
-			*y = -y1;	y += 2*NBANDS;
-			*y = -y2;	y += 2*NBANDS;
-			*y = -y3;	y += 2*NBANDS;
-			*y = -y4;	y += 2*NBANDS;
-			*y = -y5;	y += 2*NBANDS;
-			*y = -y6;	y += 2*NBANDS;
-			*y = -y7;	y += 2*NBANDS;
-			*y = -y8;	y += 2*NBANDS;
+			y -= 18*IMDCT_SAMPLE_STRIDE;
+			*y = -y0;	y += 2*IMDCT_SAMPLE_STRIDE;
+			*y = -y1;	y += 2*IMDCT_SAMPLE_STRIDE;
+			*y = -y2;	y += 2*IMDCT_SAMPLE_STRIDE;
+			*y = -y3;	y += 2*IMDCT_SAMPLE_STRIDE;
+			*y = -y4;	y += 2*IMDCT_SAMPLE_STRIDE;
+			*y = -y5;	y += 2*IMDCT_SAMPLE_STRIDE;
+			*y = -y6;	y += 2*IMDCT_SAMPLE_STRIDE;
+			*y = -y7;	y += 2*IMDCT_SAMPLE_STRIDE;
+			*y = -y8;	y += 2*IMDCT_SAMPLE_STRIDE;
 		}
 		return 0;
 	} else {
@@ -219,14 +219,14 @@
 		if (blockIdx & 0x01) {
 			/* frequency invert */
 			for (i = 0; i < 18; i+=2) {
-				d = *y;		CLIP_2N(d, 31 - es);	*y = d << es;	mOut |= FASTABS(*y);	y += NBANDS;
-				d = -*y;	CLIP_2N(d, 31 - es);	*y = d << es;	mOut |= FASTABS(*y);	y += NBANDS;
+				d = *y;		CLIP_2N(d, 31 - es);	*y = d << es;	mOut |= FASTABS(*y);	y += IMDCT_SAMPLE_STRIDE;
+				d = -*y;	CLIP_2N(d, 31 - es);	*y = d << es;	mOut |= FASTABS(*y);	y += IMDCT_SAMPLE_STRIDE;
 				d = *xPrev;	CLIP_2N(d, 31 - es);	*xPrev++ = d << es;
 			}
 		} else {
 			for (i = 0; i < 18; i+=2) {
-				d = *y;		CLIP_2N(d, 31 - es);	*y = d << es;	mOut |= FASTABS(*y);	y += NBANDS;
-				d = *y;		CLIP_2N(d, 31 - es);	*y = d << es;	mOut |= FASTABS(*y);	y += NBANDS;
+				d = *y;		CLIP_2N(d, 31 - es);	*y = d << es;	mOut |= FASTABS(*y);	y += IMDCT_SAMPLE_STRIDE;
+				d = *y;		CLIP_2N(d, 31 - es);	*y = d << es;	mOut |= FASTABS(*y);	y += IMDCT_SAMPLE_STRIDE;
 				d = *xPrev;	CLIP_2N(d, 31 - es);	*xPrev++ = d << es;
 			}
 		}
@@ -430,8 +430,8 @@ const int fastWin36[18] = {
 
 			yLo = (d + (MULSHIFT32(t, *wp++) << 2));
 			yHi = (s + (MULSHIFT32(t, *wp++) << 2));
-			y[(i)*NBANDS]    = 	yLo;
-			y[(17-i)*NBANDS] =  yHi;
+			y[(i)*IMDCT_SAMPLE_STRIDE]    = 	yLo;
+			y[(17-i)*IMDCT_SAMPLE_STRIDE] =  yHi;
 			mOut |= FASTABS(yLo);
 			mOut |= FASTABS(yHi);
 		}
@@ -453,8 +453,8 @@ const int fastWin36[18] = {
 			
 			yLo = (xPrevWin[i]    + MULSHIFT32(d, wp[i])) << 2;
 			yHi = (xPrevWin[17-i] + MULSHIFT32(d, wp[17-i])) << 2;
-			y[(i)*NBANDS]    = yLo;
-			y[(17-i)*NBANDS] = yHi;
+			y[(i)*IMDCT_SAMPLE_STRIDE]    = yLo;
+			y[(17-i)*IMDCT_SAMPLE_STRIDE] = yHi;
 			mOut |= FASTABS(yLo);
 			mOut |= FASTABS(yHi);
 		}
@@ -572,45 +572,45 @@ static void imdct12 (int *x, int *out)
 
 	 i = 0; 
 		yLo = (xPrevWin[ 0+i] << 2);
-		mOut |= FASTABS(yLo);	y[( 0+i)*NBANDS] = yLo;
+		mOut |= FASTABS(yLo);	y[( 0+i)*IMDCT_SAMPLE_STRIDE] = yLo;
 		yLo = (xPrevWin[ 3+i] << 2);
-		mOut |= FASTABS(yLo);	y[( 3+i)*NBANDS] = yLo;
+		mOut |= FASTABS(yLo);	y[( 3+i)*IMDCT_SAMPLE_STRIDE] = yLo;
 		yLo = (xPrevWin[ 6+i] << 2) + (MULSHIFT32(wp[0+i], xBuf[3+i]));	
-		mOut |= FASTABS(yLo);	y[( 6+i)*NBANDS] = yLo;
+		mOut |= FASTABS(yLo);	y[( 6+i)*IMDCT_SAMPLE_STRIDE] = yLo;
 		yLo = (xPrevWin[ 9+i] << 2) + (MULSHIFT32(wp[3+i], xBuf[5-i]));	
-		mOut |= FASTABS(yLo);	y[( 9+i)*NBANDS] = yLo;
+		mOut |= FASTABS(yLo);	y[( 9+i)*IMDCT_SAMPLE_STRIDE] = yLo;
 		yLo = (xPrevWin[12+i] << 2) + (MULSHIFT32(wp[6+i], xBuf[2-i]) + MULSHIFT32(wp[0+i], xBuf[(6+3)+i]));	
-		mOut |= FASTABS(yLo);	y[(12+i)*NBANDS] = yLo;
+		mOut |= FASTABS(yLo);	y[(12+i)*IMDCT_SAMPLE_STRIDE] = yLo;
 		yLo = (xPrevWin[15+i] << 2) + (MULSHIFT32(wp[9+i], xBuf[0+i]) + MULSHIFT32(wp[3+i], xBuf[(6+5)-i]));	
-		mOut |= FASTABS(yLo);	y[(15+i)*NBANDS] = yLo;
+		mOut |= FASTABS(yLo);	y[(15+i)*IMDCT_SAMPLE_STRIDE] = yLo;
 	
 	 i = 1; 
 		yLo = (xPrevWin[ 0+i] << 2);
-		mOut |= FASTABS(yLo);	y[( 0+i)*NBANDS] = yLo;
+		mOut |= FASTABS(yLo);	y[( 0+i)*IMDCT_SAMPLE_STRIDE] = yLo;
 		yLo = (xPrevWin[ 3+i] << 2);
-		mOut |= FASTABS(yLo);	y[( 3+i)*NBANDS] = yLo;
+		mOut |= FASTABS(yLo);	y[( 3+i)*IMDCT_SAMPLE_STRIDE] = yLo;
 		yLo = (xPrevWin[ 6+i] << 2) + (MULSHIFT32(wp[0+i], xBuf[3+i]));	
-		mOut |= FASTABS(yLo);	y[( 6+i)*NBANDS] = yLo;
+		mOut |= FASTABS(yLo);	y[( 6+i)*IMDCT_SAMPLE_STRIDE] = yLo;
 		yLo = (xPrevWin[ 9+i] << 2) + (MULSHIFT32(wp[3+i], xBuf[5-i]));	
-		mOut |= FASTABS(yLo);	y[( 9+i)*NBANDS] = yLo;
+		mOut |= FASTABS(yLo);	y[( 9+i)*IMDCT_SAMPLE_STRIDE] = yLo;
 		yLo = (xPrevWin[12+i] << 2) + (MULSHIFT32(wp[6+i], xBuf[2-i]) + MULSHIFT32(wp[0+i], xBuf[(6+3)+i]));	
-		mOut |= FASTABS(yLo);	y[(12+i)*NBANDS] = yLo;
+		mOut |= FASTABS(yLo);	y[(12+i)*IMDCT_SAMPLE_STRIDE] = yLo;
 		yLo = (xPrevWin[15+i] << 2) + (MULSHIFT32(wp[9+i], xBuf[0+i]) + MULSHIFT32(wp[3+i], xBuf[(6+5)-i]));	
-		mOut |= FASTABS(yLo);	y[(15+i)*NBANDS] = yLo;
+		mOut |= FASTABS(yLo);	y[(15+i)*IMDCT_SAMPLE_STRIDE] = yLo;
 	
 	 i = 2;
 		yLo = (xPrevWin[ 0+i] << 2);
-		mOut |= FASTABS(yLo);	y[( 0+i)*NBANDS] = yLo;
+		mOut |= FASTABS(yLo);	y[( 0+i)*IMDCT_SAMPLE_STRIDE] = yLo;
 		yLo = (xPrevWin[ 3+i] << 2);
-		mOut |= FASTABS(yLo);	y[( 3+i)*NBANDS] = yLo;
+		mOut |= FASTABS(yLo);	y[( 3+i)*IMDCT_SAMPLE_STRIDE] = yLo;
 		yLo = (xPrevWin[ 6+i] << 2) + (MULSHIFT32(wp[0+i], xBuf[3+i]));	
-		mOut |= FASTABS(yLo);	y[( 6+i)*NBANDS] = yLo;
+		mOut |= FASTABS(yLo);	y[( 6+i)*IMDCT_SAMPLE_STRIDE] = yLo;
 		yLo = (xPrevWin[ 9+i] << 2) + (MULSHIFT32(wp[3+i], xBuf[5-i]));	
-		mOut |= FASTABS(yLo);	y[( 9+i)*NBANDS] = yLo;
+		mOut |= FASTABS(yLo);	y[( 9+i)*IMDCT_SAMPLE_STRIDE] = yLo;
 		yLo = (xPrevWin[12+i] << 2) + (MULSHIFT32(wp[6+i], xBuf[2-i]) + MULSHIFT32(wp[0+i], xBuf[(6+3)+i]));	
-		mOut |= FASTABS(yLo);	y[(12+i)*NBANDS] = yLo;
+		mOut |= FASTABS(yLo);	y[(12+i)*IMDCT_SAMPLE_STRIDE] = yLo;
 		yLo = (xPrevWin[15+i] << 2) + (MULSHIFT32(wp[9+i], xBuf[0+i]) + MULSHIFT32(wp[3+i], xBuf[(6+5)-i]));	
-		mOut |= FASTABS(yLo);	y[(15+i)*NBANDS] = yLo;
+		mOut |= FASTABS(yLo);	y[(15+i)*IMDCT_SAMPLE_STRIDE] = yLo;
 	
 	/* save previous (unwindowed) for overlap - only need samples 6-8, 12-17 */
 	/* fb unrolled loops
@@ -661,7 +661,17 @@ static void imdct12 (int *x, int *out)
  *
  * TODO:        examine mixedBlock/winSwitch logic carefully (test he_mode.bit)
  **************************************************************************************/
-/* __attribute__ ((section (".data"))) */ static int HybridTransform(int *xCurr, int *xPrev, int y[BLOCK_SIZE][NBANDS], SideInfoSub *sis, BlockCount *bc)
+/* y is a flat pointer; layout depends on MP3_LOW_MEM_MODE (see IMDCT_SAMPLE_STRIDE in coder.h).
+ *   default:  y is int [BLOCK_SIZE][NBANDS],  Y_AT(b,s) = y[s*NBANDS + b]
+ *   LOW_MEM:  y is int [NBANDS][BLOCK_SIZE], Y_AT(b,s) = y[b*BLOCK_SIZE + s]
+ */
+#ifdef MP3_LOW_MEM_MODE
+#define Y_AT(y, b, s)	((y)[(b)*BLOCK_SIZE + (s)])
+#else
+#define Y_AT(y, b, s)	((y)[(s)*NBANDS + (b)])
+#endif
+
+/* __attribute__ ((section (".data"))) */ static int HybridTransform(int *xCurr, int *xPrev, int *y, SideInfoSub *sis, BlockCount *bc)
 {
 	int xPrevWin[18], currWinIdx, prevWinIdx;
 	int i, j, nBlocksOut, nonZero, mOut;
@@ -677,7 +687,7 @@ static void imdct12 (int *x, int *out)
 	for(i = 0; i < bc->nBlocksLong; i++) {
 		/* currWinIdx picks the right window for long blocks (if mixed, long blocks use window type 0) */
 		currWinIdx = sis->blockType;
-		if (sis->mixedBlock && i < bc->currWinSwitch) 
+		if (sis->mixedBlock && i < bc->currWinSwitch)
 			currWinIdx = 0;
 
 		prevWinIdx = bc->prevType;
@@ -685,7 +695,7 @@ static void imdct12 (int *x, int *out)
 			 prevWinIdx = 0;
 
 		/* do 36-point IMDCT, including windowing and overlap-add */
-		mOut |= IMDCT36(xCurr, xPrev, &(y[0][i]), currWinIdx, prevWinIdx, i, bc->gbIn);
+		mOut |= IMDCT36(xCurr, xPrev, y + IMDCT_BLOCK_OFFSET(i), currWinIdx, prevWinIdx, i, bc->gbIn);
 		xCurr += 18;
 		xPrev += 9;
 	}
@@ -697,13 +707,13 @@ static void imdct12 (int *x, int *out)
 		prevWinIdx = bc->prevType;
 		if (i < bc->prevWinSwitch)
 			 prevWinIdx = 0;
-		
-		mOut |= IMDCT12x3(xCurr, xPrev, &(y[0][i]), prevWinIdx, i, bc->gbIn);
+
+		mOut |= IMDCT12x3(xCurr, xPrev, y + IMDCT_BLOCK_OFFSET(i), prevWinIdx, i, bc->gbIn);
 		xCurr += 18;
 		xPrev += 9;
 	}
 	nBlocksOut = i;
-	
+
 	/* window and overlap prev if prev longer that current */
 	for (   ; i < bc->nBlocksPrev; i++) {
 		prevWinIdx = bc->prevType;
@@ -716,14 +726,14 @@ static void imdct12 (int *x, int *out)
 		for (j = 0; j < 9; j++) {
 			xp = xPrevWin[2*j+0] << 2;	/* << 2 temp for scaling */
 			nonZero |= xp;
-			y[2*j+0][i] = xp;
+			Y_AT(y, i, 2*j+0) = xp;
 			mOut |= FASTABS(xp);
 
 			/* frequency inversion on odd blocks/odd samples (flip sign if i odd, j odd) */
 			xp = xPrevWin[2*j+1] << 2;
-			xp = (xp ^ (fiBit >> 31)) + (i & 0x01);	
+			xp = (xp ^ (fiBit >> 31)) + (i & 0x01);
 			nonZero |= xp;
-			y[2*j+1][i] = xp;
+			Y_AT(y, i, 2*j+1) = xp;
 			mOut |= FASTABS(xp);
 
 			xPrev[j] = 0;
@@ -732,11 +742,11 @@ static void imdct12 (int *x, int *out)
 		if (nonZero)
 			nBlocksOut = i;
 	}
-	
+
 	/* clear rest of blocks */
 	for (   ; i < 32; i++) {
-		for (j = 0; j < 18; j++) 
-			y[j][i] = 0;
+		for (j = 0; j < 18; j++)
+			Y_AT(y, i, j) = 0;
 	}
 
 	bc->gbOut = CLZ(mOut) - 1;
@@ -814,7 +824,14 @@ static void imdct12 (int *x, int *out)
 	bc.currWinSwitch = (si->sis[gr][ch].mixedBlock ? blockCutoff : 0);	/* where WINDOW switches (not nec. transform) */
 	bc.gbIn = hi->gb[ch];
 
-	mi->numPrevIMDCT[ch] = HybridTransform(hi->huffDecBuf[ch], mi->overBuf[ch], mi->outBuf[ch], &si->sis[gr][ch], &bc);
+#ifdef MP3_LOW_MEM_MODE
+	/* outBuf union'd with huffDecBuf in HuffmanInfo (see coder.h). After this call,
+	 * hi->huffDecBuf[ch] is dead — its storage now holds outBuf in subband-major order.
+	 */
+	mi->numPrevIMDCT[ch] = HybridTransform(hi->huffDecBuf[ch], mi->overBuf[ch], (int *)hi->outBuf[ch], &si->sis[gr][ch], &bc);
+#else
+	mi->numPrevIMDCT[ch] = HybridTransform(hi->huffDecBuf[ch], mi->overBuf[ch], (int *)mi->outBuf[ch], &si->sis[gr][ch], &bc);
+#endif
 	mi->prevType[ch] = si->sis[gr][ch].blockType;
 	mi->prevWinSwitch[ch] = bc.currWinSwitch;		/* 0 means not a mixed block (either all short or all long) */
 	mi->gb[ch] = bc.gbOut;
