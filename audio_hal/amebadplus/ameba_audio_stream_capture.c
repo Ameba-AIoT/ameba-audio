@@ -841,7 +841,7 @@ static int32_t ameba_audio_stream_rx_read_in_noirq_mode(Stream *stream, void *da
 	PGDMA_InitTypeDef sp_rxgdma_initstruct = &(cstream->stream.gdma_struct->u.SpRxGdmaInitStruct);
 
 	while (bytes_to_read_0 != 0) {
-		uint32_t rp = (uint32_t)(cstream->stream.rbuffer->raw_data + cstream->stream.rbuffer->read_ptr);
+		uint32_t rp = (uint32_t)(cstream->stream.rbuffer->raw_data + ameba_audio_stream_buffer_get_tx_readptr(cstream->stream.rbuffer));
 		uint32_t capacity = cstream->stream.rbuffer->capacity;
 		uint32_t dma_addr = GDMA_GetDstAddr(sp_rxgdma_initstruct->GDMA_Index, sp_rxgdma_initstruct->GDMA_ChNum);
 		uint32_t avail = (rp <= dma_addr) ? (dma_addr - rp) : (capacity - (rp - dma_addr));
