@@ -53,7 +53,6 @@ if MEDIA_PLAYER_MENU
             bool "MP3"
             select MEDIA_DEMUX_MP3 if WHC_HOST || WHC_NONE
             select MEDIA_CODEC_MP3 if WHC_HOST || WHC_NONE
-            select THIRD_PARTY_HMP3_MENU
 
         config MEDIA_FORMAT_AAC_MENU
             bool "AAC"

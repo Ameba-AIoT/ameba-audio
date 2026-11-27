@@ -96,6 +96,25 @@ enum MediaPlayerInfos {
     MEDIA_PLAYER_INFO_NOT_REWINDABLE = 3,
 };
 
+/**
+ * @brief Defines the global config keys of MediaPlayer_SetConfig(), all values are int32_t.
+ *
+ * @since 1.0
+ * @version 1.0
+ */
+enum MediaPlayerConfigKey {
+    /** Extractor probe mode, 0: normal probe; 1: fast probe. */
+    MEDIA_PLAYER_CONFIG_PROBE_MODE = 0,
+    /** Streaming playback starts when buffered audio reaches this duration, in ms. */
+    MEDIA_PLAYER_CONFIG_BUFFERING_INITIAL_MS = 1,
+    /** Streaming playback resumes from buffering when buffered audio reaches this duration, in ms. */
+    MEDIA_PLAYER_CONFIG_BUFFERING_RESUME_MS = 2,
+    /** Max buffered audio duration of streaming, in ms; must be larger than the two above. */
+    MEDIA_PLAYER_CONFIG_MAX_BUFFER_DURATION_MS = 3,
+
+    MEDIA_PLAYER_CONFIG_MAX,
+};
+
 #ifdef __cplusplus
 }
 #endif
