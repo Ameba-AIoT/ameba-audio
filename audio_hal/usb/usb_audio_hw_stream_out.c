@@ -16,7 +16,7 @@
 #include <inttypes.h>
 
 #include "os_wrapper.h"
-#include "usbh_uac1.h"
+#include "usbh_uac.h"
 #include "usbh.h"
 
 #include "audio_hw_compat.h"
