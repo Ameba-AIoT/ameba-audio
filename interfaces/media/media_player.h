@@ -402,6 +402,28 @@ int32_t MediaPlayer_SetSpeed(MediaPlayer *player, float speed, float pitch);
  */
 int32_t MediaPlayer_Invoke(MediaPlayer *player, Parcel *request, Parcel *reply);
 
+/**
+ * @brief Sets a global config shared by all players, not bound to any player instance.
+ * It takes effect on players whose data source is set afterwards.
+ * The config flow is like this:
+ * Parcel *config = Parcel_Create();
+ * Parcel_WriteInt32(config, MEDIA_PLAYER_CONFIG_BUFFERING_INITIAL_MS);  // one of MediaPlayerConfigKey
+ * Parcel_WriteInt32(config, 500);                                       // value of the key
+ * MediaPlayer_SetConfig(config);
+ * Parcel_Destroy(config);
+ *
+ * @param config The config parcel object pointer, holding a key and its value.
+ * @return Returns a value listed below: \n
+ * int32_t | Description
+ * ----------------------| -----------------------
+ * OSAL_OK | the operation is successful.
+ * OSAL_ERR_INVALID_PARAM | config is NULL or the key is invalid.
+ * OSAL_ERR_NO_MEMORY | out of memory.
+ * @since 1.0
+ * @version 1.0
+ */
+int32_t MediaPlayer_SetConfig(Parcel *config);
+
 #ifdef __cplusplus
 }
 #endif
